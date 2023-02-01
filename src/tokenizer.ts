@@ -41,7 +41,7 @@ export class Tokenizer {
 export class TokenData {
     public text: string;
     public token: Token;
-    constructor(token, text) {
+    constructor(token: Token, text: string) {
         this.token = token;
         this.text = text;
     }

@@ -1,7 +1,7 @@
-import { Expression } from "./Expression";
-import { Identifier } from "./Identifier";
-import { Statement } from "./Statement";
-import { TypeExpression } from "./TypeExpression";
+import { Expression } from "./Expression.js";
+import { Identifier } from "./Identifier.js";
+import { Statement } from "./Statement.js";
+import { TypeExpression } from "./TypeExpression.js";
 
 export class VariableStatement extends Statement {
     public value: Expression;
