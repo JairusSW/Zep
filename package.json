@@ -5,7 +5,10 @@
     "author": "Jairus Tanaka",
     "contributors": [],
     "license": "MIT",
-    "scripts": {},
+    "scripts": {
+        "build:watch": "tsc -w",
+        "run:test": "node ./lib/src/test"
+    },
     "devDependencies": {
         "@types/node": "^18.11.18",
         "typescript": "^4.9.4"

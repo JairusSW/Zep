@@ -1,41 +1,61 @@
+import { isWhitespace } from "./util.js";
+
 export class Tokenizer {
     public text: string = "";
     public pos: number = 0;
+    public queue: TokenData[] = [];
     constructor(text: string) {
         this.text = text;
     }
+    getAll(): string[] {
+        const result: TokenData[] = [];
+        while (true) {
+            const token = this.getToken();
+            if (token.token === Token.EOF) break;
+            result.push(token)
+        }
+        this.queue = result;
+        this.pos = 0;
+        return result.map(v => v.text);
+    }
     getNext(): string {
-        return this.getToken().text;        
+        return this.getToken().text;
     }
     getToken(): TokenData {
+        // Publish queue
+        if (this.queue.length) {
+            return this.queue.shift()!;
+        }
+
         // Remove leading whitespace
-        if (this.text[this.pos] == " ") while (this.pos < this.text.length && this.text[++this.pos] === " ") { }
-        // Scan single character tokens
-        switch (this.text[this.pos]) {
-            case ";": {
-                return new TokenData(Token.Semi, this.text.slice(this.pos, ++this.pos));
-            }
-            case "=": {
-                return new TokenData(Token.Equals, this.text.slice(this.pos, ++this.pos));
-            }
-            case "\n": {
-                return new TokenData(Token.EOF, "");
-            }
+        while (true) {
+            const code = this.text.charCodeAt(this.pos);
+            if (isWhitespace(code)) this.pos++;
+            else break;
         }
-        if (this.pos > this.text.length) {
-            return new TokenData(Token.EOF, "");
-        }
-        // Scan multi-character tokens
+
         const start = this.pos;
-        let data = this.text[this.pos];
-        if (data == "\"") {
-            while (this.text[++this.pos] != "\"") { }
-            return new TokenData(Token.String, this.text.slice(start, ++this.pos));
-        } else {
-            while (this.pos < this.text.length && this.text[++this.pos] != " ") { }
-            return new TokenData(Token.Identifier, this.text.slice(start, this.pos));
+
+        // Scan single character tokens
+        while (this.pos < this.text.length) {
+            const char = this.text[this.pos];
+            const spl = parseSplToken(char);
+            if (spl) {
+                this.pos++; // Move to the next character
+                return spl;
+            } else if (char == "\t") {
+                this.pos++;
+            } else if (char === " " && this.text[this.pos - 1] !== " ") {
+                this.pos++;
+                return new TokenData(Token.Identifier, this.text.slice(start, this.pos));
+            } else {
+                this.pos++;
+            }
         }
+
+        return new TokenData(Token.EOF, "");
     }
+
 }
 
 export class TokenData {
@@ -47,11 +67,45 @@ export class TokenData {
     }
 }
 
+export const SPLITTER_TOKENS = [
+    ";",
+    "=",
+    "?",
+    ":",
+    "(",
+    ")",
+    "{",
+    "}"
+];
+
 export enum Token {
+    // GENERAL
     Identifier,
     Number,
     String,
+    // SPLITTERS
     Semi,
     Equals,
-    EOF
+    Question,
+    Colon,
+    LeftParen,
+    RightParen,
+    LeftBracket,
+    RightBracket,
+    // UTILITY
+    EOF,
+}
+
+export function parseSplToken(char: string): TokenData | null {
+    switch (char) {
+        case ";": return new TokenData(Token.Semi, ";");
+        case "=": return new TokenData(Token.Equals, "=");
+        case "?": return new TokenData(Token.Question, "?");
+        case ":": return new TokenData(Token.Colon, ":");
+        case "(": return new TokenData(Token.LeftParen, "(");
+        case ")": return new TokenData(Token.RightParen, ")");
+        case "{": return new TokenData(Token.LeftBracket, "{");
+        case "}": return new TokenData(Token.RightBracket, "}");
+        default: return null;
+    }
 }
