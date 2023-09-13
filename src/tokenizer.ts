@@ -1,4 +1,4 @@
-import { isWhitespace } from "./util.js";
+import { isWhitespace, isWhitespaceCode } from "./util.js";
 
 export class Tokenizer {
     public text: string = "";
@@ -24,13 +24,15 @@ export class Tokenizer {
     getToken(): TokenData {
         // Publish queue
         if (this.queue.length) {
-            return this.queue.shift()!;
+            const item = this.queue.shift()!;
+            this.pos += item.text.length;
+            return item;
         }
 
         // Remove leading whitespace
         while (true) {
             const code = this.text.charCodeAt(this.pos);
-            if (isWhitespace(code)) this.pos++;
+            if (isWhitespaceCode(code)) this.pos++;
             else break;
         }
 
@@ -38,16 +40,13 @@ export class Tokenizer {
 
         // Scan single character tokens
         while (this.pos < this.text.length) {
-            const char = this.text[this.pos];
+            const char = this.text[this.pos + 1];
             const spl = parseSplToken(char);
-            if (spl) {
-                this.pos++; // Move to the next character
-                return spl;
-            } else if (char == "\t") {
-                this.pos++;
-            } else if (char === " " && this.text[this.pos - 1] !== " ") {
-                this.pos++;
-                return new TokenData(Token.Identifier, this.text.slice(start, this.pos));
+            if (isWhitespace(char)) {
+                return new TokenData(Token.Identifier, this.text.slice(start, ++this.pos));
+            } else if (spl) {
+                this.queue.push(spl);
+                return new TokenData(Token.Identifier, this.text.slice(start, ++this.pos));
             } else {
                 this.pos++;
             }
@@ -72,6 +71,7 @@ export const SPLITTER_TOKENS = [
     "=",
     "?",
     ":",
+    ",",
     "(",
     ")",
     "{",
@@ -88,6 +88,7 @@ export enum Token {
     Equals,
     Question,
     Colon,
+    Comma,
     LeftParen,
     RightParen,
     LeftBracket,
@@ -102,6 +103,7 @@ export function parseSplToken(char: string): TokenData | null {
         case "=": return new TokenData(Token.Equals, "=");
         case "?": return new TokenData(Token.Question, "?");
         case ":": return new TokenData(Token.Colon, ":");
+        case ",": return new TokenData(Token.Comma, ",");
         case "(": return new TokenData(Token.LeftParen, "(");
         case ")": return new TokenData(Token.RightParen, ")");
         case "{": return new TokenData(Token.LeftBracket, "{");
