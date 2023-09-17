@@ -2,10 +2,12 @@ import { VariableStatement } from "../nodes/VariableStatement.js";
 import { Tokenizer } from "./tokenizer.js";
 
 const tokenizer = new Tokenizer(`
+import "std:io/print";
+
 string foo = "bar";
-string boo = "gah";`);
 
-console.log(tokenizer.getAll());
+fn main() -> void {
+    print(foo);
+}`);
 
-console.log("Is Variable Statement? ", tokenizer.matches(VariableStatement.match));
-console.log("Is Variable Statement? ", tokenizer.matches(VariableStatement.match));
+console.log(tokenizer.getAll().map(v => v.text).join("\n"));

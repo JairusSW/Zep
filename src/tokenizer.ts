@@ -58,6 +58,21 @@ export class Tokenizer {
 
         const start = this.pos;
 
+        if (this.text[this.pos] === '"') {
+            this.pos++;
+            while (this.pos < this.text.length) {
+                if (this.text[this.pos] === '"') {
+                    this.pos++;
+                    const tok = new TokenData(Token.String, this.text.slice(start, this.pos));
+                    this.tokens.push(tok);
+                    return tok;
+                }
+                this.pos++;
+            }
+            
+            return new TokenData(Token.EOF, "");
+        }
+
         // Scan single character tokens
         while (this.pos < this.text.length) {
             const char = this.text[this.pos + 1];
