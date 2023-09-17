@@ -3,28 +3,48 @@ import { isWhitespace, isWhitespaceCode } from "./util.js";
 export class Tokenizer {
     public text: string = "";
     public pos: number = 0;
-    public queue: TokenData[] = [];
+    public tokens: TokenData[] = [];
+    public tokensPos: number = 0;
+
+    private inString: boolean = false;
+    private lastRef: number = 0;
+    private tokensCalculated: boolean = false;
+    private lookahead: TokenData | null = null;
     constructor(text: string) {
         this.text = text;
     }
-    getAll(): string[] {
+    getAll(): TokenData[] {
+        if (this.tokensCalculated) return this.tokens;
+        this.tokensCalculated = true;
         const result: TokenData[] = [];
         while (true) {
             const token = this.getToken();
             if (token.token === Token.EOF) break;
-            result.push(token)
+            result.push(token);
         }
-        this.queue = result;
+        this.tokens = result;
         this.pos = 0;
-        return result.map(v => v.text);
+        this.tokensPos = 0;
+        return result;
     }
-    getNext(): string {
-        return this.getToken().text;
+    matches(tests: ((token: TokenData) => boolean)[]): TokenData[] | null {
+        const startPos = this.pos;
+        const startToken = this.tokensPos;
+        for (const test of tests) {
+            if (!test(this.getToken())) {
+                this.pos = startPos;
+                this.tokensPos = startToken;
+                return null;
+            }
+        }
+        return this.tokens.slice(startToken, this.tokensPos);
     }
     getToken(): TokenData {
+        //if (this.tokens[this.tokensPos]) return this.tokens[this.tokensPos];
         // Publish queue
-        if (this.queue.length) {
-            const item = this.queue.shift()!;
+        if (this.lookahead) {
+            const item = this.lookahead;
+            this.lookahead = null;
             this.pos += item.text.length;
             return item;
         }
@@ -42,11 +62,17 @@ export class Tokenizer {
         while (this.pos < this.text.length) {
             const char = this.text[this.pos + 1];
             const spl = parseSplToken(char);
-            if (isWhitespace(char)) {
-                return new TokenData(Token.Identifier, this.text.slice(start, ++this.pos));
-            } else if (spl) {
-                this.queue.push(spl);
-                return new TokenData(Token.Identifier, this.text.slice(start, ++this.pos));
+            if (spl) {
+                const tok = new TokenData(Token.Identifier, this.text.slice(start, ++this.pos));
+                this.tokensPos += 2;
+                this.tokens.push(tok);
+                this.lookahead = spl;
+                return tok;
+            } else if (isWhitespace(char)) {
+                const tok = new TokenData(Token.Identifier, this.text.slice(start, ++this.pos));
+                this.tokensPos++;
+                this.tokens.push(tok);
+                return tok;
             } else {
                 this.pos++;
             }
@@ -54,7 +80,6 @@ export class Tokenizer {
 
         return new TokenData(Token.EOF, "");
     }
-
 }
 
 export class TokenData {

@@ -3,6 +3,7 @@ import { StringLiteral } from "../nodes/StringLiteral.js";
 import { TypeExpression } from "../nodes/TypeExpression.js";
 import { VariableStatement } from "../nodes/VariableStatement.js";
 import { Token, Tokenizer } from "./tokenizer.js";
+import { isBuiltinType } from "./util.js";
 
 export class AST {
     public data: string;
@@ -14,7 +15,7 @@ export class AST {
         this.tokenizer = new Tokenizer(this.data);
         const tokenData = this.tokenizer.getToken();
         if (tokenData.token == Token.Identifier) {
-            if (tokenData.text == "string") {
+            if (isBuiltinType(tokenData.text)) {
                 const pos = this.tokenizer.pos;
                 const nameToken = this.tokenizer.getToken();
                 const eqToken = this.tokenizer.getToken();

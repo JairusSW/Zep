@@ -1,5 +1,6 @@
+import { TokenData } from "../src/tokenizer.js";
+import { isBuiltinType, isEquals, isIdentifier, isString, isSemi } from "../src/util/types/checkers.js";
 import { Expression } from "./Expression.js";
-import { Identifier } from "./Identifier.js";
 import { Statement } from "./Statement.js";
 import { TypeExpression } from "./TypeExpression.js";
 
@@ -15,4 +16,11 @@ export class VariableStatement extends Statement {
         this.type = type;
         this.mutable = mutable;
     }
+    static match: ((tok: TokenData) => boolean)[] = [
+        isBuiltinType,
+        isIdentifier,
+        isEquals,
+        isString,
+        isSemi
+    ]
 }
