@@ -1,7 +1,7 @@
-import { Expression } from "./Expression.js";
+import { TokenData } from "../src/tokenizer.js";
+import { isString } from "../src/util/types/checkers.js";
 import { Identifier } from "./Identifier.js";
 import { Statement } from "./Statement.js";
-import { TypeExpression } from "./TypeExpression.js";
 
 export class ImportDeclaration extends Statement {
     public path: Identifier;
@@ -9,4 +9,8 @@ export class ImportDeclaration extends Statement {
         super();
         this.path = path;
     }
+    static match: ((tok: TokenData) => boolean)[] = [
+        (tok: TokenData) => tok.text === "import",
+        isString
+    ]
 }

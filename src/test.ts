@@ -1,3 +1,4 @@
+import { ImportDeclaration } from "../nodes/ImportDeclaration.js";
 import { VariableStatement } from "../nodes/VariableStatement.js";
 import { Tokenizer } from "./tokenizer.js";
 
@@ -11,3 +12,5 @@ fn main() -> void {
 }`);
 
 console.log(tokenizer.getAll().map(v => v.text).join("\n"));
+
+console.log(tokenizer.matches(ImportDeclaration.match));

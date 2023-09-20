@@ -6,8 +6,7 @@
     "contributors": [],
     "license": "MIT",
     "scripts": {
-        "build:watch": "tsc -w",
-        "run:test": "node ./lib/src/test"
+        "run:test": "bun run ./src/test.ts"
     },
     "devDependencies": {
         "@types/node": "^18.11.18",

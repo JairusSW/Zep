@@ -58,10 +58,10 @@ export class Tokenizer {
 
         const start = this.pos;
 
-        if (this.text[this.pos] === '"') {
+        if (this.text[this.pos] === "\"") {
             this.pos++;
             while (this.pos < this.text.length) {
-                if (this.text[this.pos] === '"') {
+                if (this.text[this.pos] === "\"" && this.text[this.pos - 1] !== "\\") {
                     this.pos++;
                     const tok = new TokenData(Token.String, this.text.slice(start, this.pos));
                     this.tokens.push(tok);
@@ -69,11 +69,10 @@ export class Tokenizer {
                 }
                 this.pos++;
             }
-            
+
             return new TokenData(Token.EOF, "");
         }
 
-        // Scan single character tokens
         while (this.pos < this.text.length) {
             const char = this.text[this.pos + 1];
             const spl = parseSplToken(char);
