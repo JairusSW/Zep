@@ -31,7 +31,8 @@ export class Tokenizer {
         const startPos = this.pos;
         const startToken = this.tokensPos;
         for (const test of tests) {
-            if (!test(this.getToken())) {
+            const tok = this.getToken();
+            if (!test(tok)) {
                 this.pos = startPos;
                 this.tokensPos = startToken;
                 return null;
@@ -46,6 +47,8 @@ export class Tokenizer {
             const item = this.lookahead;
             this.lookahead = null;
             this.pos += item.text.length;
+            this.tokens.push(item);
+            this.tokensPos++;
             return item;
         }
 
@@ -63,6 +66,7 @@ export class Tokenizer {
             while (this.pos < this.text.length) {
                 if (this.text[this.pos] === "\"" && this.text[this.pos - 1] !== "\\") {
                     this.pos++;
+                    this.tokensPos++;
                     const tok = new TokenData(Token.String, this.text.slice(start, this.pos));
                     this.tokens.push(tok);
                     return tok;
@@ -78,12 +82,19 @@ export class Tokenizer {
             const spl = parseSplToken(char);
             if (spl) {
                 const tok = new TokenData(Token.Identifier, this.text.slice(start, ++this.pos));
-                this.tokensPos += 2;
+                this.tokensPos++;
                 this.tokens.push(tok);
                 this.lookahead = spl;
                 return tok;
             } else if (isWhitespace(char)) {
-                const tok = new TokenData(Token.Identifier, this.text.slice(start, ++this.pos));
+                const txt = this.text.slice(start, ++this.pos);
+                const spl = parseSplToken(txt);
+                if (spl) {
+                    this.tokensPos++;
+                    this.tokens.push(spl);
+                    return spl;
+                }
+                const tok = new TokenData(Token.Identifier, txt);
                 this.tokensPos++;
                 this.tokens.push(tok);
                 return tok;

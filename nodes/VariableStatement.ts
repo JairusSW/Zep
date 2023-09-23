@@ -20,7 +20,6 @@ export class VariableStatement extends Statement {
         isBuiltinType,
         isIdentifier,
         isEquals,
-        isString,
-        isSemi
+        isString
     ]
 }

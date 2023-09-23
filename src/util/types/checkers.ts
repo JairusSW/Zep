@@ -28,11 +28,11 @@ export function isIdentifier(token: TokenData): boolean {
 }
 
 export function isEquals(token: TokenData): boolean {
-    return token.text == "="; //token.token === Token.Equals;
+    return token.token === Token.Equals;
 }
 
 export function isString(token: TokenData): boolean {
-    return token.text.startsWith("\"") && token.text.endsWith("\"");  //token.token === Token.String;
+    return token.token === Token.String;
 }
 
 export function isSemi(token: TokenData): boolean {
