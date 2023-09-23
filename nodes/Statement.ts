@@ -1,1 +1,1 @@
-export class Statement { }
+export class Statement {}

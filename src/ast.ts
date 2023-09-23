@@ -1,31 +1,25 @@
 import { Statement } from "../nodes/Statement.js";
-import { StringLiteral } from "../nodes/StringLiteral.js";
-import { TypeExpression } from "../nodes/TypeExpression.js";
-import { VariableStatement } from "../nodes/VariableStatement.js";
-import { Token, Tokenizer } from "./tokenizer.js";
-import { isBuiltinType } from "./util.js";
+import { Identifier } from "../nodes/Identifier.js";
+import { ImportDeclaration } from "../nodes/ImportDeclaration.js";
+import { Token, TokenData, Tokenizer } from "./tokenizer.js";
 
 export class AST {
-    public data: string;
     public statements: Statement[] = [];
     public pos: number = 0;
     public tokenizer: Tokenizer;
-    constructor(data: string) {
-        this.data = data;
-        this.tokenizer = new Tokenizer(this.data);
-        const tokenData = this.tokenizer.getToken();
-        if (tokenData.token == Token.Identifier) {
-            if (isBuiltinType(tokenData.text)) {
-                const pos = this.tokenizer.pos;
-                const nameToken = this.tokenizer.getToken();
-                const eqToken = this.tokenizer.getToken();
-                const valueToken = this.tokenizer.getToken();
-                const semiToken = this.tokenizer.getToken();
-                if (nameToken.token == Token.Identifier && eqToken.token == Token.Equals && valueToken.token == Token.String && semiToken.token == Token.Semi) {
-                    // Obviously a variable
-                    this.statements.push(new VariableStatement(new StringLiteral(valueToken.text), nameToken.text, new TypeExpression([tokenData.text], false), false));
-                }
-            }
+    constructor(tokenizer: Tokenizer) {
+        this.tokenizer = tokenizer;
+    }
+    parseImportDeclaration(match: TokenData[] | null = null): ImportDeclaration | null {
+        if (!match) {
+            match = this.tokenizer.matches(ImportDeclaration.match);
+
+            const node = new ImportDeclaration(
+                new Identifier(match![1].text)
+            );
+            this.statements.push(node);
+            return node;
         }
+        return null;
     }
 }

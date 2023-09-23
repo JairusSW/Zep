@@ -6,8 +6,6 @@ export class Tokenizer {
     public tokens: TokenData[] = [];
     public tokensPos: number = 0;
 
-    private inString: boolean = false;
-    private lastRef: number = 0;
     private tokensCalculated: boolean = false;
     private lookahead: TokenData | null = null;
     constructor(text: string) {
@@ -41,7 +39,7 @@ export class Tokenizer {
         return this.tokens.slice(startToken, this.tokensPos);
     }
     getToken(): TokenData {
-        //if (this.tokens[this.tokensPos]) return this.tokens[this.tokensPos];
+        if (this.tokens[this.tokensPos]) return this.tokens[this.tokensPos++];
         // Publish queue
         if (this.lookahead) {
             const item = this.lookahead;
@@ -104,6 +102,12 @@ export class Tokenizer {
         }
 
         return new TokenData(Token.EOF, "");
+    }
+    reset(): void {
+        this.pos = 0;
+        this.lookahead = null;
+        this.tokensCalculated = false;
+        this.tokensPos = 0;
     }
 }
 
