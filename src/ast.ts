@@ -6,6 +6,7 @@ import { VariableDeclaration } from "../nodes/VariableDeclaration.js";
 import { StringLiteral } from "../nodes/StringLiteral.js";
 import { TypeExpression } from "../nodes/TypeExpression.js";
 import { Program } from "../nodes/Program.js";
+import { FunctionDeclaration } from "../nodes/FunctionDeclaration.js";
 
 export class AST {
     public program: Program = new Program();
@@ -57,6 +58,22 @@ export class AST {
                 false
             ),
             (mutable === 1) ? true : false
+        );
+        this.program.statements.push(node);
+        return node;
+    }
+    parseFunctionDeclaration(match: TokenData[] | null = null): FunctionDeclaration | null {
+        if (!match && !(match = this.tokenizer.matches(FunctionDeclaration.match))) return null;
+        const name = new Identifier(match[1].text);
+        const returnType = new TypeExpression([
+            match[5].text
+        ], false);
+
+        const node = new FunctionDeclaration(
+            name,
+            [],
+            returnType,
+            []
         );
         this.program.statements.push(node);
         return node;

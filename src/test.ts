@@ -1,3 +1,4 @@
+import { FunctionDeclaration } from "../nodes/FunctionDeclaration.js";
 import { ImportDeclaration } from "../nodes/ImportDeclaration.js";
 import { VariableDeclaration } from "../nodes/VariableDeclaration.js";
 import { AST } from "./ast.js";
@@ -14,7 +15,8 @@ fn main() -> void {
 
 const ast = new AST(tokenizer);
 
-ast.parseStatement();
-ast.parseStatement();
+ast.parseImportDeclaration();
+ast.parseVariableDeclaration();
+ast.parseFunctionDeclaration();
 
 console.log(ast.program);
