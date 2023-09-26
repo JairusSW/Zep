@@ -1,5 +1,5 @@
 import { ImportDeclaration } from "../nodes/ImportDeclaration.js";
-import { VariableStatement } from "../nodes/VariableStatement.js";
+import { VariableDeclaration } from "../nodes/VariableDeclaration.js";
 import { AST } from "./ast.js";
 import { Tokenizer } from "./tokenizer.js";
 
@@ -12,12 +12,9 @@ fn main() -> void {
     print(foo)
 }`);
 
-console.log(tokenizer.matches(ImportDeclaration.match));
-console.log(tokenizer.matches(VariableStatement.match));
-
-tokenizer.reset();
-
 const ast = new AST(tokenizer);
-ast.parseImportDeclaration();
 
-console.log(ast.statements);
+ast.parseStatement();
+ast.parseStatement();
+
+console.log(ast.program);
