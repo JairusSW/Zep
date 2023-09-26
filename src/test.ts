@@ -14,7 +14,7 @@ fn main() -> void {
 }`);
 
 const ast = new AST(tokenizer);
-
+console.log(ast.tokenizer.getAll());
 ast.parseImportDeclaration();
 ast.parseVariableDeclaration();
 ast.parseFunctionDeclaration();

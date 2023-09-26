@@ -30,10 +30,20 @@ export class Tokenizer {
         const startToken = this.tokensPos;
         for (const test of tests) {
             const tok = this.getToken();
-            if (!test(tok)) {
+            const res = test(tok);
+
+            if (res === false) {
                 this.pos = startPos;
                 this.tokensPos = startToken;
                 return null;
+            } else if (res === null) {
+                while (true) {
+                    const tok = this.getToken();
+                    if (tok === null) return null;
+                    const res = test(tok);
+                    if (res === false) return null;
+                    if (res === true) this.tokens.slice(startToken, this.tokensPos);
+                }
             }
         }
         return this.tokens.slice(startToken, this.tokensPos);
@@ -100,7 +110,19 @@ export class Tokenizer {
                 this.pos++;
             }
         }
-
+        if (this.pos === this.text.length) {
+            const txt = this.text.slice(start, this.pos++);
+            const spl = parseSplToken(txt);
+            if (spl) {
+                this.tokensPos++;
+                this.tokens.push(spl);
+                return spl;
+            }
+            const tok = new TokenData(Token.Identifier, txt);
+            this.tokensPos++;
+            this.tokens.push(tok);
+            return tok;
+        }
         return new TokenData(Token.EOF, "");
     }
     reset(): void {
