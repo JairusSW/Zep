@@ -7,6 +7,9 @@ import { StringLiteral } from "../nodes/StringLiteral.js";
 import { TypeExpression } from "../nodes/TypeExpression.js";
 import { Program } from "../nodes/Program.js";
 import { FunctionDeclaration } from "../nodes/FunctionDeclaration.js";
+import { BlockExpression } from "../nodes/BlockExpression.js";
+import { CallExpression } from "../nodes/CallExpression.js";
+import { ParameterExpression } from "../nodes/ParameterExpression.js";
 
 export class AST {
     public program: Program = new Program();
@@ -17,14 +20,14 @@ export class AST {
     }
     parseStatement(): Statement | null {
         let match: TokenData[] | null = null;
-        match = this.tokenizer.matches(ImportDeclaration.match)
-        if (match) {
+        if (match = this.tokenizer.matches(ImportDeclaration.match))
             return this.parseImportDeclaration(match);
-        }
-        match = this.tokenizer.matches(VariableDeclaration.match)
-        if (match) {
+        if (match = this.tokenizer.matches(VariableDeclaration.match))
             return this.parseVariableDeclaration(match);
-        }
+        if (match = this.tokenizer.matches(FunctionDeclaration.match))
+            return this.parseFunctionDeclaration(match);
+        if (match = this.tokenizer.matches(CallExpression.match))
+            return this.parseCallExpression(match);
         return null;
     }
     parseProgram(): Program {
@@ -69,14 +72,69 @@ export class AST {
             match[5].text
         ], false);
 
-        const node = new FunctionDeclaration(
-            name,
-            [],
-            returnType,
-            []
-        );
-        this.program.statements.push(node);
-        return node;
+        const block = this.parseBlockExpression();
+        if (block) {
+            const node = new FunctionDeclaration(
+                name,
+                [],
+                returnType,
+                block
+            );
+            this.program.statements.push(node);
+            return node;
+        }
+        return null;
+    }
+    parseBlockExpression(match: TokenData[] | null = null): BlockExpression | null {
+        const start = this.tokenizer.pos;
+        const startTok = this.tokenizer.tokensPos;
+
+        const block = new BlockExpression([]);
+
+        let inDepth = 1;
+        let outDepth = 0;
+
+        const firstToken = this.tokenizer.getToken();
+        if (firstToken.token === Token.LeftBracket) {
+            let token: Token | null = null;
+            while (token != Token.EOF) {
+                const statement = this.parseStatement();
+                if (statement) block.statements.push(statement);
+                token = this.tokenizer.getToken().token;
+                if (token === Token.LeftBracket) inDepth++;
+                else if (token === Token.RightBracket && inDepth === ++outDepth) return block;
+            }
+        }
+        this.tokenizer.pos = start;
+        this.tokenizer.tokensPos = startTok;
+        return null;
+    }
+    parseCallExpression(match: TokenData[] | null = null): CallExpression | null {
+        if (!match && !(match = this.tokenizer.matches(CallExpression.match))) return null;
+        const params: ParameterExpression[] = [];
+        const calling = new Identifier(match[0].text);
+
+        let token: TokenData | null = null;
+        while (true) {
+            const nextToken = this.tokenizer.getToken();
+            if (token && token.token === Token.EOF) return null;
+            if (nextToken.token === Token.RightParen) {
+                if (token && token.token === Token.Identifier) {
+                    params.push(new ParameterExpression(
+                        new Identifier(token.text)
+                    ));
+                }
+                const node = new CallExpression(calling, params);
+                return node;
+            } else if (nextToken.token === Token.Comma) {
+                if (token && token.token === Token.Identifier) {
+                    params.push(new ParameterExpression(
+                        new Identifier(token.text)
+                    ))
+                }
+            }
+            token = nextToken;
+        }
     }
 }
 
