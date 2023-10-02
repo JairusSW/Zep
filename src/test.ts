@@ -7,7 +7,7 @@ import { Tokenizer } from "./tokenizer.js";
 const tokenizer = new Tokenizer(`
 import "std:io/print"
 
-string foo = "bar"
+string foo = "foo"
 
 fn main() -> void {
     print(foo)
@@ -15,8 +15,10 @@ fn main() -> void {
 
 const ast = new AST(tokenizer);
 console.log(ast.tokenizer.getAll());
-ast.parseImportDeclaration();
-ast.parseVariableDeclaration();
-ast.parseFunctionDeclaration();
+ast.parseStatement();
+ast.parseStatement();
+ast.parseStatement();
+
+//console.log(ast.parseCallExpression())
 
 console.log(ast.program);

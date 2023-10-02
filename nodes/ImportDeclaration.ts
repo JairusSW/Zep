@@ -10,7 +10,7 @@ export class ImportDeclaration extends Statement {
         this.path = path;
     }
     static match: ((tok: TokenData) => boolean)[] = [
-        (tok: TokenData) => tok.text === "import",
+        (tok) => tok.text === "import",
         isString
     ]
 }

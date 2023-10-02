@@ -49,6 +49,7 @@ export class Tokenizer {
         return this.tokens.slice(startToken, this.tokensPos);
     }
     getToken(): TokenData {
+        if (this.pos >= this.text.length) return new TokenData(Token.EOF, "");
         if (this.tokens[this.tokensPos]) return this.tokens[this.tokensPos++];
         // Publish queue
         if (this.lookahead) {
