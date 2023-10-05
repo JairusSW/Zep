@@ -1,4 +1,4 @@
-import { TokenData } from "../src/tokenizer.js";
+import { Token, TokenData } from "../src/tokenizer.js";
 import { isBuiltinType, isEquals, isIdentifier, isString, isSemi } from "../src/util/types/checkers.js";
 import { Expression } from "./Expression.js";
 import { Identifier } from "./Identifier.js";
@@ -21,6 +21,6 @@ export class VariableDeclaration extends Statement {
         isBuiltinType,
         isIdentifier,
         isEquals,
-        isString
+        (tok) => tok.token === Token.String || tok.token === Token.Identifier
     ]
 }

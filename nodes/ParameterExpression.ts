@@ -1,4 +1,3 @@
-import { Expression } from "./Expression.js";
 import { Identifier } from "./Identifier.js";
 import { Statement } from "./Statement.js";
 import { TypeExpression } from "./TypeExpression.js";

@@ -9,8 +9,10 @@ import "std:io/print"
 
 string foo = "foo"
 
+i32 bar = 123
+
 fn main() -> void {
-    print(foo)
+    print(foo, bar)
 }`);
 
 const ast = new AST(tokenizer);

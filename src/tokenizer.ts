@@ -84,6 +84,18 @@ export class Tokenizer {
             }
 
             return new TokenData(Token.EOF, "");
+        } else if (isNumeric(this.text[this.pos])) {
+            while (this.pos < this.text.length && (isNumeric(this.text[this.pos]) || this.text[this.pos] === '.')) {
+                this.pos++;
+            }
+            const txt = this.text.slice(start, this.pos);
+            const value = parseFloat(txt);
+            if (!isNaN(value)) {
+                const tok = new TokenData(Token.Number, txt);
+                this.tokensPos++;
+                this.tokens.push(tok);
+                return tok;
+            }
         }
 
         while (this.pos < this.text.length) {
@@ -187,4 +199,8 @@ export function parseSplToken(char: string): TokenData | null {
         case "}": return new TokenData(Token.RightBracket, "}");
         default: return null;
     }
+}
+
+function isNumeric(char: string): boolean {
+    return /^[0-9]+$/.test(char) || char === '.';
 }

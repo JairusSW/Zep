@@ -1,4 +1,3 @@
-import { TokenData } from "../src/tokenizer.js";
 import { Expression } from "./Expression.js";
 
 export class TypeExpression extends Expression {

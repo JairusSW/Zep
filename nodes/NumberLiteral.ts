@@ -1,3 +1,4 @@
+import { Token, TokenData } from "../src/tokenizer.js";
 import { Expression } from "./Expression.js";
 
 export class NumberLiteral extends Expression {
@@ -6,4 +7,7 @@ export class NumberLiteral extends Expression {
         super();
         this.data = data;
     }
+    static match: ((tok: TokenData) => boolean)[] = [
+        (tok) => tok.token === Token.Number
+    ]
 }
