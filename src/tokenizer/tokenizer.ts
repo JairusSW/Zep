@@ -183,6 +183,7 @@ export const SPLITTER_TOKENS = [
     ")",
     "{",
     "}",
+    "+"
 ];
 
 export enum Token {
@@ -202,6 +203,8 @@ export enum Token {
     RightBracket, // }
     LeftBrace, // [
     RightBrace, // ]
+    // Operators
+    Add, // +
     // UTILITY
     EOF, // EXIT
 }
@@ -219,6 +222,7 @@ export function parseSplToken(char: string, pos: number): TokenData | null {
         case "}": return new TokenData(Token.RightBracket, "}", pos);
         case "[": return new TokenData(Token.LeftBrace, "[", pos);
         case "]": return new TokenData(Token.RightBrace, "]", pos);
+        case "+": return new TokenData(Token.Add, "+", pos);
         default: return null;
     }
 }

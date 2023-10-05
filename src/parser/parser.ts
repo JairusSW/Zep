@@ -12,6 +12,9 @@ import { CallExpression } from "../ast/nodes/CallExpression.js";
 import { ParameterExpression } from "../ast/nodes/ParameterExpression.js";
 import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
 import { ImportFunctionDeclaration } from "../ast/nodes/ImportFunctionDeclaration.js";
+import { ReturnStatement } from "../ast/nodes/ReturnStatement.js";
+import { Expression } from "../ast/nodes/Expression.js";
+import { BinaryExpression, Operator } from "../ast/nodes/BinaryExpression.js";
 
 export class Parser {
     public program: Program = new Program();
@@ -32,6 +35,14 @@ export class Parser {
             return this.parseFunctionDeclaration(match);
         if (match = this.tokenizer.matches(CallExpression.match))
             return this.parseCallExpression(match);
+        if (match = this.tokenizer.matches(ReturnStatement.match))
+            return this.parseReturnStatement(match);
+        return null;
+    }
+    parseExpression(): Expression | null {
+        let match: TokenData[] | null = null;
+        if (match = this.tokenizer.matches(BinaryExpression.match))
+            return this.parseBinaryExpression(match);
         return null;
     }
     parseProgram(): Program {
@@ -72,14 +83,36 @@ export class Parser {
         if (!match && !(match = this.tokenizer.matches(FunctionDeclaration.match))) return null;
 
         const name = new Identifier(match[1].text);
+        const params: ParameterExpression[] = [];
+
+        let paramName: string | null = null;
+        let offset: number = 3;
+        while (true) {
+            let token = this.tokenizer.getToken();
+            if (token.token === Token.RightParen) break;
+            offset++;
+            if (!paramName && token.token === Token.Identifier) {
+                paramName = token.text;
+            } else if (token.token === Token.Colon && (token = this.tokenizer.getToken()).token === Token.Identifier) {
+                const param = new ParameterExpression(
+                    new Identifier(paramName!),
+                    new TypeExpression([
+                        token.text
+                    ])
+                );
+                params.push(param);
+                paramName = null;
+            }
+        }
+        if (this.tokenizer.getToken().text !== "->") return null;
         const returnType = new TypeExpression([
-            match[5].text
+            this.tokenizer.getToken().text
         ], false);
         const block = this.parseBlockExpression();
         if (block) {
             const node = new FunctionDeclaration(
                 name,
-                [],
+                params,
                 returnType,
                 block
             );
@@ -187,9 +220,22 @@ export class Parser {
             return node;
         }
     }
-}
-
-function testToken(match: ((tok: TokenData) => boolean)[], token: TokenData, pos: number): boolean {
-    if (pos > match.length) return false;
-    return match[pos](token);
+    parseReturnStatement(match: TokenData[] | null = null): ReturnStatement | null {
+        if (!match && !(match = this.tokenizer.matches(ReturnStatement.match))) return null;
+        const returning = this.parseExpression();
+        if (!returning) return null;
+        const node = new ReturnStatement(returning);
+        this.program.statements.push(node);
+        return node;
+    }
+    parseBinaryExpression(match: TokenData[] | null = null): BinaryExpression | null {
+        if (!match && !(match = this.tokenizer.matches(BinaryExpression.match))) return null;
+        const node = new BinaryExpression(
+            new Identifier(match[0].text),
+            Operator.Add,
+            new Identifier(match[2].text)
+        )
+        this.program.statements.push(node);
+        return node;
+    }
 }
