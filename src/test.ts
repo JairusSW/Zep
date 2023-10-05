@@ -1,6 +1,3 @@
-import { ImportDeclaration } from "./ast/nodes/ImportDeclaration.js";
-import { ImportFunctionDeclaration } from "./ast/nodes/ImportFunctionDeclaration.js";
-import { ModifierExpression } from "./ast/nodes/ModifierExpression.js";
 import { Parser } from "./parser/parser.js";
 import { Tokenizer } from "./tokenizer/tokenizer.js";
 
