@@ -10,6 +10,7 @@ export class CallExpression extends Expression {
     static match: ((tok: TokenData) => boolean)[] = [
         (tok) => tok.token === Token.Identifier,
         (tok) => tok.token === Token.LeftParen,
-        //(tok) => tok.token === Token.RightParen
+        (tok) => tok.token === Token.Identifier,
+        (tok) => tok.token === Token.RightParen
     ]
 }
