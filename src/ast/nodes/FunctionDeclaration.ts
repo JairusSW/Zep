@@ -1,5 +1,5 @@
-import { Token, TokenData } from "../src/tokenizer.js";
-import { isIdentifier } from "../src/util/types/checkers.js";
+import { Token, TokenData } from "../../tokenizer/tokenizer.js";
+import { isIdentifier } from "../../util/types/checkers.js";
 import { BlockExpression } from "./BlockExpression.js";
 import { Identifier } from "./Identifier.js";
 import { ParameterExpression } from "./ParameterExpression.js";

@@ -1,5 +1,5 @@
-import { Token, TokenData } from "../src/tokenizer.js";
-import { isBuiltinType, isEquals, isIdentifier, isString, isSemi } from "../src/util/types/checkers.js";
+import { Token, TokenData } from "../../tokenizer/tokenizer.js";
+import { isBuiltinType, isEquals, isIdentifier, isString, isSemi } from "../../util/types/checkers.js";
 import { Expression } from "./Expression.js";
 import { Identifier } from "./Identifier.js";
 import { Statement } from "./Statement.js";

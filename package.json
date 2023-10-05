@@ -1,26 +1,26 @@
 {
-    "name": "toy-parser",
-    "version": "0.1.0",
-    "description": "Parser for a toy language",
-    "author": "Jairus Tanaka",
-    "contributors": [],
-    "license": "MIT",
-    "scripts": {
-        "run:test": "bun run ./src/test.ts"
-    },
-    "devDependencies": {
-        "@types/node": "^18.11.18",
-        "typescript": "^4.9.4"
-    },
-    "dependencies": {},
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/JairusSW/toy-parser.git"
-    },
-    "keywords": [],
-    "bugs": {
-        "url": "https://github.com/JairusSW/toy-parser/issues"
-    },
-    "homepage": "https://github.com/JairusSW/toy-parser#readme",
-    "type": "module"
+  "name": "toy-parser",
+  "version": "0.1.0",
+  "description": "Parser for a toy language",
+  "author": "Jairus Tanaka",
+  "contributors": [],
+  "license": "MIT",
+  "scripts": {
+    "run:test": "bun run ./src/test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.18",
+    "typescript": "^4.9.4"
+  },
+  "dependencies": { "binaryen": "^114.0.0" },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JairusSW/toy-parser.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://github.com/JairusSW/toy-parser/issues"
+  },
+  "homepage": "https://github.com/JairusSW/toy-parser#readme",
+  "type": "module"
 }

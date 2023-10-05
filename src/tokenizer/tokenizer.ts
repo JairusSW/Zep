@@ -1,4 +1,4 @@
-import { isWhitespace, isWhitespaceCode } from "./util.js";
+import { isWhitespace, isWhitespaceCode } from "../util.js";
 
 export class Tokenizer {
     public text: string = "";

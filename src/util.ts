@@ -1,5 +1,5 @@
 import { TypeExpression } from "../nodes/TypeExpression.js";
-import { TokenData } from "./tokenizer.js";
+import { TokenData } from "./tokenizer/tokenizer.js";
 /*
 
 export function parseType(text: string): TypeExpression | null {

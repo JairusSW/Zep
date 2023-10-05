@@ -1,4 +1,4 @@
-import { Token, TokenData } from "../src/tokenizer.js";
+import { Token, TokenData } from "../../tokenizer/tokenizer.js";
 import { Expression } from "./Expression.js";
 import { Statement } from "./Statement.js";
 

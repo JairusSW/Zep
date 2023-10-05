@@ -1,26 +1,19 @@
-import { FunctionDeclaration } from "../nodes/FunctionDeclaration.js";
-import { ImportDeclaration } from "../nodes/ImportDeclaration.js";
-import { VariableDeclaration } from "../nodes/VariableDeclaration.js";
-import { AST } from "./ast.js";
-import { Tokenizer } from "./tokenizer.js";
+import { Parser } from "./parser/parser.js";
+import { Tokenizer } from "./tokenizer/tokenizer.js";
 
 const tokenizer = new Tokenizer(`
-import "std:io/print"
+#[ref] fn print(data: i32): void
 
-string foo = "foo"
+import "std:io/print"
 
 i32 bar = 123
 
 fn main() -> void {
-    print(foo, bar)
+    print(foo)
 }`);
 
-const ast = new AST(tokenizer);
-console.log(ast.tokenizer.getAll());
-ast.parseStatement();
-ast.parseStatement();
-ast.parseStatement();
+const parser = new Parser(tokenizer, "test.zp");
+console.log(parser.tokenizer.getAll());
+parser.parseProgram();
 
-//console.log(ast.parseCallExpression())
-
-console.log(ast.program);
+console.log(parser.program);

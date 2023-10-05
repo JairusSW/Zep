@@ -1,21 +1,21 @@
-import { Statement } from "../nodes/Statement.js";
-import { Identifier } from "../nodes/Identifier.js";
-import { ImportDeclaration } from "../nodes/ImportDeclaration.js";
-import { Token, TokenData, Tokenizer } from "./tokenizer.js";
-import { VariableDeclaration } from "../nodes/VariableDeclaration.js";
-import { StringLiteral } from "../nodes/StringLiteral.js";
-import { TypeExpression } from "../nodes/TypeExpression.js";
-import { Program } from "../nodes/Program.js";
-import { FunctionDeclaration } from "../nodes/FunctionDeclaration.js";
-import { BlockExpression } from "../nodes/BlockExpression.js";
-import { CallExpression } from "../nodes/CallExpression.js";
-import { ParameterExpression } from "../nodes/ParameterExpression.js";
+import { Statement } from "../../nodes/Statement.js";
+import { Identifier } from "../../nodes/Identifier.js";
+import { ImportDeclaration } from "../../nodes/ImportDeclaration.js";
+import { Token, TokenData, Tokenizer } from "../tokenizer/tokenizer.js";
+import { VariableDeclaration } from "../../nodes/VariableDeclaration.js";
+import { StringLiteral } from "../../nodes/StringLiteral.js";
+import { TypeExpression } from "../../nodes/TypeExpression.js";
+import { Program } from "../../nodes/Program.js";
+import { FunctionDeclaration } from "../../nodes/FunctionDeclaration.js";
+import { BlockExpression } from "../../nodes/BlockExpression.js";
+import { CallExpression } from "../../nodes/CallExpression.js";
+import { ParameterExpression } from "../../nodes/ParameterExpression.js";
 
-export class AST {
+export class Parser {
     public program: Program = new Program();
     public pos: number = 0;
     public tokenizer: Tokenizer;
-    constructor(tokenizer: Tokenizer) {
+    constructor(tokenizer: Tokenizer, public fileName: string) {
         this.tokenizer = tokenizer;
     }
     parseStatement(): Statement | null {

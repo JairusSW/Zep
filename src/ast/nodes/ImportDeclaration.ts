@@ -1,5 +1,5 @@
-import { TokenData } from "../src/tokenizer.js";
-import { isString } from "../src/util/types/checkers.js";
+import { TokenData } from "../../tokenizer/tokenizer.js";
+import { isString } from "../../util/types/checkers.js";
 import { Identifier } from "./Identifier.js";
 import { Statement } from "./Statement.js";
 
