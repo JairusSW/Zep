@@ -26,19 +26,19 @@
         <g id="anim">
             <rect width="1000%" height="100%" fill="#ff5733"/>
             <rect width="1000%" height="100%" y="75%" fill="#ff8c00"/>
-            <rect width="1000%" height="100%" y="150%" fill="#ffb62f"/>
-            <rect width="1000%" height="100%" y="225%" fill="#a7b32d"/>
-            <rect width="1000%" height="100%" y="300%" fill="#5aac7c"/>
-            <rect width="1000%" height="100%" y="375%" fill="#579aa6"/>
-            <rect width="1000%" height="100%" y="450%" fill="#b1536b"/>
+            <rect width="1000%" height="100%" y="100%" fill="#ffb62f"/>
+            <rect width="1000%" height="100%" y="125%" fill="#a7b32d"/>
+            <rect width="1000%" height="100%" y="150%" fill="#5aac7c"/>
+            <rect width="1000%" height="100%" y="175%" fill="#579aa6"/>
+            <rect width="1000%" height="100%" y="200%" fill="#b1536b"/>
 
-            <rect width="1000%" height="100%" y="525%" fill="#ff5733"/>
-            <rect width="1000%" height="100%" y="600%" fill="#ff8c00"/>
-            <rect width="1000%" height="100%" y="675%" fill="#ffb62f"/>
-            <rect width="1000%" height="100%" y="750%" fill="#a7b32d"/>
-            <rect width="1000%" height="100%" y="825%" fill="#5aac7c"/>
-            <rect width="1000%" height="100%" y="900%" fill="#579aa6"/>
-            <rect width="1000%" height="100%" y="975%" fill="#b1536b"/>
+            <rect width="1000%" height="100%" y="225%" fill="#ff5733"/>
+            <rect width="1000%" height="100%" y="250%" fill="#ff8c00"/>
+            <rect width="1000%" height="100%" y="275%" fill="#ffb62f"/>
+            <rect width="1000%" height="100%" y="300%" fill="#a7b32d"/>
+            <rect width="1000%" height="100%" y="325%" fill="#5aac7c"/>
+            <rect width="1000%" height="100%" y="350" fill="#579aa6"/>
+            <rect width="1000%" height="100%" y="375%" fill="#b1536b"/>
         </g>
     </g>
 </svg>
