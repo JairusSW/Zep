@@ -9,7 +9,7 @@
                 transform: rotate(45deg) translateY(-400%);
             }
             to {
-                transform: rotate(45deg) translateY(-925%);
+                transform: rotate(45deg) translateY(-1000%);
             }
         }
 

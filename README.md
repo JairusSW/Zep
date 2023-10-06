@@ -48,3 +48,7 @@ fn main() -> void {
     print(foo)
 }
 ```
+
+`zep build hello.zp -o hello.wasm`
+
+`wasmtime run hello.wasm`
