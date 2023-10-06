@@ -49,6 +49,6 @@ fn main() -> void {
 }
 ```
 
-`zep build hello.zp -o hello.wasm`
+`zep build hello.zp -o hello.wat`
 
-`wasmtime run hello.wasm`
+`wasmtime run hello.wat`
