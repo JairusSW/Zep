@@ -1,0 +1,5 @@
+import "std:io/print"
+
+fn main() -> void {
+    print("hello")
+}

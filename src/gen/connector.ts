@@ -3,7 +3,10 @@ import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
 import { Program } from "../ast/nodes/Program.js";
 import { ReturnStatement } from "../ast/nodes/ReturnStatement.js";
+import { StringLiteral } from "../ast/nodes/StringLiteral.js";
 import { TypeExpression } from "../ast/nodes/TypeExpression.js";
+import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
+import { WasmData } from "./types/WasmData.js";
 import { WasmFunction } from "./types/WasmFunction.js";
 import { WasmModule } from "./types/WasmModule.js";
 import { WasmOp, WasmOperator } from "./types/WasmOp.js";
@@ -49,6 +52,16 @@ export class WasmConnector {
 
         const out = new WasmFunction(name, params, body, returnType!, true);
         this.module.statements.push(out);
+        return out;
+    }
+    addStringLiteral(node: StringLiteral): WasmData {
+        const dataBuf = new ArrayBuffer(1 + node.data.length);
+        const dataView = new Uint8Array(dataBuf);
+        dataView[0] = dataBuf.byteLength;
+        for (let i = 0; i < node.data.length; i++) {
+            dataView[i + 1] = node.data.charCodeAt(i);
+        }
+        const out = new WasmData(0, dataBuf);
         return out;
     }
 }

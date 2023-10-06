@@ -43,6 +43,8 @@ export class Parser {
         let match: TokenData[] | null = null;
         if (match = this.tokenizer.matches(BinaryExpression.match))
             return this.parseBinaryExpression(match);
+        if (match = this.tokenizer.matches(StringLiteral.match))
+            return this.parseStringLiteral(match);
         return null;
     }
     parseProgram(): Program {
@@ -159,6 +161,10 @@ export class Parser {
                     params.push(new ParameterExpression(
                         new Identifier(token.text)
                     ));
+                } else if (token && token.token === Token.String) {
+                    params.push(new ParameterExpression(
+                        new StringLiteral(token.text.slice(1, token.text.length - 1))
+                    ));
                 }
                 const node = new CallExpression(calling, params);
                 return node;
@@ -166,7 +172,11 @@ export class Parser {
                 if (token && token.token === Token.Identifier) {
                     params.push(new ParameterExpression(
                         new Identifier(token.text)
-                    ))
+                    ));
+                } if (token && token.token === Token.String) {
+                    params.push(new ParameterExpression(
+                        new StringLiteral(token.text.slice(1, token.text.length - 1))
+                    ));
                 }
             }
             token = nextToken;
@@ -235,6 +245,12 @@ export class Parser {
             Operator.Add,
             new Identifier(match[2].text)
         )
+        this.program.statements.push(node);
+        return node;
+    }
+    parseStringLiteral(match: TokenData[] | null = null): StringLiteral | null {
+        if (!match && !(match = this.tokenizer.matches(StringLiteral.match))) return null;
+        const node = new StringLiteral(match[0].text.slice(1, match[0].text.length - 1));
         this.program.statements.push(node);
         return node;
     }
