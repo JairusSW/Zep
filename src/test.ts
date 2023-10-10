@@ -7,7 +7,7 @@ import { Parser } from "./parser/parser.js";
 import { Tokenizer } from "./tokenizer/tokenizer.js";
 
 const tokenizer = new Tokenizer(`#[ref]: env
-fn print(data: i32) -> void
+fn print(data: *string) -> void
 fn main() -> void {
     print("Hi there... Its me, Zep!")
 }`);
