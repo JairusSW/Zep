@@ -78,13 +78,12 @@ export class WasmConnector {
         return out;
     }
     addStringLiteral(node: StringLiteral): WasmData {
-        const dataBuf = new ArrayBuffer(1 + node.data.length);
-        const dataView = new Uint8Array(dataBuf);
-        dataView[0] = dataBuf.byteLength;
+        const data = new Array<string | number>(1 + node.data.length);
+        data[0] = data.length;
         for (let i = 0; i < node.data.length; i++) {
-            dataView[i + 1] = node.data.charCodeAt(i);
+            data[i + 1] = node.data.charAt(i);
         }
-        const out = new WasmData(0, dataBuf);
+        const out = new WasmData(0, data);
         this.module.statements.push(out);
         return out;
     }

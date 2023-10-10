@@ -2,8 +2,8 @@ import { WasmStatement } from "./WasmStatement.js";
 
 export class WasmData extends WasmStatement {
     public ptr: number;
-    public buffer: ArrayBuffer;
-    constructor(ptr: number, buffer: ArrayBuffer) {
+    public buffer: (string | number)[];
+    constructor(ptr: number, buffer: (string | number)[]) {
         super();
         this.ptr = ptr;
         this.buffer = buffer;
@@ -13,11 +13,14 @@ export class WasmData extends WasmStatement {
     }
 }
 
-export function bufferToString(buffer: ArrayBuffer): string {
+export function bufferToString(buffer: (string | number)[]): string {
     let out = "";
-    const view = new Uint8Array(buffer);
-    for (let i = 0; i < view.byteLength; i++) {
-        out += "\\" + view[i].toString();
+    for (let i = 0; i < buffer.length; i++) {
+        if (typeof buffer[i] === "string") {
+            out += buffer[i];
+        } else {
+            out += "\\" + buffer[i].toString();
+        }
     }
     return out;
 }

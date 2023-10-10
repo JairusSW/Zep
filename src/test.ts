@@ -9,7 +9,7 @@ import { Tokenizer } from "./tokenizer/tokenizer.js";
 const tokenizer = new Tokenizer(`#[ref]: env
 fn print(data: i32) -> void
 fn main() -> void {
-    print("Hello, from Zep!")
+    print("Hi there... Its me, Zep!")
 }`);
 
 const parser = new Parser(tokenizer, "test.zp");
@@ -21,7 +21,7 @@ console.log(parser.program.statements);
 
 const wasm = new WasmConnector(parser.program);
 wasm.addImportFunction(imp!);
-wasm.addStringLiteral(new StringLiteral("Hello, from Zep!"));
+wasm.addStringLiteral(new StringLiteral("Hi there... Its me, Zep!"));
 wasm.addFunction(fn!);
 
 console.log(wasm.module.toWat())
