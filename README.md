@@ -49,6 +49,4 @@ fn main() -> void {
 }
 ```
 
-`zep build hello.zp -o hello.wat`
-
-`wasmtime run hello.wat`
+For more details, see [Reference.md](/docs/Reference.md)

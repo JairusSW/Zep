@@ -7,6 +7,6 @@ export class ReturnStatement extends Statement {
         super();
     }
     static match: ((tok: TokenData) => boolean)[] = [
-        (tok) => tok.text === "ret"
+        (tok) => tok.text === "rt"
     ]
 }
