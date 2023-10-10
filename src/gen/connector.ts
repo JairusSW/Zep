@@ -1,4 +1,4 @@
-import { BinaryExpression } from "../ast/nodes/BinaryExpression.js";
+import { BinaryExpression, Operator } from "../ast/nodes/BinaryExpression.js";
 import { CallExpression } from "../ast/nodes/CallExpression.js";
 import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
@@ -24,7 +24,6 @@ export class WasmConnector {
     public module: WasmModule = new WasmModule([]);
     constructor(program: Program) {
         this.program = program;
-        this.module.statements.push(new WasmMemory(1, "env", "buffer"));
     }
     addFunctionCall(node: CallExpression): WasmCall {
         const out = new WasmCall(node.calling.data, []);
@@ -57,7 +56,7 @@ export class WasmConnector {
                 body.push(
                     new WasmOp(
                         (<Identifier>stmt.returning.left).data,
-                        WasmOperator.Add,
+                        opToWasm(stmt.returning.operand),
                         (<Identifier>stmt.returning.right).data
                     )
                 )
@@ -96,4 +95,11 @@ export function typeToWasm(type: TypeExpression): WasmType | null {
         case "void": return WasmType.Void;
     }
     return null;
+}
+
+export function opToWasm(op: Operator): WasmOperator {
+    switch (op) {
+        case Operator.Add: return WasmOperator.Add;
+        case Operator.Sub: return WasmOperator.Sub;
+    }
 }

@@ -20,11 +20,13 @@ export class WasmOp extends WasmStatement{
 }
 
 export enum WasmOperator {
-    Add
+    Add,
+    Sub
 }
 
 export function operatorToWat(op: WasmOperator): string {
     switch (op) {
-        case WasmOperator.Add: return "i32.add"
+        case WasmOperator.Add: return "i32.add";
+        case WasmOperator.Sub: return "i32.sub";
     }
 }

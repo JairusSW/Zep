@@ -204,7 +204,8 @@ export enum Token {
     LeftBrace, // [
     RightBrace, // ]
     // Operators
-    Add, // +
+    Plus, // +
+    Neg, // -
     // UTILITY
     EOF, // EXIT
 }
@@ -222,7 +223,8 @@ export function parseSplToken(char: string, pos: number): TokenData | null {
         case "}": return new TokenData(Token.RightBracket, "}", pos);
         case "[": return new TokenData(Token.LeftBrace, "[", pos);
         case "]": return new TokenData(Token.RightBrace, "]", pos);
-        case "+": return new TokenData(Token.Add, "+", pos);
+        case "+": return new TokenData(Token.Plus, "+", pos);
+        case "-": return new TokenData(Token.Neg, "-", pos);
         default: return null;
     }
 }

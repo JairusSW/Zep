@@ -233,6 +233,7 @@ export class Parser {
     parseReturnStatement(match: TokenData[] | null = null): ReturnStatement | null {
         if (!match && !(match = this.tokenizer.matches(ReturnStatement.match))) return null;
         const returning = this.parseExpression();
+        console.log(returning)
         if (!returning) return null;
         const node = new ReturnStatement(returning);
         this.program.statements.push(node);
@@ -242,7 +243,7 @@ export class Parser {
         if (!match && !(match = this.tokenizer.matches(BinaryExpression.match))) return null;
         const node = new BinaryExpression(
             new Identifier(match[0].text),
-            Operator.Add,
+            tokenToOp(match[1])!,
             new Identifier(match[2].text)
         )
         this.program.statements.push(node);
@@ -254,4 +255,10 @@ export class Parser {
         this.program.statements.push(node);
         return node;
     }
+}
+
+export function tokenToOp(tok: TokenData): Operator | null {
+    if (tok.token === Token.Plus) return Operator.Add;
+    if (tok.token === Token.Neg) return Operator.Sub;
+    return null;
 }

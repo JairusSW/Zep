@@ -36,8 +36,8 @@ export class WasmFunction extends WasmStatement {
         let wasmText =
             `    (func ${this.exported ? '(export ' + fnName + ')' : fnName}`
         const startWT = wasmText.length;
-        if (fnParams) wasmText += `        ${fnParams}`;
-        if (fnReturnType) wasmText += `        ${fnReturnType}`;
+        if (fnParams) wasmText += `\n        ${fnParams}`;
+        if (fnReturnType) wasmText += `\n        ${fnReturnType}`;
         if (fnStmts) wasmText += `\n        ${fnStmts}`;
         wasmText += wasmText.length === startWT ? ")" : "\n    )";
         return wasmText;
