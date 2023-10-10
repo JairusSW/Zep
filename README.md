@@ -20,13 +20,13 @@ hand-tuned control, yet precise.<br><br>
 - Scene 002 -<br>
 Welcome, Zep, our hero.<br>
 In the realm of the One and Zero,<br>
-where a ruler holds so tightly,<br>
-the developer is kingly.<br><br>
+where the ruler's grip, firm and tight<br>
+the developer is given power, shining bright.<br><br>
 - Scene 003 -<br>
-Reveal to us this Zep, they said<br>
-If only it was ready, was the response.<br>
-And so there was silence between the darkness,<br>
-and the morning.
+Reveal to us this Zep, they pled<br>
+If only it was ready, was said.<br>
+And so there was silence oh so profound,<br>
+Between the darkness and daybreak's sound.
 </i>
 </p>
 
