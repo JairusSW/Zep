@@ -20,10 +20,21 @@ import { WasmStatement } from "./types/WasmStatement.js";
 import { WasmType } from "./types/WasmType.js";
 
 export class WasmConnector {
-    public program: Program;
+    public program: Program | null = null;
     public module: WasmModule = new WasmModule([]);
-    constructor(program: Program) {
-        this.program = program;
+    constructor() {}
+    fromProgram(program: Program) {
+        for (const node of program.statements) {
+            if (node instanceof CallExpression) {
+                this.addFunctionCall(node);
+            } else if (node instanceof ImportFunctionDeclaration) {
+                this.addImportFunction(node);
+            } else if (node instanceof FunctionDeclaration) {
+                this.addFunction(node);
+            } else if (node instanceof StringLiteral) {
+                this.addStringLiteral(node);
+            }
+        }
     }
     addFunctionCall(node: CallExpression): WasmCall {
         const out = new WasmCall(node.calling.data, []);
