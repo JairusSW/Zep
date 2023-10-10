@@ -1,5 +1,5 @@
 **Examples:**
 
-- [Add](/examples/Add.md)
+- [Add](docs/examples/Add.md)
 
-- [Hello](/examples/Hello.md)
+- [Hello](docs/examples/Hello.md)
