@@ -15,6 +15,7 @@ const parser = new Parser(tokenizer, "test.zp");
 console.log(parser.tokenizer.getAll());
 
 parser.parseProgram();
+
 const wasm = new WasmConnector();
 wasm.fromProgram(parser.program);
 
