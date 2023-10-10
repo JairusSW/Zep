@@ -1,13 +1,18 @@
 import { BinaryExpression } from "../ast/nodes/BinaryExpression.js";
+import { CallExpression } from "../ast/nodes/CallExpression.js";
 import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
+import { ImportFunctionDeclaration } from "../ast/nodes/ImportFunctionDeclaration.js";
 import { Program } from "../ast/nodes/Program.js";
 import { ReturnStatement } from "../ast/nodes/ReturnStatement.js";
 import { StringLiteral } from "../ast/nodes/StringLiteral.js";
 import { TypeExpression } from "../ast/nodes/TypeExpression.js";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
+import { WasmCall } from "./types/WasmCall.js";
 import { WasmData } from "./types/WasmData.js";
 import { WasmFunction } from "./types/WasmFunction.js";
+import { WasmImport, WasmImportType } from "./types/WasmImport.js";
+import { WasmMemory } from "./types/WasmMemory.js";
 import { WasmModule } from "./types/WasmModule.js";
 import { WasmOp, WasmOperator } from "./types/WasmOp.js";
 import { WasmParam } from "./types/WasmParam.js";
@@ -19,6 +24,17 @@ export class WasmConnector {
     public module: WasmModule = new WasmModule([]);
     constructor(program: Program) {
         this.program = program;
+        this.module.statements.push(new WasmMemory(1, "env", "buffer"));
+    }
+    addFunctionCall(node: CallExpression): WasmCall {
+        const out = new WasmCall(node.calling.data, []);
+        this.module.statements.push(out);
+        return out;
+    }
+    addImportFunction(node: ImportFunctionDeclaration): WasmImport {
+        const out = new WasmImport(WasmImportType.Function, node);
+        this.module.statements.push(out);
+        return out;
     }
     addFunction(node: FunctionDeclaration): WasmFunction {
         const name = node.name.data;
@@ -45,6 +61,13 @@ export class WasmConnector {
                         (<Identifier>stmt.returning.right).data
                     )
                 )
+            } else if (stmt instanceof CallExpression) {
+                body.push(
+                    new WasmCall(
+                        stmt.calling.data,
+                        []
+                    )
+                )
             }
         }
 
@@ -62,6 +85,7 @@ export class WasmConnector {
             dataView[i + 1] = node.data.charCodeAt(i);
         }
         const out = new WasmData(0, dataBuf);
+        this.module.statements.push(out);
         return out;
     }
 }
@@ -70,6 +94,7 @@ export function typeToWasm(type: TypeExpression): WasmType | null {
     if (type.union) return null;
     switch (type.types[0]) {
         case "i32": return WasmType.I32;
+        case "void": return WasmType.Void;
     }
     return null;
 }

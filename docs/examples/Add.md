@@ -12,7 +12,7 @@ Build Web Assembly Text (wat) format
 
 Compile to WebAssembly Binary
 
-`wavm assemble ./add.wat -o ./add.wasm`
+`wavm assemble ./add.wat ./add.wasm`
 
 Run WebAssembly Binary
 

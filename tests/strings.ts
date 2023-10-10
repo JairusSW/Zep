@@ -1,4 +1,4 @@
-const binary = Bun.file("./build/strings.wasm");
+const binary = Bun.file("./build/strings.build.wasm");
 
 const module = new WebAssembly.Module(await binary.arrayBuffer());
 const memory = new WebAssembly.Memory({ initial: 1, maximum: 1});

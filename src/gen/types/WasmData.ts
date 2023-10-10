@@ -9,7 +9,7 @@ export class WasmData extends WasmStatement {
         this.buffer = buffer;
     }
     toWat(): string {
-        return `(data (i32.const ${this.ptr}) ${bufferToString(this.buffer)})`
+        return `    (data (i32.const ${this.ptr}) "${bufferToString(this.buffer)}")`
     }
 }
 

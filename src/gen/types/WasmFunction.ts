@@ -25,7 +25,7 @@ export class WasmFunction extends WasmStatement {
         }
         fnParams = fnParams.trimEnd();
 
-        const fnReturnType = "(result " + typeToString(this.returnType) + ")";
+        const fnReturnType = this.returnType !== WasmType.Void ? "(result " + typeToString(this.returnType) + ")" : "";
 
         let fnStmts = "";
         for (const stmt of this.body) {
@@ -33,12 +33,13 @@ export class WasmFunction extends WasmStatement {
         }
         fnStmts = fnStmts.trimEnd();
 
-        let wasmText = 
-   `    (func ${this.exported ? '(export ' + fnName + ')' : fnName}
-        ${fnParams}
-        ${fnReturnType}
-        ${fnStmts}
-    )`;
+        let wasmText =
+            `    (func ${this.exported ? '(export ' + fnName + ')' : fnName}`
+        const startWT = wasmText.length;
+        if (fnParams) wasmText += `        ${fnParams}`;
+        if (fnReturnType) wasmText += `        ${fnReturnType}`;
+        if (fnStmts) wasmText += `\n        ${fnStmts}`;
+        wasmText += wasmText.length === startWT ? ")" : "\n    )";
         return wasmText;
     }
 }
