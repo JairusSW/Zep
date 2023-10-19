@@ -5,7 +5,7 @@ import { Token, TokenData, Tokenizer } from "../tokenizer/tokenizer.js";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
 import { StringLiteral } from "../ast/nodes/StringLiteral.js";
 import { TypeExpression } from "../ast/nodes/TypeExpression.js";
-import { Program } from "../ast/nodes/Program.js";
+import { Program } from "../ast/Program.js";
 import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
 import { BlockExpression } from "../ast/nodes/BlockExpression.js";
 import { CallExpression } from "../ast/nodes/CallExpression.js";
@@ -25,14 +25,14 @@ export class Parser {
     }
     parseStatement(): Statement | null {
         let match: TokenData[] | null = null;
+        if (match = this.tokenizer.matches(FunctionDeclaration.match))
+            return this.parseFunctionDeclaration(match);
         if (match = this.tokenizer.matches(ImportFunctionDeclaration.match))
             return this.parseImportFunctionDeclaration(match);
         if (match = this.tokenizer.matches(ImportDeclaration.match))
             return this.parseImportDeclaration(match);
         if (match = this.tokenizer.matches(VariableDeclaration.match))
             return this.parseVariableDeclaration(match);
-        if (match = this.tokenizer.matches(FunctionDeclaration.match))
-            return this.parseFunctionDeclaration(match);
         if (match = this.tokenizer.matches(CallExpression.match))
             return this.parseCallExpression(match);
         if (match = this.tokenizer.matches(ReturnStatement.match))
@@ -79,6 +79,10 @@ export class Parser {
             (mutable === 1) ? true : false
         );
         this.program.statements.push(node);
+
+        const scope = this.program.globalScope;
+        scope.add(name, node);
+
         return node;
     }
     parseFunctionDeclaration(match: TokenData[] | null = null): FunctionDeclaration | null {
@@ -119,6 +123,8 @@ export class Parser {
                 block
             );
             this.program.statements.push(node);
+            const scope = this.program.globalScope;
+            scope.add(name.data, node);
             return node;
         }
         return null;
@@ -206,6 +212,10 @@ export class Parser {
 
         const node = new ImportFunctionDeclaration(path, name, params, returnType);
         this.program.statements.push(node);
+
+        const scope = this.program.globalScope;
+        scope.add(name.data, node);
+
         return node;
     }
     parseModifierExpression(match: TokenData[] | null = null): ModifierExpression | null {

@@ -1,7 +1,7 @@
 `hello.zp`
 
 ```rust
-#[ref]: env
+#[extern]: env
 fn print(data: *string) -> void
 
 fn main() -> void {

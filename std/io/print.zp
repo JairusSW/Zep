@@ -1,2 +1,2 @@
-#[ref]: env
+#[extern]: env
 fn print(data: i32) -> void

@@ -3,7 +3,7 @@ import { CallExpression } from "../ast/nodes/CallExpression.js";
 import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
 import { ImportFunctionDeclaration } from "../ast/nodes/ImportFunctionDeclaration.js";
-import { Program } from "../ast/nodes/Program.js";
+import { Program } from "../ast/Program.js";
 import { ReturnStatement } from "../ast/nodes/ReturnStatement.js";
 import { StringLiteral } from "../ast/nodes/StringLiteral.js";
 import { TypeExpression } from "../ast/nodes/TypeExpression.js";

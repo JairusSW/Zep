@@ -32,7 +32,7 @@ Between the darkness and daybreak's sound.
 
 `std:io.zp`
 ```
-#[ref]: env
+#[extern]: env
 fn print(data: i32) -> void
 ```
 

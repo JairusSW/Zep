@@ -12,22 +12,8 @@ const tokenizer = new Tokenizer(`fn add(a: i32, b: i32) -> i32 {
 }`);
 
 const parser = new Parser(tokenizer, "test.zp");
-console.log(parser.tokenizer.getAll());
 
 parser.parseProgram();
 
-const wasm = new WasmConnector();
-wasm.fromProgram(parser.program);
-
-console.log(wasm.module.toWat());
-/*
-const imp = parser.parseImportFunctionDeclaration();
-const fn = parser.parseFunctionDeclaration();
 console.log(parser.program.statements);
-
-const wasm = new WasmConnector(parser.program);
-wasm.addImportFunction(imp!);
-wasm.addStringLiteral(new StringLiteral("Hi there... Its me, Zep!"));
-wasm.addFunction(fn!);
-
-console.log(wasm.module.toWat())*/
+console.log(parser.program.globalScope)
