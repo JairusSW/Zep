@@ -1,4 +1,3 @@
-import { TypeExpression } from "../nodes/TypeExpression.js";
 import { TokenData } from "./tokenizer/tokenizer.js";
 /*
 

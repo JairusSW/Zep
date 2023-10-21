@@ -35,3 +35,7 @@ export function isString(token: TokenData): boolean {
 export function isSemi(token: TokenData): boolean {
     return token.token === Token.Semi;
 }
+
+export function isNumeric(token: TokenData): boolean {
+    return token.token === Token.Number;
+}

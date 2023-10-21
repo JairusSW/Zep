@@ -9,6 +9,8 @@ export class Tokenizer {
     public line: number = 0;
     public linePos: number = 0;
 
+    public cache: boolean;
+
     private tokensCalculated: boolean = false;
     private lookahead: TokenData | null = null;
 
@@ -16,8 +18,9 @@ export class Tokenizer {
     private freezeToken: number = 0;
     private freezeLine: number = 0;
     private freezeLinePos: number = 0;
-    constructor(text: string) {
+    constructor(text: string, cache: boolean = false) {
         this.text = text;
+        this.cache = cache;
     }
     freeze(): void {
         this.freezePos = this.pos;
@@ -32,7 +35,7 @@ export class Tokenizer {
         this.linePos = this.freezeLinePos;
     }
     getAll(): TokenData[] {
-        if (this.tokensCalculated) return this.tokens;
+        if (this.cache && this.tokensCalculated) return this.tokens;
         this.tokensCalculated = true;
         const result: TokenData[] = [];
         while (true) {
@@ -40,7 +43,7 @@ export class Tokenizer {
             if (token.token === Token.EOF) break;
             result.push(token);
         }
-        this.tokens = result;
+        if (this.cache) this.tokens = result;
         this.pos = 0;
         this.tokensPos = 0;
         return result;
@@ -69,7 +72,7 @@ export class Tokenizer {
     }
     getToken(): TokenData {
         if (this.pos >= this.text.length) return new TokenData(Token.EOF, "", this.text.length, this.line, this.pos - this.linePos );
-        if (this.tokens[this.tokensPos + 1]) {
+        if (this.cache && this.tokens[this.tokensPos + 1]) {
             const tok = this.tokens[this.tokensPos++];
             this.pos = tok.pos + tok.text.length;
             return tok;

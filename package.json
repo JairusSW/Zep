@@ -14,6 +14,7 @@
   "devDependencies": {
     "@types/node": "^20.8.2",
     "bun-types": "^1.0.4-canary.20231004T140131",
+    "tinybench": "^2.5.1",
     "typescript": "^4.9.4"
   },
   "dependencies": {
