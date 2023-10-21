@@ -1,3 +1,4 @@
+import { Scope } from "../../checker/scope/Scope.js";
 import { Token, TokenData } from "../../tokenizer/tokenizer.js";
 import { isIdentifier } from "../../util/types/checkers.js";
 import { BlockExpression } from "./BlockExpression.js";
@@ -12,12 +13,17 @@ export class FunctionDeclaration extends Statement {
     public returnType: TypeExpression;
     //public genericType: TypeExpression | null;
     public block: BlockExpression;
-    constructor(name: Identifier, parameters: ParameterExpression[], returnType: TypeExpression, block: BlockExpression) {
+    public scope: Scope;
+    constructor(name: Identifier, parameters: ParameterExpression[], returnType: TypeExpression, block: BlockExpression, scope: Scope) {
         super();
         this.name = name;
         this.parameters = parameters;
         this.returnType = returnType;
         this.block = block;
+        this.scope = scope;
+        for (const param of this.parameters) {
+            this.scope.add(param.name.data, param);
+        }
     }
     static match: ((tok: TokenData) => boolean)[] = [
         (tok) => tok.text === "fn",

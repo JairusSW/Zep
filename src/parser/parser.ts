@@ -15,6 +15,7 @@ import { ImportFunctionDeclaration } from "../ast/nodes/ImportFunctionDeclaratio
 import { ReturnStatement } from "../ast/nodes/ReturnStatement.js";
 import { Expression } from "../ast/nodes/Expression.js";
 import { BinaryExpression, Operator } from "../ast/nodes/BinaryExpression.js";
+import { Scope } from "../checker/scope/Scope.js";
 
 export class Parser {
     public program: Program = new Program();
@@ -120,7 +121,8 @@ export class Parser {
                 name,
                 params,
                 returnType,
-                block
+                block,
+                new Scope(this.program.globalScope)
             );
             this.program.statements.push(node);
             const scope = this.program.globalScope;

@@ -1,6 +1,7 @@
 import { Token, TokenData } from "../../tokenizer/tokenizer.js";
 import { Expression } from "./Expression.js";
 
+// #[IDENTIFIER]
 export class ModifierExpression extends Expression {
     constructor(public tag: string, public content: string | null = null) {
         super();
