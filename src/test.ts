@@ -3,7 +3,7 @@ import { Tokenizer } from "./tokenizer/tokenizer.js";
 
 const tokenizer = new Tokenizer(`i32? foo = 123
 fn add(a: i32, b: i32) -> i32 {
-    i32 sum = 12
+    rt a + b
 }`);
 
 console.log(tokenizer.getAll());

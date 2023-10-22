@@ -30,18 +30,18 @@ export class Parser {
         let node: Statement | null = null
         if (node = this.parseVariableDeclaration()) return node;
         if (node = this.parseFunctionDeclaration()) return node;
-        if (node = this.parseReturnStatement()) return node;
+        //if (node = this.parseReturnStatement()) return node;
         return node;
     }
     parseExpression(): Expression | null {
-        let express: Expression | null = null
+        let express: Expression | null = null;
         if (express = this.parseNumberLiteral()) return express;
         if (express = this.parseStringLiteral()) return express;
+        if (express = this.parseBinaryExpression()) return express;
+        if (express = this.parseIdentifierExpression()) return express;
         return express;
     }
     parseVariableDeclaration(): VariableDeclaration | null {
-        // type=TypeExpresson mutable?="?" name=Identifier "=" value=Expression
-
         this.tokenizer.freeze();
         const type = this.tokenizer.getToken(); // TypeExpression
         if (!isBuiltinType(type)) {
@@ -138,10 +138,17 @@ export class Parser {
         return node;
     }
     parseReturnStatement(): ReturnStatement | null {
+        this.tokenizer.freeze();
         const rt = this.tokenizer.getToken();
-        if (!isIdentifier(rt) || rt.text !== "rt") return null;
-        const express = this.parseExpression();
-        if (!express) return null;
+        if (!isIdentifier(rt) || rt.text !== "rt") {
+            this.tokenizer.release();
+            return null;
+        }
+        const express = this.parseBinaryExpression();
+        if (!express) {
+            this.tokenizer.release();
+            return null;
+        }
         const node = new ReturnStatement(express);
         return node;
     }
@@ -162,33 +169,33 @@ export class Parser {
         return node;
     }
     parseBlockExpression(): BlockExpression | null {
-        if (this.tokenizer.getToken().token !== Token.LeftBracket) return null;
+        let token = this.tokenizer.getToken();
+        if (token.token !== Token.LeftBracket) return null;
         const stmts: Statement[] = [];
-        const pos = this.tokenizer.pos;
-        const line = this.tokenizer.line;
-        const linePos = this.tokenizer.linePos;
-        const tokensPos = this.tokenizer.tokensPos;
-        if (this.tokenizer.getToken().token === Token.RightBracket) {
-            this.tokenizer.pos = pos;
-            this.tokenizer.line = line;
-            this.tokenizer.linePos = linePos;
-            this.tokenizer.tokensPos = tokensPos;
-            const node = new BlockExpression([]);
-            return node;
-        }
-        this.tokenizer.pos = pos;
-        this.tokenizer.line = line;
-        this.tokenizer.linePos = linePos;
-        this.tokenizer.tokensPos = tokensPos;
         while (true) {
-            const stmt = this.parseVariableDeclaration();
-            console.log(stmt)
+            const stmt = this.parseReturnStatement();
             if (!stmt) break;
-            stmts.push(stmt);
+            stmts.push(stmt!);
         }
         if (this.tokenizer.getToken().token !== Token.RightBracket) return null;
         const node = new BlockExpression(stmts);
         return node;
+    }
+    parseBinaryExpression(): BinaryExpression | null {
+        const left = this.parseIdentifierExpression();
+        const op = tokenToOp(this.tokenizer.getToken());
+        const right = this.parseIdentifierExpression();
+        if (op === null || !left || !right) return null;
+        return new BinaryExpression(
+            left,
+            op,
+            right
+        );
+    }
+    parseIdentifierExpression(): Identifier | null {
+        const id = this.tokenizer.getToken();
+        if (!isIdentifier(id)) return null;
+        return new Identifier(id.text);
     }
     parseNumberLiteral(): NumberLiteral | null {
         this.tokenizer.freeze();
