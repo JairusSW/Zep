@@ -1,6 +1,5 @@
 import { Statement } from "../ast/nodes/Statement.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
-import { ImportDeclaration } from "../ast/nodes/ImportDeclaration.js";
 import { Token, TokenData, Tokenizer } from "../tokenizer/tokenizer.js";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
 import { StringLiteral } from "../ast/nodes/StringLiteral.js";
@@ -8,10 +7,7 @@ import { TypeExpression } from "../ast/nodes/TypeExpression.js";
 import { Program } from "../ast/Program.js";
 import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
 import { BlockExpression } from "../ast/nodes/BlockExpression.js";
-import { CallExpression } from "../ast/nodes/CallExpression.js";
 import { ParameterExpression } from "../ast/nodes/ParameterExpression.js";
-import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
-import { ImportFunctionDeclaration } from "../ast/nodes/ImportFunctionDeclaration.js";
 import { ReturnStatement } from "../ast/nodes/ReturnStatement.js";
 import { Expression } from "../ast/nodes/Expression.js";
 import { BinaryExpression, Operator } from "../ast/nodes/BinaryExpression.js";
