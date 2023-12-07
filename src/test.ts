@@ -10,9 +10,9 @@ const tokenizer = new Tokenizer(`fn add(a: i32, b: i32) -> i32 {
 
 const parser = new Parser(tokenizer, "test.zp");
 const func = parser.parseStatement() as FunctionDeclaration;
-console.log(asTree(func as unknown as TreeObject, true, false));
+console.log("AST \n" + asTree(func as unknown as TreeObject, true, false));
 
-console.log(asTree(parser.program.globalScope as unknown as TreeObject, true, false));
+console.log("Scope \n" + asTree(parser.program.globalScope as unknown as TreeObject, true, false));
 
 
 const gen = new Generator();
@@ -24,4 +24,4 @@ const binary = gen.toWasm();
 
 const compiled = new WebAssembly.Module(binary);
 const instance = new WebAssembly.Instance(compiled, {});
-console.log(instance.exports.add(41, 1));
+console.log(instance.exports.add(41, 232));
