@@ -14,9 +14,15 @@ import { BinaryExpression, Operator } from "../ast/nodes/BinaryExpression.js";
 import { Scope } from "../checker/scope/Scope.js";
 import { isBuiltinType, isIdentifier, isNumeric, isString } from "../util/types/checkers.js";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral.js";
+import { ImportFunctionDeclaration } from "../ast/nodes/ImportFunctionDeclaration.js";
+import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
+import { ReferenceExpression } from "../ast/nodes/ReferenceExpression.js";
+import { throws } from "assert";
+import { TypeError } from "../error/error.js";
+import { Range } from "../ast/Range.js";
 
 export class Parser {
-    public program: Program = new Program();
+    public program: Program = new Program("test.zp");
     public pos: number = 0;
     public tokenizer: Tokenizer;
     constructor(tokenizer: Tokenizer, public fileName: string) {
@@ -33,6 +39,7 @@ export class Parser {
         let express: Expression | null = null;
         if (express = this.parseNumberLiteral()) return express;
         if (express = this.parseStringLiteral()) return express;
+        if (express = this.parseModifierExpression()) return express;
         if (express = this.parseBinaryExpression()) return express;
         if (express = this.parseIdentifierExpression()) return express;
         return express;
@@ -62,7 +69,8 @@ export class Parser {
         const node = new VariableDeclaration(
             value,
             new Identifier(
-                name.text
+                name.text,
+                name.range
             ),
             new TypeExpression(
                 [type.text]
@@ -73,7 +81,29 @@ export class Parser {
         this.program.globalScope.add(name.text, node);
         return node;
     }
-    parseFunctionDeclaration(): FunctionDeclaration | null {
+    parseModifierExpression(): ModifierExpression | null {
+        this.tokenizer.freeze();
+
+        const hashToken = this.tokenizer.getToken();
+        const openingBracketToken = this.tokenizer.getToken();
+        const tagToken = this.tokenizer.getToken();
+        const closingBracketToken = this.tokenizer.getToken();
+
+        if (
+            hashToken?.text !== "#" ||
+            openingBracketToken?.text !== "[" ||
+            !isIdentifier(tagToken) ||
+            closingBracketToken?.text !== "]"
+        ) {
+            this.tokenizer.release();
+            return null;
+        }
+
+        const node = new ModifierExpression(tagToken.text);
+        return node;
+    }
+
+    parseFunctionDeclaration(scope: Scope = this.program.globalScope): FunctionDeclaration | null {
         this.tokenizer.freeze();
 
         let token: TokenData | null = null;
@@ -121,7 +151,8 @@ export class Parser {
         }
         const node = new FunctionDeclaration(
             new Identifier(
-                name.text
+                name.text,
+                name.range
             ),
             params,
             new TypeExpression(
@@ -129,18 +160,21 @@ export class Parser {
                 false
             ),
             block,
-            new Scope(this.program.globalScope)
+            new Scope(scope)
         )
+
+        scope.add(name.text, node);
+
         return node;
     }
-    parseReturnStatement(): ReturnStatement | null {
+    parseReturnStatement(scope: Scope = this.program.globalScope): ReturnStatement | null {
         this.tokenizer.freeze();
         const rt = this.tokenizer.getToken();
         if (!isIdentifier(rt) || rt.text !== "rt") {
             this.tokenizer.release();
             return null;
         }
-        const express = this.parseBinaryExpression();
+        const express = this.parseBinaryExpression(scope);
         if (!express) {
             this.tokenizer.release();
             return null;
@@ -148,40 +182,73 @@ export class Parser {
         const node = new ReturnStatement(express);
         return node;
     }
-    parseParameterExpression(): ParameterExpression | null {
+    parseParameterExpression(scope: Scope = this.program.globalScope): ParameterExpression | null {
+        this.tokenizer.freeze();
         const name = this.tokenizer.getToken();
-        if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":") return null;
+        if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":") {
+            this.tokenizer.release();
+            return null;
+        }
         const type = this.tokenizer.getToken();
-        if (!isBuiltinType(type)) return null;
+        if (!isBuiltinType(type)) {
+            this.tokenizer.release();
+            return null;
+        }
         const node = new ParameterExpression(
             new Identifier(
-                name.text
+                name.text,
+                name.range
             ),
             new TypeExpression(
                 [type.text],
                 false
             )
         );
+
+        scope.add(name.text, node);
+        
         return node;
     }
     parseBlockExpression(): BlockExpression | null {
+        this.tokenizer.freeze();
         let token = this.tokenizer.getToken();
-        if (token.token !== Token.LeftBracket) return null;
+        if (token.token !== Token.LeftBracket) {
+            this.tokenizer.release();
+            return null;
+        }
         const stmts: Statement[] = [];
         while (true) {
             const stmt = this.parseReturnStatement();
             if (!stmt) break;
             stmts.push(stmt!);
         }
-        if (this.tokenizer.getToken().token !== Token.RightBracket) return null;
+        if (this.tokenizer.getToken().token !== Token.RightBracket) {
+            this.tokenizer.release();
+            return null;
+        }
         const node = new BlockExpression(stmts);
         return node;
     }
-    parseBinaryExpression(): BinaryExpression | null {
-        const left = this.parseIdentifierExpression();
+    parseBinaryExpression(scope: Scope = this.program.globalScope): BinaryExpression | null {
+        this.tokenizer.freeze();
+        let left: Expression | null = this.parseIdentifierExpression();
         const op = tokenToOp(this.tokenizer.getToken());
-        const right = this.parseIdentifierExpression();
-        if (op === null || !left || !right) return null;
+        let right: Expression | null = this.parseIdentifierExpression();
+
+        if (op === null || !left || !right) {
+            this.tokenizer.release();
+            return null;
+        }
+        if (left instanceof Identifier) {
+            if (scope.has(left.data)) {
+                left = new ReferenceExpression(left);
+            } else {
+                new TypeError(`Cannot find name ${left.data} in scope`, left.range);
+                this.tokenizer.release();
+                return new BinaryExpression(left, op, right);
+            }
+        }
+        // Check scope
         return new BinaryExpression(
             left,
             op,
@@ -189,14 +256,21 @@ export class Parser {
         );
     }
     parseIdentifierExpression(): Identifier | null {
+        this.tokenizer.freeze();
         const id = this.tokenizer.getToken();
-        if (!isIdentifier(id)) return null;
-        return new Identifier(id.text);
+        if (!isIdentifier(id)) {
+            this.tokenizer.release();
+            return null;
+        }
+        return new Identifier(id.text, id.range);
     }
     parseNumberLiteral(): NumberLiteral | null {
         this.tokenizer.freeze();
         const num = this.tokenizer.getToken(); // 1234567890_.
-        if (!isNumeric(num)) return null;
+        if (!isNumeric(num)) {
+            this.tokenizer.release();
+            return null;
+        }
         return new NumberLiteral(
             num.text
         );
@@ -204,7 +278,10 @@ export class Parser {
     parseStringLiteral(): StringLiteral | null {
         this.tokenizer.freeze();
         const num = this.tokenizer.getToken(); // " ... "
-        if (!isString(num)) return null;
+        if (!isString(num)) {
+            this.tokenizer.release();
+            return null;
+        }
         return new StringLiteral(
             num.text
         );

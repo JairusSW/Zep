@@ -1,3 +1,4 @@
+import { Range } from "../ast/Range.js";
 import { isWhitespace, isWhitespaceCode } from "../util.js";
 
 export class Tokenizer {
@@ -71,20 +72,19 @@ export class Tokenizer {
         return this.tokens.slice(start, this.tokensPos);
     }
     getToken(): TokenData {
-        if (this.pos >= this.text.length) return new TokenData(Token.EOF, "", this.text.length, this.line, this.pos - this.linePos );
-        if (this.cache && this.tokens[this.tokensPos + 1]) {
+        if (this.pos >= this.text.length) return new TokenData(Token.EOF, "", new Range(this.line, this.pos - this.linePos, this.pos - this.linePos));
+        /*if (this.cache && this.tokens[this.tokensPos + 1]) {
             const tok = this.tokens[this.tokensPos++];
-            this.pos = tok.pos + tok.text.length;
+            this.pos = tok.range.end;
             return tok;
-        }
+        }*/
         // Publish queue
         if (this.lookahead) {
             const item = this.lookahead;
             this.lookahead = null;
+            const start = this.pos;
             this.pos += item.text.length;
-            item.line = this.line;
-            item.pos = this.pos;
-            item.linePos = this.pos - this.linePos;
+            item.range = new Range(this.line, start - this.linePos, this.pos - this.linePos);
             this.tokens.push(item);
             this.tokensPos++;
             return item;
@@ -102,7 +102,7 @@ export class Tokenizer {
         let char = this.text[this.pos];
         if (char === "\n") {
             this.line++;
-            this.linePos = this.pos + 1;
+            this.linePos = this.pos;
         }
         if (char === "\"") {
             const start = this.pos;
@@ -111,14 +111,14 @@ export class Tokenizer {
                 if (this.text[this.pos] === "\"" && this.text[this.pos - 1] !== "\\") {
                     this.pos++;
                     this.tokensPos++;
-                    const tok = new TokenData(Token.String, this.text.slice(start, this.pos), start, this.line, this.pos - this.linePos);
+                    const tok = new TokenData(Token.String, this.text.slice(start, this.pos), new Range(this.line, start - this.linePos, this.pos - this.linePos));
                     this.tokens.push(tok);
                     return tok;
                 }
                 this.pos++;
             }
 
-            return new TokenData(Token.EOF, "", this.text.length, this.line, this.pos - this.linePos);
+            return new TokenData(Token.EOF, "", new Range(this.line, start - this.linePos, this.pos - this.linePos));
         } else if (isNumeric(char)) {
             const start = this.pos;
             while (this.pos < this.text.length && (isNumeric(this.text[this.pos]) || this.text[this.pos] === '.')) {
@@ -127,7 +127,7 @@ export class Tokenizer {
             const txt = this.text.slice(start, this.pos);
             const value = parseFloat(txt);
             if (!isNaN(value)) {
-                const tok = new TokenData(Token.Number, txt, start, this.line, this.pos - this.linePos);
+                const tok = new TokenData(Token.Number, txt, new Range(this.line, start - this.linePos, this.pos - this.linePos));
                 this.tokensPos++;
                 this.tokens.push(tok);
                 return tok;
@@ -140,9 +140,9 @@ export class Tokenizer {
                 this.line++;
                 this.linePos = this.pos + 1;
             }
-            const spl = parseSplToken(char, this.pos, this.line, this.linePos );
+            const spl = parseSplToken(char, this.pos, this.line, this.linePos);
             if (spl) {
-                const tok = new TokenData(Token.Identifier, this.text.slice(start, ++this.pos), start, this.line, this.pos - this.linePos);
+                const tok = new TokenData(Token.Identifier, this.text.slice(start, ++this.pos), new Range(this.line, start - this.linePos, this.pos - this.linePos));
                 this.tokensPos++;
                 this.tokens.push(tok);
                 this.lookahead = spl;
@@ -155,7 +155,7 @@ export class Tokenizer {
                     this.tokens.push(spl);
                     return spl;
                 }
-                const tok = new TokenData(Token.Identifier, txt, start, this.line, this.pos - this.linePos);
+                const tok = new TokenData(Token.Identifier, txt, new Range(this.line, start - this.linePos, this.pos - this.linePos));
                 this.tokensPos++;
                 this.tokens.push(tok);
                 return tok;
@@ -165,18 +165,18 @@ export class Tokenizer {
         }
         if (this.pos === this.text.length) {
             const txt = this.text.slice(start, this.pos++);
-            const spl = parseSplToken(txt, this.pos, this.line, this.linePos );
+            const spl = parseSplToken(txt, this.pos, this.line, this.linePos);
             if (spl) {
                 this.tokensPos++;
                 this.tokens.push(spl);
                 return spl;
             }
-            const tok = new TokenData(Token.Identifier, txt, start, this.line, this.pos - this.linePos );
+            const tok = new TokenData(Token.Identifier, txt, new Range(this.line, start - this.linePos, this.pos - this.linePos));
             this.tokensPos++;
             this.tokens.push(tok);
             return tok;
         }
-        return new TokenData(Token.EOF, "", this.text.length, this.line, this.pos - this.linePos );
+        return new TokenData(Token.EOF, "", new Range(this.line, start - this.linePos, this.pos - this.linePos));
     }
     reset(): void {
         this.pos = 0;
@@ -189,15 +189,11 @@ export class Tokenizer {
 export class TokenData {
     public text: string;
     public token: Token;
-    public pos: number;
-    public line: number;
-    public linePos: number;
-    constructor(token: Token, text: string, pos: number, line: number, linePos: number) {
+    public range: Range;
+    constructor(token: Token, text: string, range: Range) {
         this.token = token;
         this.text = text;
-        this.pos = pos;
-        this.line = line;
-        this.linePos = linePos;
+        this.range = range;
     }
 }
 
@@ -240,19 +236,19 @@ export enum Token {
 
 export function parseSplToken(char: string, pos: number, line: number, linePos: number): TokenData | null {
     switch (char) {
-        case ";": return new TokenData(Token.Semi, ";", pos, line, pos - linePos);
-        case "=": return new TokenData(Token.Equals, "=", pos, line, pos - linePos);
-        case "?": return new TokenData(Token.Question, "?", pos, line, pos - linePos);
-        case ":": return new TokenData(Token.Colon, ":", pos, line, pos - linePos);
-        case ",": return new TokenData(Token.Comma, ",", pos, line, pos - linePos);
-        case "(": return new TokenData(Token.LeftParen, "(", pos, line, pos - linePos);
-        case ")": return new TokenData(Token.RightParen, ")", pos, line, pos - linePos);
-        case "{": return new TokenData(Token.LeftBracket, "{", pos, line, pos - linePos);
-        case "}": return new TokenData(Token.RightBracket, "}", pos, line, pos - linePos);
-        case "[": return new TokenData(Token.LeftBrace, "[", pos, line, pos - linePos);
-        case "]": return new TokenData(Token.RightBrace, "]", pos, line, pos - linePos);
-        case "+": return new TokenData(Token.Plus, "+", pos, line, pos - linePos);
-        case "-": return new TokenData(Token.Neg, "-", pos, line, pos - linePos);
+        case ";": return new TokenData(Token.Semi, ";", new Range(line, pos - linePos, pos - linePos + 1));
+        case "=": return new TokenData(Token.Equals, "=", new Range(line, pos - linePos, pos - linePos + 1));
+        case "?": return new TokenData(Token.Question, "?", new Range(line, pos - linePos, pos  - linePos+ 1));
+        case ":": return new TokenData(Token.Colon, ":", new Range(line, pos - linePos, pos  - linePos+ 1));
+        case ",": return new TokenData(Token.Comma, ",", new Range(line, pos - linePos, pos - linePos + 1));
+        case "(": return new TokenData(Token.LeftParen, "(", new Range(line, pos - linePos, pos - linePos + 1));
+        case ")": return new TokenData(Token.RightParen, ")", new Range(line, pos - linePos, pos - linePos + 1));
+        case "{": return new TokenData(Token.LeftBracket, "{", new Range(line, pos - linePos, pos - linePos + 1));
+        case "}": return new TokenData(Token.RightBracket, "}", new Range(line, pos - linePos, pos - linePos + 1));
+        case "[": return new TokenData(Token.LeftBrace, "[", new Range(line, pos - linePos, pos - linePos + 1));
+        case "]": return new TokenData(Token.RightBrace, "]", new Range(line, pos - linePos, pos  - linePos+ 1));
+        case "+": return new TokenData(Token.Plus, "+", new Range(line, pos - linePos, pos  - linePos+ 1));
+        case "-": return new TokenData(Token.Neg, "-", new Range(line, pos - linePos, pos - linePos + 1));
         default: return null;
     }
 }
