@@ -2,7 +2,7 @@ import { Token } from "../../tokenizer/token";
 import { TokenData } from "../../tokenizer/tokendata";
 
 const builtinTypes = [
-  "string",
+  "str",
   "bool",
   "i8",
   "i16",
@@ -14,6 +14,7 @@ const builtinTypes = [
   "u64",
   "f32",
   "f64",
+  "void",
 ];
 
 export function isBuiltinType(token: TokenData): boolean {

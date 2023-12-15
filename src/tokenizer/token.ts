@@ -18,9 +18,13 @@ export enum Token {
   RightBracket, // }
   LeftBrace, // [
   RightBrace, // ]
+  Period, // .
   // Operators
   Add, // +
   Sub, // -
+  // COMPARISIONS
+  GreaterThan, // >
+  LessThan, // <
   // SYMBOLS
   Pound, // #
   // UTILITY

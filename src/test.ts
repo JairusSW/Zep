@@ -3,32 +3,27 @@ import { ModifierExpression } from "./ast/nodes/ModifierExpression.js";
 import { Parser } from "./parser/parser.js";
 import { Tokenizer } from "./tokenizer/tokenizer.js";
 import { TreeObject, asTree } from "treeify";
+import { Transpiler } from "./transpiler/transpiler.js";
 
-const tokenizer = new Tokenizer(`
-#[export]: method
-fn add(a: i32, b: i32) -> i32 {
-    rt a + b
-}`);
+const tokenizer = new Tokenizer(`#[extern]: env.print
+`);
 
 console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
-const mod = parser.parseExpression() as ModifierExpression;
-console.log(mod);
-const func = parser.parseFunctionDeclaration() as FunctionDeclaration;
-console.log("AST \n" + asTree(func as unknown as TreeObject, true, false));
 
-console.log(
-  "Scope \n" +
-  asTree(parser.program.globalScope as unknown as TreeObject, true, false),
-);
+const a = parser.parseModifierExpression();
+console.log(a);
+//const b = parser.parseImportFunctionDeclaration();
+//console.log(b);
+//const c = parser.parseVariableDeclaration();
+//console.log(c);
+//const d = parser.parseCallExpression();
+//console.log(d);
+/*
+const transpiler = new Transpiler();
 
-/*const gen = new Generator();
-gen.addFunction(func);
+const out = transpiler.transpileProgram(parser.program);
 
-gen.optimize();
-if (!gen.validate()) console.log("Failed to validate");
-const binary = gen.toWasm();
-
-const compiled = new WebAssembly.Module(binary);
-const instance = new WebAssembly.Instance(compiled, {});
-console.log(instance.exports.add(41, 1));*/
+console.log(out + `\nconsole.log(foo)`);
+eval(out + `\nconsole.log(foo)`)
+*/
