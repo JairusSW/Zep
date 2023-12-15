@@ -1,6 +1,6 @@
 import { Statement } from "../ast/nodes/Statement.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
-import { Token, TokenData, Tokenizer } from "../tokenizer/tokenizer.js";
+import { Tokenizer } from "../tokenizer/tokenizer.js";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
 import { StringLiteral } from "../ast/nodes/StringLiteral.js";
 import { TypeExpression } from "../ast/nodes/TypeExpression.js";
@@ -25,6 +25,8 @@ import { ReferenceExpression } from "../ast/nodes/ReferenceExpression.js";
 import { throws } from "assert";
 import { TypeError } from "../error/error.js";
 import { Range } from "../ast/Range.js";
+import { Token } from "../tokenizer/token.js";
+import { TokenData } from "../tokenizer/tokendata.js";
 
 export class Parser {
   public program: Program = new Program("test.zp");
@@ -102,7 +104,17 @@ export class Parser {
       return null;
     }
 
-    const node = new ModifierExpression(tagToken.text);
+    this.tokenizer.pauseState();
+    const colonToken = this.tokenizer.getToken();
+    const contentToken = this.tokenizer.getToken();
+
+    if (colonToken.token !== Token.Colon && contentToken.token !== Token.Identifier) {
+      this.tokenizer.resumeState();
+      const node = new ModifierExpression(tagToken.text);
+      return node;
+    }
+
+    const node = new ModifierExpression(tagToken.text, contentToken.text);
     return node;
   }
 

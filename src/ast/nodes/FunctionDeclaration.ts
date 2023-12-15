@@ -1,6 +1,4 @@
 import { Scope } from "../../checker/scope/Scope.js";
-import { Token, TokenData } from "../../tokenizer/tokenizer.js";
-import { isIdentifier } from "../../util/types/checkers.js";
 import { BlockExpression } from "./BlockExpression.js";
 import { Identifier } from "./Identifier.js";
 import { ParameterExpression } from "./ParameterExpression.js";
@@ -31,9 +29,4 @@ export class FunctionDeclaration extends Statement {
       this.scope.add(param.name.data, param);
     }
   }
-  static match: ((tok: TokenData) => boolean)[] = [
-    (tok) => tok.text === "fn",
-    (tok) => tok.token === Token.Identifier,
-    (tok) => tok.token === Token.LeftParen,
-  ];
 }

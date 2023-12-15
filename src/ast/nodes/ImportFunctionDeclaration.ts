@@ -1,5 +1,3 @@
-import { Token, TokenData } from "../../tokenizer/tokenizer.js";
-import { isIdentifier } from "../../util/types/checkers.js";
 import { Identifier } from "./Identifier.js";
 import { ParameterExpression } from "./ParameterExpression.js";
 import { Statement } from "./Statement.js";
@@ -23,23 +21,4 @@ export class ImportFunctionDeclaration extends Statement {
     this.parameters = parameters;
     this.returnType = returnType;
   }
-  static match: ((tok: TokenData) => boolean)[] = [
-    (tok) => tok.text === "#",
-    (tok) => tok.token === Token.LeftBrace,
-    (tok) => tok.token === Token.Identifier,
-    (tok) => tok.token === Token.RightBrace,
-    (tok) => tok.token === Token.Colon,
-    (tok) => tok.token === Token.Identifier,
-    (tok) => tok.text === "fn",
-    (tok) => tok.token === Token.Identifier,
-    (tok) => tok.token === Token.LeftParen,
-
-    (tok) => tok.token === Token.Identifier,
-    (tok) => tok.token === Token.Colon,
-    (tok) => tok.token === Token.Identifier,
-
-    (tok) => tok.token === Token.RightParen,
-    (tok) => tok.text === "->",
-    (tok) => tok.token === Token.Identifier,
-  ];
 }

@@ -1,7 +1,13 @@
-import { Token } from "./Token";
-import { TokenData } from "./TokenData";
+import { Token } from "./token";
+import { TokenData } from "./tokendata";
 import { Position } from "./position";
 
+/**
+ * Checks if a character is a punctuation mark and returns the corresponding TokenData object.
+ * @param char - The character to check.
+ * @param position - The current position in the code.
+ * @returns A TokenData object if the character is a punctuation mark, or null if it is not.
+ */
 export function isPunctuation(
     char: string,
     position: Position,

@@ -1,3 +1,6 @@
+/**
+ * Represents different types of tokens.
+ */
 export enum Token {
   // GENERAL
   Identifier,

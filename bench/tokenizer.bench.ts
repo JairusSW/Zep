@@ -1,5 +1,6 @@
 import { Bench } from "tinybench";
-import { Token, Tokenizer } from "../src/tokenizer/tokenizer.js";
+import { Tokenizer } from "../src/tokenizer/tokenizer.js";
+import { Token } from "../src/tokenizer/token.js";
 
 const bench = new Bench({ time: 5000 });
 

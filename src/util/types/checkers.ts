@@ -1,4 +1,5 @@
-import { Token, TokenData } from "../../tokenizer/tokenizer.js";
+import { Token } from "../../tokenizer/token";
+import { TokenData } from "../../tokenizer/tokendata";
 
 const builtinTypes = [
   "string",
