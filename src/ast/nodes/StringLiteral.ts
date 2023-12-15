@@ -2,12 +2,12 @@ import { Token, TokenData } from "../../tokenizer/tokenizer.js";
 import { Expression } from "./Expression.js";
 
 export class StringLiteral extends Expression {
-    public data: string;
-    constructor(data: string) {
-        super();
-        this.data = data;
-    }
-    static match: ((tok: TokenData) => boolean)[] = [
-        (tok) => tok.token === Token.String
-    ]
+  public data: string;
+  constructor(data: string) {
+    super();
+    this.data = data;
+  }
+  static match: ((tok: TokenData) => boolean)[] = [
+    (tok) => tok.token === Token.String,
+  ];
 }

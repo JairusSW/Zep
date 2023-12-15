@@ -2,7 +2,7 @@
 
 ## Design
 
-Zep caters to developers that desire to control every aspect of their code. It means to fill a spot of a mid-level language that is transparent, allowing the developer to know *exactly* what is happening.
+Zep caters to developers that desire to control every aspect of their code. It means to fill a spot of a mid-level language that is transparent, allowing the developer to know _exactly_ what is happening.
 
 To achieve this, Zep is shipped without a Garbage Collector by default. Instead, it will require the dev to call
 

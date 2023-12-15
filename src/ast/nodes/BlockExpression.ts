@@ -4,11 +4,11 @@ import { Expression } from "./Expression.js";
 import { Statement } from "./Statement.js";
 
 export class BlockExpression extends Expression {
-    public scope: Scope = new Scope();
-    constructor(public statements: Statement[]) {
-        super();
-    }
-    static match: ((tok: TokenData) => boolean)[] = [
-        (tok) => tok.token === Token.LeftBracket
-    ]
+  public scope: Scope = new Scope();
+  constructor(public statements: Statement[]) {
+    super();
+  }
+  static match: ((tok: TokenData) => boolean)[] = [
+    (tok) => tok.token === Token.LeftBracket,
+  ];
 }

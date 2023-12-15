@@ -1,3 +1,1 @@
-export class TypeChecker {
-    
-}
+export class TypeChecker {}

@@ -4,7 +4,7 @@
 
 Variables hold a specific `value` to its `reference`. They can be expressed as
 
-```string? foo = "bar"```
+`string? foo = "bar"`
 
 > The `?` following the type represents its mutability. Without it, the variable is declared immutable.
 

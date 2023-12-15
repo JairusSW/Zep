@@ -19,9 +19,9 @@ export function parseType(text: string): TypeExpression | null {
 }
 */
 export function isWhitespaceCode(code: number): boolean {
-    return code === 32 || code === 10 || code === 9;
+  return code === 32 || code === 9;
 }
 
 export function isWhitespace(char: string): boolean {
-    return char === " " || char === "\n" || char === "\t";
+  return char === " " || char === "\t";
 }
