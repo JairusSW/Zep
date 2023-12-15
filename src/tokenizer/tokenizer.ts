@@ -1,46 +1,8 @@
-import { Range } from "../ast/Range.js";
 import { isWhitespace } from "../util.js";
-
-export class Position {
-  public index: number = 0;
-  public line: number = 0;
-  public start: number = 0;
-  private lineStart: number = 0;
-  private indexState: number = 0;
-  private startState: number = 0;
-  private lineState: number = 0;
-  private lineStartState: number = 0;
-  constructor(index: number, line: number) {
-    this.index = index;
-    this.line = line;
-  }
-  incrementLine(): void {
-    this.line++;
-    this.lineStart = this.index;
-  }
-  markPosition(): void {
-    this.start = this.index;
-  }
-  pauseState(): void {
-    this.indexState = this.index;
-    this.lineState = this.line;
-    this.startState = this.start;
-    this.lineStartState = this.lineStart;
-  }
-  resumeState(): void {
-    this.index = this.indexState;
-    this.line = this.lineState;
-    this.start = this.startState;
-    this.lineStart = this.lineStartState;
-  }
-  toRange(): Range {
-    return new Range(
-      this.line,
-      this.start - this.lineStart,
-      this.index - this.lineStart,
-    );
-  }
-}
+import { Token } from "./Token.js";
+import { TokenData } from "./TokenData.js";
+import { Position } from "./position.js";
+import { isPunctuation } from "./util.js";
 
 export class Tokenizer {
   public text: string = "";
@@ -48,14 +10,11 @@ export class Tokenizer {
   public tokensIndex: number = 0;
 
   public position: Position = new Position(0, 0);
-  public cache: boolean;
 
-  private tokensCalculated: boolean = false;
   private nextToken: TokenData | null = null;
 
-  constructor(text: string, cache: boolean = false) {
+  constructor(text: string) {
     this.text = text;
-    this.cache = cache;
   }
   pauseState(): void {
     this.position.pauseState();
@@ -64,21 +23,13 @@ export class Tokenizer {
     this.position.resumeState();
   }
   getAll(): TokenData[] {
-    if (this.cache && this.tokensCalculated) return this.tokens;
     this.pauseState();
-    let tokensIndexState = this.tokensIndex;
-    this.tokensCalculated = true;
     const result: TokenData[] = [];
     while (true) {
       const token = this.getToken();
-      if (token.token === Token.EOF) {
-        result.push(token);
-        break;
-      }
+      if (token.token === Token.EOF) break;
       result.push(token);
     }
-    if (this.cache) this.tokens = result;
-    this.tokensIndex = tokensIndexState;
     this.resumeState();
     return result;
   }
@@ -172,111 +123,4 @@ export class Tokenizer {
     this.tokensCalculated = false;
     this.tokensIndex = 0;
   }
-}
-
-export function isPunctuation(
-  char: string,
-  position: Position,
-): TokenData | null {
-  switch (char) {
-    case ";": {
-      return new TokenData(Token.Semi, ";", position.toRange());
-    }
-    case "=": {
-      return new TokenData(Token.Equals, "=", position.toRange());
-    }
-    case "?": {
-      return new TokenData(Token.Question, "?", position.toRange());
-    }
-    case ":": {
-      return new TokenData(Token.Colon, ":", position.toRange());
-    }
-    case ",": {
-      return new TokenData(Token.Comma, ",", position.toRange());
-    }
-    case "(": {
-      return new TokenData(Token.LeftParen, "(", position.toRange());
-    }
-    case ")": {
-      return new TokenData(Token.RightParen, ")", position.toRange());
-    }
-    case "{": {
-      return new TokenData(Token.LeftBracket, "{", position.toRange());
-    }
-    case "}": {
-      return new TokenData(Token.RightBracket, "}", position.toRange());
-    }
-    case "[": {
-      return new TokenData(Token.LeftBrace, "[", position.toRange());
-    }
-    case "]": {
-      return new TokenData(Token.RightBrace, "]", position.toRange());
-    }
-    case "+": {
-      return new TokenData(Token.Add, "+", position.toRange());
-    }
-    case "-": {
-      return new TokenData(Token.Sub, "-", position.toRange());
-    }
-    case "#": {
-      return new TokenData(Token.Pound, "#", position.toRange());
-    }
-    default: {
-      return null;
-    }
-  }
-}
-
-export class TokenData {
-  public text: string;
-  public token: Token;
-  public range: Range;
-  constructor(token: Token, text: string, range: Range) {
-    this.token = token;
-    this.text = text;
-    this.range = range;
-  }
-}
-
-export const SPLITTER_TOKENS = [
-  ";",
-  "=",
-  "?",
-  ":",
-  ",",
-  "(",
-  ")",
-  "{",
-  "}",
-  "+",
-];
-
-export enum Token {
-  // GENERAL
-  Identifier,
-  Number, // 0-9 _ .
-  String, // " "   ' '   ` `
-  // PUNCTUATION
-  Semi, // ;
-  Equals, // =
-  Question, // ?
-  Colon, // :
-  Comma, // ,
-  LeftParen, // (
-  RightParen, // )
-  LeftBracket, // {
-  RightBracket, // }
-  LeftBrace, // [
-  RightBrace, // ]
-  // Operators
-  Add, // +
-  Sub, // -
-  // SYMBOLS
-  Pound, // #
-  // UTILITY
-  EOF, // EXIT
-}
-
-function isNumeric(char: string): boolean {
-  return /^[0-9]+$/.test(char) || char === ".";
 }
