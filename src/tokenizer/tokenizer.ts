@@ -72,71 +72,72 @@ export class Tokenizer {
 
     while (true) {
       const code = this.text.charCodeAt(this.position.index);
-      if (code === 32 /*" "*/ || code === 9 /* \t */) this.position.index++;
-      else if (code === 10 /* \n */) {
-        this.position.incrementLine();
-        this.position.index++;
-      } else break;
-    }
-    this.position.markPosition();
-    let char = this.text[this.position.index];
-
-    const punct = isPunctuation(char, this.position);
-    if (punct) {
-      punct.range.end += punct.text.length;
-      this.position.index += punct.text.length;
-      this.tokens.push(punct);
-      return punct;
-    }
-
-    while (this.position.index < this.text.length) {
-      char = this.text[this.position.index];
-      if (char === "\n") {
-        const txt = this.text.slice(this.position.start, this.position.index++);
-        const tok = new TokenData(
-          Token.Identifier,
-          txt,
-          this.position.toRange(),
-        );
-        this.tokens.push(tok);
-
-        this.position.incrementLine();
-        this.position.index++;
-        return tok;
-      } else {
-        const punct = isPunctuation(char, this.position);
-        if (punct) {
-          this.nextToken = punct;
-          const txt = this.text.slice(
-            this.position.start,
-            this.position.index++,
-          );
-          const tok = new TokenData(
-            Token.Identifier,
-            txt,
-            this.position.toRange(),
-          );
-          this.tokens.push(tok);
-          return tok;
-        } else if (isWhitespace(char)) {
-          const txt = this.text.slice(
-            this.position.start,
-            this.position.index++,
-          );
-          const tok = new TokenData(
-            Token.Identifier,
-            txt,
-            this.position.toRange(),
-          );
-          this.tokens.push(tok);
-          return tok;
-        } else {
+      switch (code) {
+        case 32 /*" "*/:
+        case 9 /* \t */:
           this.position.index++;
-        }
+          break;
+        case 10 /* \n */:
+          this.position.incrementLine();
+          this.position.index++;
+          break;
+        default:
+          this.position.markPosition();
+          let char = this.text[this.position.index];
+
+          const punct = isPunctuation(char, this.position);
+          if (punct) {
+            punct.range.end += punct.text.length;
+            this.position.index += punct.text.length;
+            return punct;
+          }
+
+          while (this.position.index < this.text.length) {
+            char = this.text[this.position.index];
+            if (char === "\n") {
+              const txt = this.text.slice(this.position.start, this.position.index++);
+              const tok = new TokenData(
+                Token.Identifier,
+                txt,
+                this.position.toRange(),
+              );
+              this.position.incrementLine();
+              this.position.index++;
+              return tok;
+            } else {
+              const punct = isPunctuation(char, this.position);
+              if (punct) {
+                this.nextToken = punct;
+                const txt = this.text.slice(
+                  this.position.start,
+                  this.position.index++,
+                );
+                const tok = new TokenData(
+                  Token.Identifier,
+                  txt,
+                  this.position.toRange(),
+                );
+                return tok;
+              } else if (isWhitespace(char)) {
+                const txt = this.text.slice(
+                  this.position.start,
+                  this.position.index++,
+                );
+                const tok = new TokenData(
+                  Token.Identifier,
+                  txt,
+                  this.position.toRange(),
+                );
+                return tok;
+              } else {
+                this.position.index++;
+              }
+            }
+          }
+          const endOfFile = new TokenData(Token.EOF, "", this.position.toRange());
+          return endOfFile;
       }
     }
-    const endOfFile = new TokenData(Token.EOF, "", this.position.toRange());
-    return endOfFile;
   }
   reset(): void {
     this.position = new Position(0, 0);
