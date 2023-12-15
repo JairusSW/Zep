@@ -5,16 +5,18 @@ import { Tokenizer } from "./tokenizer/tokenizer.js";
 import { TreeObject, asTree } from "treeify";
 import { Transpiler } from "./transpiler/transpiler.js";
 
-const tokenizer = new Tokenizer(`#[extern]: env.print
+const tokenizer = new Tokenizer(`
+#[extern]: env.print
+fn print(data: i32) -> void
 `);
 
 console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
 
-const a = parser.parseModifierExpression();
-console.log(a);
-//const b = parser.parseImportFunctionDeclaration();
-//console.log(b);
+//const a = parser.parseModifierExpression();
+//console.log(a);
+const b = parser.parseImportFunctionDeclaration();
+console.log(asTree(b as unknown as TreeObject, true, false));
 //const c = parser.parseVariableDeclaration();
 //console.log(c);
 //const d = parser.parseCallExpression();

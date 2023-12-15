@@ -136,7 +136,7 @@ export class Parser {
     const content: TokenData[] = [contentFirstToken];
     while (true) {
       const token = this.tokenizer.getToken();
-      if (token.range.line < token.range.line || token.token === Token.EOF) {
+      if (contentFirstToken.range.line < token.range.line || token.token === Token.EOF) {
         this.tokenizer.resumeState();
         break;
       }
@@ -241,6 +241,7 @@ export class Parser {
     const colonToken = this.tokenizer.getToken();
     if (colonToken.token !== Token.Colon) {
       this.tokenizer.resumeState();
+      new TokenMismatchError("Expected to find path to host function import, but found nothing!", 3, colonToken.range);
       return null;
     }
     const contentFirstToken = this.tokenizer.getToken();
@@ -255,7 +256,7 @@ export class Parser {
     const content: TokenData[] = [contentFirstToken];
     while (true) {
       const token = this.tokenizer.getToken();
-      if (token.range.line < token.range.line) {
+      if (contentFirstToken.range.line !== token.range.line || token.token === Token.EOF) {
         this.tokenizer.resumeState();
         break;
       }
@@ -270,10 +271,10 @@ export class Parser {
         content[content.length - 1].range.end,
       ),
     );
-
+    this.tokenizer.pauseState();
     const fn = this.tokenizer.getToken();
     if (!isIdentifier(fn) || fn.text !== "fn") {
-      console.log(1);
+      console.log(1, fn);
       return null;
     }
 
@@ -317,7 +318,7 @@ export class Parser {
     }
 
     const node = new ImportFunctionDeclaration(
-      new Identifier("env", new Range(0, 0, 0)),
+      contentId,
       new Identifier(name.text, name.range),
       params,
       new TypeExpression([returnType.text], false),
