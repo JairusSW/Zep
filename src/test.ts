@@ -8,19 +8,30 @@ import { Transpiler } from "./transpiler/transpiler.js";
 const tokenizer = new Tokenizer(`
 #[extern]: env.print
 fn print(data: i32) -> void
+str foo = "bar"
+print(123, foo)
+
 `);
 
 console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
 
-//const a = parser.parseModifierExpression();
-//console.log(a);
-const b = parser.parseImportFunctionDeclaration();
-console.log(asTree(b as unknown as TreeObject, true, false));
-//const c = parser.parseVariableDeclaration();
-//console.log(c);
-//const d = parser.parseCallExpression();
-//console.log(d);
+parser.parseImportFunctionDeclaration();
+parser.parseVariableDeclaration();
+parser.parseCallExpression();
+
+console.log(
+  "AST (Top Level): \n" +
+    asTree(
+      parser.program.topLevelStatements as unknown as TreeObject,
+      true,
+      false,
+    ),
+);
+console.log(
+  "AST (Statements): \n" +
+    asTree(parser.program.statements as unknown as TreeObject, true, false),
+);
 /*
 const transpiler = new Transpiler();
 

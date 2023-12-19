@@ -4,6 +4,7 @@ import { Statement } from "./Statement.js";
 import { TypeExpression } from "./TypeExpression.js";
 
 export class ImportFunctionDeclaration extends Statement {
+  public nameOf: string = "ImportFunctionDeclaration";
   public path: Identifier;
 
   public name: Identifier;

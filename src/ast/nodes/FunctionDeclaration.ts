@@ -6,6 +6,7 @@ import { Statement } from "./Statement.js";
 import { TypeExpression } from "./TypeExpression.js";
 
 export class FunctionDeclaration extends Statement {
+  public nameOf: string = "FunctionDeclaration";
   public name: Identifier;
   public parameters: ParameterExpression[];
   public returnType: TypeExpression;

@@ -5,6 +5,7 @@ import { Statement } from "./Statement.js";
 import { TypeExpression } from "./TypeExpression.js";
 
 export class VariableDeclaration extends Statement {
+  public nameOf: string = "VariableDeclaration";
   public value: Expression;
   public name: Identifier;
   public type: TypeExpression;

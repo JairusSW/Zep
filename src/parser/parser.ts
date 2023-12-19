@@ -38,29 +38,33 @@ export class Parser {
   ) {
     this.tokenizer = tokenizer;
   }
-  parseStatement(): Statement | null {
+  parseStatement(scope: Scope = this.program.globalScope): Statement | null {
     let node: Statement | null = null;
-    if ((node = this.parseVariableDeclaration())) return node;
+    if ((node = this.parseVariableDeclaration(scope))) return node;
     this.tokenizer.resumeState();
-    if ((node = this.parseFunctionDeclaration())) return node;
+    if ((node = this.parseFunctionDeclaration(scope))) return node;
     this.tokenizer.resumeState();
     //if (node = this.parseReturnStatement()) return node;
     return node;
   }
-  parseExpression(): Expression | null {
+  parseExpression(scope: Scope = this.program.globalScope): Expression | null {
     let express: Expression | null = null;
-    if ((express = this.parseNumberLiteral())) return express;
+    if ((express = this.parseNumberLiteral(scope))) return express;
     this.tokenizer.resumeState();
-    if ((express = this.parseStringLiteral())) return express;
+    if ((express = this.parseStringLiteral(scope))) return express;
     this.tokenizer.resumeState();
-    if ((express = this.parseModifierExpression())) return express;
+    if ((express = this.parseReferenceExpression(scope))) return express;
     this.tokenizer.resumeState();
-    if ((express = this.parseBinaryExpression())) return express;
+    if ((express = this.parseModifierExpression(scope))) return express;
     this.tokenizer.resumeState();
-    if ((express = this.parseIdentifierExpression())) return express;
+    if ((express = this.parseBinaryExpression(scope))) return express;
+    this.tokenizer.resumeState();
+    if ((express = this.parseIdentifierExpression(scope))) return express;
     return express;
   }
-  parseVariableDeclaration(): VariableDeclaration | null {
+  parseVariableDeclaration(
+    scope: Scope = this.program.globalScope,
+  ): VariableDeclaration | null {
     this.tokenizer.pauseState();
     const type = this.tokenizer.getToken(); // TypeExpression
     if (!isBuiltinType(type)) return null;
@@ -81,8 +85,8 @@ export class Parser {
       this.tokenizer.resumeState();
       new TokenMismatchError(
         "Expected to find value of variable, but found " +
-        value.text +
-        " instead!",
+          value.text +
+          " instead!",
         0x80,
         value.range,
       );
@@ -99,7 +103,9 @@ export class Parser {
     this.program.globalScope.add(name.text, node);
     return node;
   }
-  parseModifierExpression(): ModifierExpression | null {
+  parseModifierExpression(
+    scope: Scope = this.program.globalScope,
+  ): ModifierExpression | null {
     this.tokenizer.pauseState();
 
     const hashToken = this.tokenizer.getToken();
@@ -136,7 +142,10 @@ export class Parser {
     const content: TokenData[] = [contentFirstToken];
     while (true) {
       const token = this.tokenizer.getToken();
-      if (contentFirstToken.range.line < token.range.line || token.token === Token.EOF) {
+      if (
+        contentFirstToken.range.line < token.range.line ||
+        token.token === Token.EOF
+      ) {
         this.tokenizer.resumeState();
         break;
       }
@@ -241,7 +250,11 @@ export class Parser {
     const colonToken = this.tokenizer.getToken();
     if (colonToken.token !== Token.Colon) {
       this.tokenizer.resumeState();
-      new TokenMismatchError("Expected to find path to host function import, but found nothing!", 3, colonToken.range);
+      new TokenMismatchError(
+        "Expected to find path to host function import, but found nothing!",
+        3,
+        colonToken.range,
+      );
       return null;
     }
     const contentFirstToken = this.tokenizer.getToken();
@@ -256,7 +269,10 @@ export class Parser {
     const content: TokenData[] = [contentFirstToken];
     while (true) {
       const token = this.tokenizer.getToken();
-      if (contentFirstToken.range.line !== token.range.line || token.token === Token.EOF) {
+      if (
+        contentFirstToken.range.line !== token.range.line ||
+        token.token === Token.EOF
+      ) {
         this.tokenizer.resumeState();
         break;
       }
@@ -325,6 +341,7 @@ export class Parser {
     );
 
     scope.add(name.text, node);
+    this.program.topLevelStatements.push(node);
 
     return node;
   }
@@ -335,38 +352,55 @@ export class Parser {
 
     const calling = this.tokenizer.getToken();
     const leftParen = this.tokenizer.getToken();
-    const args = this.tokenizer.getToken();
-    const rightParen = this.tokenizer.getToken();
+    const args: Expression[] = [];
+    while (true) {
+      const arg = this.parseExpression(scope);
+      if (!arg) {
+        console.log(1);
+        return null;
+      }
+      console.log(arg);
+      args.push(arg);
+      const tok = this.tokenizer.getToken();
+      if (tok.token === Token.RightParen) break;
+      console.log(2, tok);
+      if (tok.token !== Token.Comma) {
+        return null;
+      }
+    }
 
     if (!isIdentifier(calling)) {
+      console.log(3);
       return null;
     }
+
     if (leftParen.token !== Token.LeftParen) return null;
-    if (!args) return null;
-    if (rightParen.token !== Token.RightParen) return null;
 
     const node = new CallExpression(
       new Identifier(calling.text, calling.range),
-      [new ParameterExpression(new Identifier(args.text, args.range))],
+      args,
     );
 
     this.program.statements.push(node);
     return node;
+  }
+  parseReferenceExpression(
+    scope: Scope = this.program.globalScope,
+  ): ReferenceExpression | null {
+    this.tokenizer.pauseState();
+    const id = this.tokenizer.getToken();
+    if (!isIdentifier(id)) return null;
+    if (!scope.has(id.text)) return null;
+    return new ReferenceExpression(scope.get(id.text)! as Statement);
   }
   parseReturnStatement(
     scope: Scope = this.program.globalScope,
   ): ReturnStatement | null {
     this.tokenizer.pauseState();
     const rt = this.tokenizer.getToken();
-    if (!isIdentifier(rt) || rt.text !== "rt") {
-      this.tokenizer.resumeState();
-      return null;
-    }
-    const express = this.parseBinaryExpression(scope);
-    if (!express) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (!isIdentifier(rt) || rt.text !== "rt") return null;
+    const express = this.parseExpression(scope);
+    if (!express) return null;
     const node = new ReturnStatement(express);
     return node;
   }
@@ -375,15 +409,10 @@ export class Parser {
   ): ParameterExpression | null {
     this.tokenizer.pauseState();
     const name = this.tokenizer.getToken();
-    if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":") {
-      this.tokenizer.resumeState();
+    if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":")
       return null;
-    }
     const type = this.tokenizer.getToken();
-    if (!isBuiltinType(type)) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (!isBuiltinType(type)) return null;
     const node = new ParameterExpression(
       new Identifier(name.text, name.range),
       new TypeExpression([type.text], false),
@@ -393,23 +422,19 @@ export class Parser {
 
     return node;
   }
-  parseBlockExpression(): BlockExpression | null {
+  parseBlockExpression(
+    scope: Scope = this.program.globalScope,
+  ): BlockExpression | null {
     this.tokenizer.pauseState();
     let token = this.tokenizer.getToken();
-    if (token.token !== Token.LeftBracket) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (token.token !== Token.LeftBracket) return null;
     const stmts: Statement[] = [];
     while (true) {
       const stmt = this.parseReturnStatement();
       if (!stmt) break;
       stmts.push(stmt!);
     }
-    if (this.tokenizer.getToken().token !== Token.RightBracket) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (this.tokenizer.getToken().token !== Token.RightBracket) return null;
     const node = new BlockExpression(stmts);
     return node;
   }
@@ -421,10 +446,7 @@ export class Parser {
     const op = tokenToOp(this.tokenizer.getToken());
     let right: Expression | null = this.parseIdentifierExpression();
 
-    if (op === null || !left || !right) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (op === null || !left || !right) return null;
     if (left instanceof Identifier) {
       if (scope.has(left.data)) {
         left = new ReferenceExpression(left);
@@ -441,31 +463,28 @@ export class Parser {
     // Check scope
     return new BinaryExpression(left, op, right);
   }
-  parseIdentifierExpression(): Identifier | null {
+  parseIdentifierExpression(
+    scope: Scope = this.program.globalScope,
+  ): Identifier | null {
     this.tokenizer.pauseState();
     const id = this.tokenizer.getToken();
-    if (!isIdentifier(id)) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (!isIdentifier(id)) return null;
     return new Identifier(id.text, id.range);
   }
-  parseNumberLiteral(): NumberLiteral | null {
+  parseNumberLiteral(
+    scope: Scope = this.program.globalScope,
+  ): NumberLiteral | null {
     this.tokenizer.pauseState();
     const num = this.tokenizer.getToken(); // 1234567890_.
-    if (!isNumeric(num)) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (!isNumeric(num)) return null;
     return new NumberLiteral(num.text);
   }
-  parseStringLiteral(): StringLiteral | null {
+  parseStringLiteral(
+    scope: Scope = this.program.globalScope,
+  ): StringLiteral | null {
     this.tokenizer.pauseState();
     const num = this.tokenizer.getToken(); // " ... "
-    if (!isString(num)) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (!isString(num)) return null;
     return new StringLiteral(num.text);
   }
 }

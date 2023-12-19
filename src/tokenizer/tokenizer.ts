@@ -114,6 +114,14 @@ export class Tokenizer {
                 );
                 this.tokens.push(tok);
                 return tok;
+              } else if (!isNaN(parseFloat(txt))) {
+                const tok = new TokenData(
+                  Token.Number,
+                  txt,
+                  this.position.toRange(),
+                );
+                this.tokens.push(tok);
+                return tok;
               } else {
                 this.position.incrementLine();
                 this.position.index++;
@@ -140,6 +148,14 @@ export class Tokenizer {
                   );
                   this.tokens.push(tok);
                   return tok;
+                } else if (!isNaN(parseFloat(txt))) {
+                  const tok = new TokenData(
+                    Token.Number,
+                    txt,
+                    this.position.toRange(),
+                  );
+                  this.tokens.push(tok);
+                  return tok;
                 } else {
                   const tok = new TokenData(
                     Token.Identifier,
@@ -161,6 +177,14 @@ export class Tokenizer {
                 if (firstChar == '"' && lastChar == '"') {
                   const tok = new TokenData(
                     Token.String,
+                    txt,
+                    this.position.toRange(),
+                  );
+                  this.tokens.push(tok);
+                  return tok;
+                } else if (!isNaN(parseFloat(txt))) {
+                  const tok = new TokenData(
+                    Token.Number,
                     txt,
                     this.position.toRange(),
                   );
@@ -193,6 +217,14 @@ export class Tokenizer {
             this.tokens.push(tok);
             this.position.index++;
 
+            return tok;
+          } else if (!isNaN(parseFloat(txt))) {
+            const tok = new TokenData(
+              Token.Number,
+              txt,
+              this.position.toRange(),
+            );
+            this.tokens.push(tok);
             return tok;
           } else {
             this.position.incrementLine();

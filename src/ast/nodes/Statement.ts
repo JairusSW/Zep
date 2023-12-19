@@ -1,1 +1,3 @@
-export class Statement {}
+export class Statement {
+  public nameOf: string = "Statement";
+}
