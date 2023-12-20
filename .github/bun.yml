@@ -1,0 +1,24 @@
+name: Bun CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v2
+
+      - name: Setup Bun
+        run: curl -fsSL https://bun.sh/install | bash
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Test to see if the project compiles
+        run: bun src/test.ts
+
+      - name: Perform tests
+        run: bun test
