@@ -10,6 +10,7 @@ jobs:
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v2
+        uses: oven-sh/setup-bun@v1
 
       - name: Setup Bun
         run: curl -fsSL https://bun.sh/install | bash
