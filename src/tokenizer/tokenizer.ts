@@ -56,16 +56,9 @@ export class Tokenizer {
 
     if (this.nextToken) {
       const tok = this.nextToken;
-      const char = this.text[this.position.index + 1];
       this.position.markPosition();
-      const punct = isPunctuation(char, this.position);
-      if (punct) {
-        punct.range.end += punct.text.length;
-        this.position.index += 2;
-        this.nextToken = punct;
-      } else {
-        this.nextToken = null;
-      }
+      this.nextToken = null;
+      this.position.index++;
       tok.range = this.position.toRange();
       return tok;
     }
@@ -88,8 +81,10 @@ export class Tokenizer {
           if (punct) {
             punct.range.end += punct.text.length;
             this.position.index++;
+            this.tokens.push(punct);
             return punct;
           }
+
           this.position.markPosition();
 
           while (this.position.index < this.text.length) {
@@ -135,8 +130,6 @@ export class Tokenizer {
                   this.position.start,
                   this.position.index,
                 );
-                this.position.index++;
-
                 const firstChar = txt[0];
                 const lastChar = txt[txt.length - 1];
 
@@ -173,13 +166,13 @@ export class Tokenizer {
                 const firstChar = txt[0];
                 const lastChar = txt[txt.length - 1];
 
-                this.position.index++;
                 if (firstChar == '"' && lastChar == '"') {
                   const tok = new TokenData(
                     Token.String,
                     txt,
                     this.position.toRange(),
                   );
+                  this.position.index++;
                   this.tokens.push(tok);
                   return tok;
                 } else if (!isNaN(parseFloat(txt))) {
@@ -188,6 +181,7 @@ export class Tokenizer {
                     txt,
                     this.position.toRange(),
                   );
+                  this.position.index++;
                   this.tokens.push(tok);
                   return tok;
                 } else {
@@ -196,6 +190,7 @@ export class Tokenizer {
                     txt,
                     this.position.toRange(),
                   );
+                  this.position.index++;
                   this.tokens.push(tok);
                   return tok;
                 }
@@ -214,9 +209,8 @@ export class Tokenizer {
               txt,
               this.position.toRange(),
             );
-            this.tokens.push(tok);
             this.position.index++;
-
+            this.tokens.push(tok);
             return tok;
           } else if (!isNaN(parseFloat(txt))) {
             const tok = new TokenData(
@@ -224,6 +218,7 @@ export class Tokenizer {
               txt,
               this.position.toRange(),
             );
+            this.position.index++;
             this.tokens.push(tok);
             return tok;
           } else {
@@ -234,9 +229,8 @@ export class Tokenizer {
               txt,
               this.position.toRange(),
             );
-            this.tokens.push(tok);
             this.position.index++;
-
+            this.tokens.push(tok);
             return tok;
           }
       }

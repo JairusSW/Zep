@@ -9,8 +9,8 @@ const tokenizer = new Tokenizer(`
 #[extern]: env.print
 fn print(data: i32) -> void
 str foo = "bar"
-print(123)
-fn add( a: i32, b: i32) -> i32 {
+print(123, foo)
+fn add(a: i32, b: i32) -> i32 {
   rt a + b
 }
 `);
