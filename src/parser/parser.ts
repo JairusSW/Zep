@@ -44,8 +44,9 @@ export class Parser {
     this.tokenizer.resumeState();
     if ((node = this.parseFunctionDeclaration(scope))) return node;
     this.tokenizer.resumeState();
-    //if (node = this.parseReturnStatement()) return node;
-    return node;
+    if (node = this.parseReturnStatement()) return node;
+    this.tokenizer.resumeState();
+    return null;
   }
   parseExpression(scope: Scope = this.program.globalScope): Expression | null {
     let express: Expression | null = null;
@@ -53,14 +54,15 @@ export class Parser {
     this.tokenizer.resumeState();
     if ((express = this.parseStringLiteral(scope))) return express;
     this.tokenizer.resumeState();
+    if ((express = this.parseBinaryExpression(scope))) return express;
+    this.tokenizer.resumeState();
     if ((express = this.parseReferenceExpression(scope))) return express;
     this.tokenizer.resumeState();
     if ((express = this.parseModifierExpression(scope))) return express;
     this.tokenizer.resumeState();
-    if ((express = this.parseBinaryExpression(scope))) return express;
-    this.tokenizer.resumeState();
     if ((express = this.parseIdentifierExpression(scope))) return express;
-    return express;
+    this.tokenizer.resumeState();
+    return null;
   }
   parseVariableDeclaration(
     scope: Scope = this.program.globalScope,
@@ -175,47 +177,28 @@ export class Parser {
     let token: TokenData | null = null;
 
     const fn = this.tokenizer.getToken();
-    if (!isIdentifier(fn) || fn.text !== "fn") {
-      return null;
-    }
+    if (!isIdentifier(fn) || fn.text !== "fn") return null;
 
     const name = this.tokenizer.getToken();
-    if (!isIdentifier(name)) {
-      return null;
-    }
-    if (this.tokenizer.getToken().token !== Token.LeftParen) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (!isIdentifier(name)) return null;
+    if (this.tokenizer.getToken().token !== Token.LeftParen) return null;
+
     const params: ParameterExpression[] = [];
     while (true) {
       const param = this.parseParameterExpression();
-      if (!param) {
-        this.tokenizer.resumeState();
-        return null;
-      }
+      if (!param) return null;
       params.push(param);
       const tok = this.tokenizer.getToken().token;
       if (tok === Token.RightParen) break;
       if (tok !== Token.Comma) break;
     }
-    if (
-      ((token = this.tokenizer.getToken()) && !isIdentifier(token)) ||
-      token.text !== "->"
-    ) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (this.tokenizer.getToken().token !== Token.Sub) return null;
+    if (this.tokenizer.getToken().token !== Token.GreaterThan) return null;
     const returnType = this.tokenizer.getToken();
-    if (!isBuiltinType(returnType)) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (!isBuiltinType(returnType)) return null;
     const block = this.parseBlockExpression();
-    if (!block) {
-      this.tokenizer.resumeState();
-      return null;
-    }
+    if (!block) return null;
+    console.log("as")
     const node = new FunctionDeclaration(
       new Identifier(name.text, name.range),
       params,
@@ -225,7 +208,7 @@ export class Parser {
     );
 
     scope.add(name.text, node);
-
+    this.program.topLevelStatements.push(node);
     return node;
   }
   parseImportFunctionDeclaration(
@@ -289,49 +272,24 @@ export class Parser {
     );
     this.tokenizer.pauseState();
     const fn = this.tokenizer.getToken();
-    if (!isIdentifier(fn) || fn.text !== "fn") {
-      console.log(1, fn);
-      return null;
-    }
+    if (!isIdentifier(fn) || fn.text !== "fn") return null;
 
     const name = this.tokenizer.getToken();
-    if (!isIdentifier(name)) {
-      return null;
-    }
-    if (this.tokenizer.getToken().token !== Token.LeftParen) {
-      console.log(3);
-      return null;
-    }
+    if (!isIdentifier(name)) return null;
+    if (this.tokenizer.getToken().token !== Token.LeftParen) return null;
     const params: ParameterExpression[] = [];
     while (true) {
       const param = this.parseParameterExpression();
-      if (!param) {
-        console.log(4);
-        return null;
-      }
+      if (!param) return null;
       params.push(param);
       const tok = this.tokenizer.getToken().token;
       if (tok === Token.RightParen) break;
       if (tok !== Token.Comma) break;
     }
-    let token: TokenData | null = null;
-    if ((token = this.tokenizer.getToken()) && token.token !== Token.Sub) {
-      console.log(5, token);
-      return null;
-    }
-    if (
-      (token = this.tokenizer.getToken()) &&
-      token.token !== Token.GreaterThan
-    ) {
-      console.log(6);
-      return null;
-    }
+    if (this.tokenizer.getToken().token !== Token.Sub) return null;
+    if (this.tokenizer.getToken().token !== Token.GreaterThan) return null;
     const returnType = this.tokenizer.getToken();
-    if (!isBuiltinType(returnType)) {
-      this.tokenizer.resumeState();
-      console.log(7, returnType);
-      return null;
-    }
+    if (!isBuiltinType(returnType)) return null;
 
     const node = new ImportFunctionDeclaration(
       contentId,
@@ -409,8 +367,7 @@ export class Parser {
   ): ParameterExpression | null {
     this.tokenizer.pauseState();
     const name = this.tokenizer.getToken();
-    if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":")
-      return null;
+    if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":") return null;
     const type = this.tokenizer.getToken();
     if (!isBuiltinType(type)) return null;
     const node = new ParameterExpression(
@@ -426,12 +383,16 @@ export class Parser {
     scope: Scope = this.program.globalScope,
   ): BlockExpression | null {
     this.tokenizer.pauseState();
+    const localScope = new Scope(scope);
     let token = this.tokenizer.getToken();
     if (token.token !== Token.LeftBracket) return null;
     const stmts: Statement[] = [];
     while (true) {
-      const stmt = this.parseReturnStatement();
-      if (!stmt) break;
+      const stmt = this.parseReturnStatement(localScope);
+      if (!stmt) {
+        this.tokenizer.resumeState();
+        break;
+      }
       stmts.push(stmt!);
     }
     if (this.tokenizer.getToken().token !== Token.RightBracket) return null;

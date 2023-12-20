@@ -9,8 +9,10 @@ const tokenizer = new Tokenizer(`
 #[extern]: env.print
 fn print(data: i32) -> void
 str foo = "bar"
-print(123, foo)
-
+print(123)
+fn add( a: i32, b: i32) -> i32 {
+  rt a + b
+}
 `);
 
 console.log(tokenizer.getAll());
@@ -19,6 +21,7 @@ const parser = new Parser(tokenizer, "test.zp");
 parser.parseImportFunctionDeclaration();
 parser.parseVariableDeclaration();
 parser.parseCallExpression();
+console.log(parser.parseFunctionDeclaration());
 
 console.log(
   "AST (Top Level): \n" +
