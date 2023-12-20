@@ -44,7 +44,7 @@ export class Parser {
     this.tokenizer.resumeState();
     if ((node = this.parseFunctionDeclaration(scope))) return node;
     this.tokenizer.resumeState();
-    if (node = this.parseReturnStatement()) return node;
+    if ((node = this.parseReturnStatement())) return node;
     this.tokenizer.resumeState();
     return null;
   }
@@ -174,8 +174,6 @@ export class Parser {
   ): FunctionDeclaration | null {
     this.tokenizer.pauseState();
 
-    let token: TokenData | null = null;
-
     const fn = this.tokenizer.getToken();
     if (!isIdentifier(fn) || fn.text !== "fn") return null;
 
@@ -198,7 +196,7 @@ export class Parser {
     if (!isBuiltinType(returnType)) return null;
     const block = this.parseBlockExpression();
     if (!block) return null;
-    console.log("as")
+
     const node = new FunctionDeclaration(
       new Identifier(name.text, name.range),
       params,
@@ -231,6 +229,7 @@ export class Parser {
 
     this.tokenizer.pauseState();
     const colonToken = this.tokenizer.getToken();
+
     if (colonToken.token !== Token.Colon) {
       this.tokenizer.resumeState();
       new TokenMismatchError(
@@ -240,6 +239,7 @@ export class Parser {
       );
       return null;
     }
+
     const contentFirstToken = this.tokenizer.getToken();
     if (contentFirstToken.token !== Token.Identifier) {
       new TokenMismatchError(
@@ -249,7 +249,9 @@ export class Parser {
       );
       return null;
     }
+
     const content: TokenData[] = [contentFirstToken];
+
     while (true) {
       const token = this.tokenizer.getToken();
       if (
@@ -262,6 +264,7 @@ export class Parser {
       this.tokenizer.pauseState();
       content.push(token);
     }
+
     const contentId = new Identifier(
       content.map((v) => v.text).join(""),
       new Range(
@@ -275,20 +278,26 @@ export class Parser {
     if (!isIdentifier(fn) || fn.text !== "fn") return null;
 
     const name = this.tokenizer.getToken();
+
     if (!isIdentifier(name)) return null;
     if (this.tokenizer.getToken().token !== Token.LeftParen) return null;
     const params: ParameterExpression[] = [];
+
     while (true) {
       const param = this.parseParameterExpression();
       if (!param) return null;
       params.push(param);
+
       const tok = this.tokenizer.getToken().token;
+
       if (tok === Token.RightParen) break;
       if (tok !== Token.Comma) break;
     }
     if (this.tokenizer.getToken().token !== Token.Sub) return null;
     if (this.tokenizer.getToken().token !== Token.GreaterThan) return null;
+
     const returnType = this.tokenizer.getToken();
+
     if (!isBuiltinType(returnType)) return null;
 
     const node = new ImportFunctionDeclaration(
@@ -311,20 +320,20 @@ export class Parser {
     const calling = this.tokenizer.getToken();
     const leftParen = this.tokenizer.getToken();
     const args: Expression[] = [];
+
     while (true) {
       const arg = this.parseExpression(scope);
+
       if (!arg) {
         console.log(1);
         return null;
       }
-      console.log(arg);
       args.push(arg);
+
       const tok = this.tokenizer.getToken();
+
       if (tok.token === Token.RightParen) break;
-      console.log(2, tok);
-      if (tok.token !== Token.Comma) {
-        return null;
-      }
+      if (tok.token !== Token.Comma) return null;
     }
 
     if (!isIdentifier(calling)) {
@@ -367,16 +376,15 @@ export class Parser {
   ): ParameterExpression | null {
     this.tokenizer.pauseState();
     const name = this.tokenizer.getToken();
-    if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":") return null;
+    if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":")
+      return null;
     const type = this.tokenizer.getToken();
     if (!isBuiltinType(type)) return null;
     const node = new ParameterExpression(
       new Identifier(name.text, name.range),
       new TypeExpression([type.text], false),
     );
-
     scope.add(name.text, node);
-
     return node;
   }
   parseBlockExpression(

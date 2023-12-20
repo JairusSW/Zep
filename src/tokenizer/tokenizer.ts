@@ -122,6 +122,28 @@ export class Tokenizer {
                 this.position.index++;
                 return tok;
               }
+            } else if (char == "\"") {
+              this.position.index++;
+              this.position.markPosition();
+              while (true) {
+                char = this.text[this.position.index];
+                if (char === "\"") {
+                  const txt = this.text.slice(this.position.start, this.position.index);
+                  const tok = new TokenData(
+                    Token.String,
+                    txt,
+                    this.position.toRange(),
+                  )
+                  this.position.index++;
+                  this.tokens.push(tok);
+                  return tok;
+                }
+                if (this.position.index >= this.text.length) {
+                  this.position.markPosition();
+                  return new TokenData(Token.EOF, "", this.position.toRange());
+                }
+                this.position.index++;
+              }
             } else {
               const punct = isPunctuation(char, this.position);
               if (punct) {
