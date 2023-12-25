@@ -12,11 +12,9 @@ export class Scope {
     }
   }
   has(name: string): boolean {
-    // Recursively searches scopes in reverse to make sure that the parent does not have scope name.
     return this.nodes.has(name) || this.parentScope?.has(name) || false;
   }
   get(name: string): Node | null {
-    // Get from parent scope
     return this.nodes.get(name) || this.parentScope?.get(name) || null;
   }
 }
