@@ -425,11 +425,15 @@ export class Parser {
           left.range,
         );
         this.tokenizer.resumeState();
-        return new BinaryExpression(left, op, right);
+        const node = new BinaryExpression(left, op, right);
+        this.program.statements.push(node);
+        return node;
       }
     }
+    const node = new BinaryExpression(left, op, right);
+    this.program.statements.push(node);
     // Check scope
-    return new BinaryExpression(left, op, right);
+    return node;
   }
   parseIdentifierExpression(
     scope: Scope = this.program.globalScope,
@@ -460,5 +464,6 @@ export class Parser {
 export function tokenToOp(tok: TokenData): Operator | null {
   if (tok.token === Token.Add) return Operator.Add;
   if (tok.token === Token.Sub) return Operator.Sub;
+  if (tok.token === Token.Equals) return Operator.Assign;
   return null;
 }

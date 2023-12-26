@@ -8,8 +8,11 @@ import { Transpiler } from "./transpiler/transpiler.js";
 const tokenizer = new Tokenizer(`
 #[extern]: env.print
 fn print(data: i32) -> void
-str foo = "bar"
-print(123)
+
+str? foo = "bar"
+
+foo = "hello"
+
 fn add(a: i32, b: i32) -> i32 {
   rt a + b
 }
@@ -20,6 +23,7 @@ const parser = new Parser(tokenizer, "test.zp");
 
 parser.parseImportFunctionDeclaration();
 parser.parseVariableDeclaration();
+parser.parseBinaryExpression();
 parser.parseCallExpression();
 console.log(parser.parseFunctionDeclaration());
 
