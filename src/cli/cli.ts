@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { Parser } from "../parser/parser.js";
 import { Tokenizer } from "../tokenizer/tokenizer.js";
-import { WasmConnector } from "../gen/connector.js";
+import { WasmConnector } from "../generator/connector.js";
 
 const args = process.argv.slice(2);
 

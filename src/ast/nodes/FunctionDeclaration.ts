@@ -13,12 +13,14 @@ export class FunctionDeclaration extends Statement {
   //public genericType: TypeExpression | null;
   public block: BlockExpression;
   public scope: Scope;
+  public exported: boolean;
   constructor(
     name: Identifier,
     parameters: ParameterExpression[],
     returnType: TypeExpression,
     block: BlockExpression,
     scope: Scope,
+    exported: boolean
   ) {
     super();
     this.name = name;
@@ -26,6 +28,7 @@ export class FunctionDeclaration extends Statement {
     this.returnType = returnType;
     this.block = block;
     this.scope = scope;
+    this.exported = exported;
     for (const param of this.parameters) {
       this.scope.add(param.name.data, param);
     }

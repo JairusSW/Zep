@@ -84,8 +84,8 @@ export class Parser {
       this.tokenizer.resumeState();
       new TokenMismatchError(
         "Expected to find value of variable, but found " +
-          value.text +
-          " instead!",
+        value.text +
+        " instead!",
         0x80,
         value.range,
       );
@@ -171,7 +171,12 @@ export class Parser {
   ): FunctionDeclaration | null {
     this.tokenizer.pauseState();
 
-    const fn = this.tokenizer.getToken();
+    let exported = true;
+
+    const exp = this.tokenizer.getToken();
+    if (!isIdentifier(exp)) return null;
+    if (exp.text !== "export") exported = false;
+    const fn = exported ? this.tokenizer.getToken() : exp;
     if (!isIdentifier(fn) || fn.text !== "fn") return null;
 
     const name = this.tokenizer.getToken();
@@ -201,8 +206,10 @@ export class Parser {
       new TypeExpression([returnType.text], false),
       block,
       new Scope(scope),
+      exported
     );
 
+    if (exported && scope.parentScope) throw new Error("Exported functions must occur at the global scope!");
     this.program.globalScope.add(name.text, node);
     this.program.topLevelStatements.push(node);
     return node;
