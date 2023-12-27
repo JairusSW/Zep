@@ -4,16 +4,10 @@ import { Parser } from "./parser/parser.js";
 import { Tokenizer } from "./tokenizer/tokenizer.js";
 import { TreeObject, asTree } from "treeify";
 import { Transpiler } from "./transpiler/transpiler.js";
+import { Generator } from "./generator/index.js";
 
 const tokenizer = new Tokenizer(`
-#[extern]: env.print
-fn print(data: i32) -> void
-
-str? foo = "bar"
-
-foo = "hello"
-
-fn add(a: i32, b: i32) -> i32 {
+export fn add(a: i32, b: i32) -> i32 {
   rt a + b
 }
 `);
@@ -21,11 +15,8 @@ fn add(a: i32, b: i32) -> i32 {
 console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
 
-parser.parseImportFunctionDeclaration();
-parser.parseVariableDeclaration();
-parser.parseBinaryExpression();
-parser.parseCallExpression();
-console.log(parser.parseFunctionDeclaration());
+const fn = parser.parseFunctionDeclaration();
+console.log(fn);
 
 console.log(
   "AST (Top Level): \n" +
@@ -42,11 +33,8 @@ console.log(
 console.log(
   "Scope (Global): \n", parser.program.globalScope.nodes,
 );
-/*
-const transpiler = new Transpiler();
 
-const out = transpiler.transpileProgram(parser.program);
+const generator = new Generator();
+generator.addFn(fn!);
 
-console.log(out + `\nconsole.log(foo)`);
-eval(out + `\nconsole.log(foo)`)
-*/
+console.log(generator.toWat());
