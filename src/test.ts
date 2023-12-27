@@ -20,21 +20,21 @@ console.log(fn);
 
 console.log(
   "AST (Top Level): \n" +
-    asTree(
-      parser.program.topLevelStatements as unknown as TreeObject,
-      true,
-      false,
-    ),
+  asTree(
+    parser.program.topLevelStatements as unknown as TreeObject,
+    true,
+    false,
+  ),
 );
 console.log(
   "AST (Statements): \n" +
-    asTree(parser.program.statements as unknown as TreeObject, true, false),
+  asTree(parser.program.statements as unknown as TreeObject, true, false),
 );
 console.log(
   "Scope (Global): \n", parser.program.globalScope.nodes,
 );
 
 const generator = new Generator();
-generator.addFn(fn!);
+generator.parseFn(fn!);
 
 console.log(generator.toWat());

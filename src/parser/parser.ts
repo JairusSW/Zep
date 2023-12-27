@@ -280,7 +280,13 @@ export class Parser {
     );
 
     this.tokenizer.pauseState();
-    const fn = this.tokenizer.getToken();
+    
+    let exported = true;
+
+    const exp = this.tokenizer.getToken();
+    if (!isIdentifier(exp)) return null;
+    if (exp.text !== "export") exported = false;
+    const fn = exported ? this.tokenizer.getToken() : exp;
     if (!isIdentifier(fn) || fn.text !== "fn") return null;
 
     const name = this.tokenizer.getToken();
@@ -314,6 +320,7 @@ export class Parser {
       new Identifier(name.text, name.range),
       params,
       new TypeExpression([returnType.text], false),
+      exported
     );
 
     scope.add(name.text, node);

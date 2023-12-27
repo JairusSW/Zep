@@ -34,7 +34,7 @@ Between the darkness and daybreak's sound.
 
 ```
 #[extern]: env
-fn print(data: i32) -> void
+export fn print(data: i32) -> void
 ```
 
 `hello.zp`
