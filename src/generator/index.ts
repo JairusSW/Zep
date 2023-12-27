@@ -6,12 +6,29 @@ import { ReturnStatement } from '../ast/nodes/ReturnStatement';
 import { ImportFunctionDeclaration } from '../ast/nodes/ImportFunctionDeclaration';
 import binaryen from 'binaryen';
 import { CallExpression } from "../ast/nodes/CallExpression";
+import { NumericDataType } from "../../../wazum/dist/nodes";
+import { NumberLiteral } from "../ast/nodes/NumberLiteral";
 
 export class Generator {
   public module: w.Module = new w.Module();
   constructor() { }
   toWat(): string {
     return this.module.compile();
+  }
+  parseFnImport(node: ImportFunctionDeclaration): w.FuncImport {
+    const params: [type: NumericDataType, name: string][] = [];
+    for (const param of node.parameters) {
+      params.push([getTypeOf(param), getNameOf(param)]);
+    }
+    const fnImport = w.funcImport(node.name.data, {
+      namespace: node.path.data.split(".")[0],
+      importName: node.path.data.split(".")[1],
+      params: params,
+      returnType: toDataType(node.returnType.types[0])
+    });
+
+    this.module.addFuncImport(fnImport);
+    return fnImport;
   }
   parseFn(node: FunctionDeclaration): w.Func {
     const name: string = node.name.data;
@@ -54,7 +71,16 @@ export class Generator {
     }
   }
   parseCall(node: CallExpression): w.Call {
-    return w.call(node.calling.data, "i32", [w.constant("i32", 983)]);
+    return w.call(node.calling.data, "i32", [this.parseNumberLiteral("i32", node.parameters[0] as NumberLiteral)]);
+  }
+  parseNumberLiteral(type: NumericDataType, node: NumberLiteral): w.Instr {
+    switch (type) {
+      case "i32": return w.constant(type, parseInt(node.data));
+      case "i64": return w.constant(type, parseInt(node.data));
+      case "f32": return w.constant(type, parseFloat(node.data));
+      case "f64": return w.constant(type, parseFloat(node.data));
+      default: throw new Error("Could not parse NumberLiteral to wasm equivalent!");
+    }
   }
   parseBinaryExpression(node: BinaryExpression): w.Add | w.Sub {
     switch (node.operand) {

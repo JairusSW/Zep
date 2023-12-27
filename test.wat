@@ -10,7 +10,7 @@
   (param $b i32)
   (result i32)
   (call $print
-   (i32.const 983)
+   (i32.const 123)
   )
   (i32.add
    (local.get $a)
