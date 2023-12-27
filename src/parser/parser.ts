@@ -409,14 +409,16 @@ export class Parser {
     if (token.token !== Token.LeftBracket) return null;
     const stmts: Statement[] = [];
     while (true) {
-      const stmt = this.parseReturnStatement(scope);
+      this.tokenizer.pauseState();
+      if (this.tokenizer.getToken().token == Token.RightBracket) break;
+      else this.tokenizer.resumeState();
+      let stmt: CallExpression | ReturnStatement | null = this.parseReturnStatement(scope);
       if (!stmt) {
-        this.tokenizer.resumeState();
-        break;
+        this.tokenizer.pauseState();
+        stmt = this.parseCallExpression(scope);
       }
-      stmts.push(stmt!);
+      if (stmt) stmts.push(stmt);
     }
-    if (this.tokenizer.getToken().token !== Token.RightBracket) return null;
     const node = new BlockExpression(stmts);
     return node;
   }

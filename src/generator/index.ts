@@ -1,8 +1,11 @@
-import { w } from 'wazum';
+import { w } from "../../../wazum";
 import { FunctionDeclaration } from '../ast/nodes/FunctionDeclaration';
 import { getNameOf, getTypeOf, toDataType } from './util';
 import { BinaryExpression, Operator } from '../ast/nodes/BinaryExpression';
 import { ReturnStatement } from '../ast/nodes/ReturnStatement';
+import { ImportFunctionDeclaration } from '../ast/nodes/ImportFunctionDeclaration';
+import binaryen from 'binaryen';
+import { CallExpression } from "../ast/nodes/CallExpression";
 
 export class Generator {
   public module: w.Module = new w.Module();
@@ -17,10 +20,17 @@ export class Generator {
 
     const body: w.Instr[] = [];
 
-    for (const stmt of node.block.statements) {
-      if (stmt instanceof ReturnStatement) body.push(this.parseReturnStatement(stmt));
-      else throw new Error("Could not parse body of FunctionDeclaration to wasm equivalent!");
+    for (const param of node.parameters) {
+      const name = getNameOf(param);
+      const type = getTypeOf(param);
+      params.push([type, name]);
     }
+
+    /*for (const stmt of node.block.statements) {
+      if (stmt instanceof CallExpression) body.push(this.parseCall(stmt));
+      else if (stmt instanceof ReturnStatement) body.push(this.parseReturnStatement(stmt));
+      else throw new Error("Could not parse body of FunctionDeclaration to wasm equivalent!");
+    }*/
 
     const fn = w.func(
       name,
@@ -29,7 +39,8 @@ export class Generator {
         returnType: returnType,
         locals: []
       },
-      ...body
+      this.parseCall(node.block.statements[0] as CallExpression),
+      this.parseReturnStatement(node.block.statements[1] as ReturnStatement)
     );
 
     this.module.addFunc(fn, node.exported);
@@ -42,8 +53,10 @@ export class Generator {
       throw new Error("Could not parse ReturnStatement to wasm equivalent!");
     }
   }
+  parseCall(node: CallExpression): w.Call {
+    return w.call(node.calling.data, "i32", [w.constant("i32", 983)]);
+  }
   parseBinaryExpression(node: BinaryExpression): w.Add | w.Sub {
-    console.log(node)
     switch (node.operand) {
       case Operator.Add: {
         const leftType = getTypeOf(node.left);

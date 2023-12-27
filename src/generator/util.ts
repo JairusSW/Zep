@@ -40,7 +40,7 @@ export function getTypeOf(node: Node): w.NumericDataType {
 
 export function getNameOf(node: Node): string {
   if (node instanceof ReferenceExpression) {
-    return getTypeOf(node.referencing);
+    return getNameOf(node.referencing);
   } else if (node instanceof ParameterExpression) {
     return node.name.data;
   } else if (node instanceof VariableDeclaration) {
