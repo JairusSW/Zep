@@ -45,7 +45,7 @@ describe("Should parse Statements", () => {
     fn print(data: i32) -> void
   `);
     const parser = new Parser(tokenizer, "test.zp");
-    const node = parser.parseImportFunctionDeclaration();
+    const node = parser.parseFunctionImport();
 
     expect(node?.name.data).toBe("print");
     expect(node?.path.data).toBe("env.print");
@@ -118,7 +118,7 @@ describe("Should parse Statements", () => {
     expect(node?.returnType.types[0]).toBe("i32");
 
     expect(node?.block.statements.length).toBe(1);
-    
+
     expect(((((node?.block.statements[0] as ReturnStatement).returning as BinaryExpression).left) as ReferenceExpression).referencing as Iden)
 
     expect(parser.program.globalScope.has(node?.name.data!)).toBe(true);

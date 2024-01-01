@@ -18,7 +18,7 @@ export fn main(a: i32, b: i32) -> i32 {
 console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
 
-const fnImport = parser.parseImportFunctionDeclaration();
+const fnImport = parser.parseFunctionImport();
 const fnMain = parser.parseFunctionDeclaration();
 console.log(
   "AST (Top Level): \n" +
@@ -53,4 +53,4 @@ const instance = new WebAssembly.Instance(module, {
   }
 });
 
-instance.exports.main(3,4)
+instance.exports.main(3, 4);

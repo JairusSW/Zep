@@ -3,8 +3,8 @@ import { ParameterExpression } from "./ParameterExpression.js";
 import { Statement } from "./Statement.js";
 import { TypeExpression } from "./TypeExpression.js";
 
-export class ImportFunctionDeclaration extends Statement {
-  public nameOf: string = "ImportFunctionDeclaration";
+export class FunctionImport extends Statement {
+  public nameOf: string = "FunctionImport";
   public path: Identifier;
 
   public name: Identifier;

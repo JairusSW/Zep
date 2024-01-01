@@ -1,10 +1,10 @@
 import { BinaryExpression } from "../ast/nodes/BinaryExpression.js";
 import { BlockExpression } from "../ast/nodes/BlockExpression.js";
 import { CallExpression } from "../ast/nodes/CallExpression.js";
-import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
+import { FunctionDeclaration } from "../ast/nodes/Function.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
 import { ImportDeclaration } from "../ast/nodes/ImportDeclaration.js";
-import { ImportFunctionDeclaration } from "../ast/nodes/ImportFunctionDeclaration.js";
+import { FunctionImport } from "../ast/nodes/FunctionImport.js";
 import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
 import { Node } from "../ast/nodes/Node.js";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral.js";
@@ -15,7 +15,7 @@ import { TypeExpression } from "../ast/nodes/TypeExpression.js";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
 
 export class Visitor {
-  constructor() {}
+  constructor() { }
   visit(node: Node) {
     if (node instanceof BinaryExpression) {
       this.visitBinaryExpression(node);
@@ -29,7 +29,7 @@ export class Visitor {
       this.visitIdentifier(node);
     } else if (node instanceof ImportDeclaration) {
       this.visitImportDeclaration(node);
-    } else if (node instanceof ImportFunctionDeclaration) {
+    } else if (node instanceof FunctionImport) {
       this.visitImportFunctionDeclaration(node);
     } else if (node instanceof ModifierExpression) {
       this.visitModifierExpression(node);
@@ -69,11 +69,11 @@ export class Visitor {
     this.visit(node.returnType);
     this.visit(node.block);
   }
-  visitIdentifier(node: Identifier) {}
+  visitIdentifier(node: Identifier) { }
   visitImportDeclaration(node: ImportDeclaration) {
     this.visit(node.path);
   }
-  visitImportFunctionDeclaration(node: ImportFunctionDeclaration) {
+  visitImportFunctionDeclaration(node: FunctionImport) {
     this.visit(node.path);
     this.visit(node.name);
     this.visitNodes(node.parameters);
@@ -83,7 +83,7 @@ export class Visitor {
     this.visit(node.tag);
     if (node.content) this.visit(node.content);
   }
-  visitNumberLiteral(node: NumberLiteral) {}
+  visitNumberLiteral(node: NumberLiteral) { }
   visitParameterExpression(node: ParameterExpression) {
     this.visit(node.name);
     if (node.type) this.visit(node.type);
@@ -91,8 +91,8 @@ export class Visitor {
   visitReturnStatement(node: ReturnStatement) {
     this.visit(node.returning);
   }
-  visitStringLiteral(node: StringLiteral) {}
-  visitTypeExpression(node: TypeExpression) {}
+  visitStringLiteral(node: StringLiteral) { }
+  visitTypeExpression(node: TypeExpression) { }
   visitVariableDeclaration(node: VariableDeclaration) {
     this.visit(node.name);
     this.visit(node.value);

@@ -1,28 +1,38 @@
 import { w } from "../../../wazum";
-import { FunctionDeclaration } from '../ast/nodes/FunctionDeclaration';
+import { FunctionDeclaration } from '../ast/nodes/Function';
 import { getNameOf, getTypeOf, toDataType } from './util';
 import { BinaryExpression, Operator } from '../ast/nodes/BinaryExpression';
 import { ReturnStatement } from '../ast/nodes/ReturnStatement';
-import { ImportFunctionDeclaration } from '../ast/nodes/ImportFunctionDeclaration';
+import { FunctionImport } from '../ast/nodes/FunctionImport';
 import binaryen from 'binaryen';
 import { CallExpression } from "../ast/nodes/CallExpression";
 import { NumericDataType } from "../../../wazum/dist/nodes";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral";
+import { Program } from "../ast/Program";
 
 export class Generator {
   public module: w.Module = new w.Module();
   constructor() { }
+  parseProgram(program: Program): void {
+    for (const topStmt of program.topLevelStatements) {
+      if (topStmt instanceof FunctionImport) {
+        this.parseFnImport(topStmt);
+      } else if (topStmt instanceof FunctionDeclaration) {
+        this.parseFn(topStmt);
+      } else {
+        throw new Error("Tried to generate unsupported top level node!");
+      }
+    }
+  }
   toWat(): string {
     return this.module.compile();
   }
-  parseFnImport(node: ImportFunctionDeclaration): w.FuncImport {
+  parseFnImport(node: FunctionImport): w.FuncImport {
     const params: [type: NumericDataType, name: string][] = [];
     for (const param of node.parameters) {
       params.push([getTypeOf(param), getNameOf(param)]);
     }
-    const fnImport = w.funcImport(node.name.data, {
-      namespace: node.path.data.split(".")[0],
-      importName: node.path.data.split(".")[1],
+    const fnImport = w.funcImport(node.name.data, node.path.data.split(".")[0], node.path.data.split(".")[1], {
       params: params,
       returnType: toDataType(node.returnType.types[0])
     });

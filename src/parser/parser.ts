@@ -5,7 +5,7 @@ import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
 import { StringLiteral } from "../ast/nodes/StringLiteral.js";
 import { TypeExpression } from "../ast/nodes/TypeExpression.js";
 import { Program } from "../ast/Program.js";
-import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
+import { FunctionDeclaration } from "../ast/nodes/Function.js";
 import { BlockExpression } from "../ast/nodes/BlockExpression.js";
 import { ParameterExpression } from "../ast/nodes/ParameterExpression.js";
 import { ReturnStatement } from "../ast/nodes/ReturnStatement.js";
@@ -19,7 +19,7 @@ import {
   isString,
 } from "../util/types/checkers.js";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral.js";
-import { ImportFunctionDeclaration } from "../ast/nodes/ImportFunctionDeclaration.js";
+import { FunctionImport } from "../ast/nodes/FunctionImport.js";
 import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
 import { ReferenceExpression } from "../ast/nodes/ReferenceExpression.js";
 import { ErrorTypes, TokenMismatchError } from "../error/error.js";
@@ -214,9 +214,9 @@ export class Parser {
     this.program.topLevelStatements.push(node);
     return node;
   }
-  parseImportFunctionDeclaration(
+  parseFunctionImport(
     scope: Scope = this.program.globalScope,
-  ): ImportFunctionDeclaration | null {
+  ): FunctionImport | null {
     this.tokenizer.pauseState();
 
     const hashToken = this.tokenizer.getToken();
@@ -280,7 +280,7 @@ export class Parser {
     );
 
     this.tokenizer.pauseState();
-    
+
     let exported = true;
 
     const exp = this.tokenizer.getToken();
@@ -315,7 +315,7 @@ export class Parser {
 
     if (!isBuiltinType(returnType)) return null;
 
-    const node = new ImportFunctionDeclaration(
+    const node = new FunctionImport(
       contentId,
       new Identifier(name.text, name.range),
       params,

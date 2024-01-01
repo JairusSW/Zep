@@ -24,7 +24,7 @@
     "binaryen": "^116.0.0",
     "chalk": "^5.3.0",
     "wasmati": "^0.2.0",
-    "wazum": "^0.0.13"
+    "wazum": "latest"
   },
   "repository": {
     "type": "git",
