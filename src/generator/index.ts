@@ -1,6 +1,6 @@
 import { w } from "../../../wazum";
 import { FunctionDeclaration } from '../ast/nodes/Function';
-import { getNameOf, getTypeOf, toDataType } from './util';
+import { getNameOf, getTypeOf, toDataType, toNumericType } from './util';
 import { BinaryExpression, Operator } from '../ast/nodes/BinaryExpression';
 import { ReturnStatement } from '../ast/nodes/ReturnStatement';
 import { FunctionImport } from '../ast/nodes/FunctionImport';
@@ -9,9 +9,12 @@ import { CallExpression } from "../ast/nodes/CallExpression";
 import { NumericDataType } from "../../../wazum/dist/nodes";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral";
 import { Program } from "../ast/Program";
+import { StringLiteral } from "../ast/nodes/StringLiteral";
+import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
 
 export class Generator {
   public module: w.Module = new w.Module();
+  public segments: w.MemorySegment[] = [];
   constructor() { }
   parseProgram(program: Program): void {
     for (const topStmt of program.topLevelStatements) {
@@ -32,7 +35,9 @@ export class Generator {
     for (const param of node.parameters) {
       params.push([getTypeOf(param), getNameOf(param)]);
     }
-    const fnImport = w.funcImport(node.name.data, node.path.data.split(".")[0], node.path.data.split(".")[1], {
+    const fnImport = w.funcImport(node.name.data, {
+      importPath: node.path.data.split(".")[0],
+      importName: node.path.data.split(".")[1],
       params: params,
       returnType: toDataType(node.returnType.types[0])
     });
@@ -44,8 +49,6 @@ export class Generator {
     const name: string = node.name.data;
     const params: [type: w.NumericDataType, name: string][] = [];
     const returnType: w.DataType = toDataType(node.returnType.types[0]);
-
-    const body: w.Instr[] = [];
 
     for (const param of node.parameters) {
       const name = getNameOf(param);
@@ -59,6 +62,8 @@ export class Generator {
       else throw new Error("Could not parse body of FunctionDeclaration to wasm equivalent!");
     }*/
 
+    const callExpression = this.parseCall(node.block.statements[0] as CallExpression);
+    //const ret = this.parseReturnStatement(node.block.statements[1] as ReturnStatement);
     const fn = w.func(
       name,
       {
@@ -66,12 +71,21 @@ export class Generator {
         returnType: returnType,
         locals: []
       },
-      this.parseCall(node.block.statements[0] as CallExpression),
-      this.parseReturnStatement(node.block.statements[1] as ReturnStatement)
+      callExpression
     );
 
     this.module.addFunc(fn, node.exported);
     return fn;
+  }
+  parseVariable(node: VariableDeclaration): w.LocalSet {
+    if (node.value instanceof StringLiteral) {
+      const value = this.parseStringLiteral(node.value as StringLiteral);
+      return w.local.set("i32", node.name.data, w.constant("i32", 0));
+    } else {
+      const type = toNumericType(node.type.types[0]);
+      const value = parseFloat((node.value as NumberLiteral).data);
+      return w.local.set(type, node.name.data, w.constant(type, value));
+    }
   }
   parseReturnStatement(node: ReturnStatement): w.Instr {
     if (node.returning instanceof BinaryExpression) {
@@ -80,8 +94,14 @@ export class Generator {
       throw new Error("Could not parse ReturnStatement to wasm equivalent!");
     }
   }
-  parseCall(node: CallExpression): w.Call {
-    return w.call(node.calling.data, "i32", [this.parseNumberLiteral("i32", node.parameters[0] as NumberLiteral)]);
+  parseCall(node: CallExpression): w.Instr {
+    const params: w.Instr[] = [];
+    for (const param of node.parameters) {
+      if (param instanceof NumberLiteral) {
+        params.push(this.parseNumberLiteral("i32", param));
+      }
+    }
+    return w.call(node.calling.data, "i32", params);
   }
   parseNumberLiteral(type: NumericDataType, node: NumberLiteral): w.Instr {
     switch (type) {
@@ -91,6 +111,14 @@ export class Generator {
       case "f64": return w.constant(type, parseFloat(node.data));
       default: throw new Error("Could not parse NumberLiteral to wasm equivalent!");
     }
+  }
+  parseStringLiteral(node: StringLiteral): w.MemorySegment {
+    const seg: w.MemorySegment = {
+      data: Uint8Array.from(node.data.split("").map(char => char.charCodeAt(0))),
+      offset: w.constant("i32", 0)
+    }
+    this.segments.push(seg);
+    return seg;
   }
   parseBinaryExpression(node: BinaryExpression): w.Add | w.Sub {
     switch (node.operand) {

@@ -99,7 +99,7 @@ export class Parser {
     );
 
     this.program.statements.push(node);
-    this.program.globalScope.add(name.text, node);
+    scope.add(name.text, node);
     return node;
   }
   parseModifierExpression(
@@ -185,13 +185,17 @@ export class Parser {
 
     const params: ParameterExpression[] = [];
     const blockScope = new Scope(scope);
-    while (true) {
-      const param = this.parseParameterExpression(blockScope);
-      if (!param) return null;
-      params.push(param);
-      const tok = this.tokenizer.getToken().token;
-      if (tok === Token.RightParen) break;
-      if (tok !== Token.Comma) break;
+    this.tokenizer.pauseState();
+    const nextToken = this.tokenizer.getToken();
+    if (nextToken.token !== Token.RightParen) {
+      this.tokenizer.resumeState();
+      while (true) {
+        const param = this.parseParameterExpression(blockScope);
+        if (!param) break;
+        params.push(param);
+        const tok = this.tokenizer.getToken().token;
+        if (tok !== Token.Comma) break;
+      }
     }
     if (this.tokenizer.getToken().token !== Token.Sub) return null;
     if (this.tokenizer.getToken().token !== Token.GreaterThan) return null;

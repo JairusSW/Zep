@@ -1,19 +1,20 @@
 (module
  (import "env" "print" (func $print
    (param i32)
+   (param i32)
   )
+ )
+ (memory $memory 5 5)
+ (export "memory" (memory $memory))
+ (data
+  (i32.const 0)
+  "hello world"
  )
  (export "main" (func $main))
  (func $main
-  (param $a i32)
-  (param $b i32)
-  (result i32)
   (call $print
-   (i32.const 123)
-  )
-  (i32.add
-   (local.get $a)
-   (local.get $b)
+   (i32.const 0)
+   (i32.const 11)
   )
  )
 )

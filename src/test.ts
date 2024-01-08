@@ -7,11 +7,12 @@ import { execSync } from "child_process";
 
 const tokenizer = new Tokenizer(`
 #[extern]: env.print
-fn print(num: i32) -> void
+fn print(start: i32, len: i32) -> void
 
-export fn main(a: i32, b: i32) -> i32 {
-  print(123)
-  rt a + b
+str text = "hello world"
+
+export fn main() -> void {
+  print(0, 11)
 }
 `);
 
@@ -19,6 +20,7 @@ console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
 
 const fnImport = parser.parseFunctionImport();
+const strLit = parser.parseVariableDeclaration();
 const fnMain = parser.parseFunctionDeclaration();
 console.log(
   "AST (Top Level): \n" +
@@ -37,9 +39,11 @@ console.log(
 );
 
 const generator = new Generator();
+generator.parseVariable(strLit!);
 generator.parseFnImport(fnImport!);
 generator.parseFn(fnMain!);
 
+generator.module.addMemory("memory", 5, 5, generator.segments);
 const wat = generator.toWat();
 console.log(wat);
 
@@ -47,10 +51,15 @@ writeFileSync("./test.wat", wat);
 execSync("wat2wasm test.wat -o test.wasm");
 const wasm = readFileSync("./test.wasm");
 const module = new WebAssembly.Module(wasm);
+let mem: WebAssembly.Memory;
 const instance = new WebAssembly.Instance(module, {
   env: {
-    print: (data: number) => console.log("Print: " + data)
+    print: (start: number, length: number) => {
+      console.log("Mem: ", mem);
+      console.log("Print: " + String.fromCharCode(...[...(new Uint8Array(mem.buffer, start, length))]))
+    }
   }
 });
 
-instance.exports.main(3, 4);
+mem = instance.exports.memory;
+instance.exports.main();
