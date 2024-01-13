@@ -49,3 +49,14 @@ export function getNameOf(node: Node): string {
     throw new Error(`Could not discern the type of expression`);
   }
 }
+
+// shitty af
+export function writeLength(value: number): string {
+  const high = (value >> 8) & 0xFF;
+  const low = value & 0xFF;
+
+  const highString = high > 9 ? high.toString() : high.toString().padStart(2, '0');
+  const lowString = low > 9 ? low.toString() : low.toString().padStart(2, '0');
+
+  return `\\${lowString}\\${highString}`;
+}

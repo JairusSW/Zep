@@ -7,12 +7,12 @@ import { execSync } from "child_process";
 
 const tokenizer = new Tokenizer(`
 #[extern]: env.print
-fn print(start: i32, len: i32) -> void
+fn print(start: i32) -> void
 
 str text = "hello world"
 
 export fn main() -> void {
-  print(0, 11)
+  print(0)
 }
 `);
 
@@ -52,11 +52,15 @@ execSync("wat2wasm test.wat -o test.wasm");
 const wasm = readFileSync("./test.wasm");
 const module = new WebAssembly.Module(wasm);
 let mem: WebAssembly.Memory;
+let dv: DataView;
 const instance = new WebAssembly.Instance(module, {
   env: {
-    print: (start: number, length: number) => {
+    print: (ptr: number) => {
+      dv = new DataView(mem.buffer);
+      const length = dv.getUint16(ptr, true);
+      console.log("Length: ", length.toString(16));
       console.log("Mem: ", mem);
-      console.log("Print: " + String.fromCharCode(...[...(new Uint8Array(mem.buffer, start, length))]))
+      console.log("Print: " + String.fromCharCode(...[...(new Uint8Array(mem.buffer, ptr+2, length))]))
     }
   }
 });

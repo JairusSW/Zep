@@ -1,16 +1,16 @@
-import { w } from "../../../wazum";
+import { w } from "../../wazum";
 import { FunctionDeclaration } from '../ast/nodes/Function';
 import { getNameOf, getTypeOf, toDataType, toNumericType } from './util';
 import { BinaryExpression, Operator } from '../ast/nodes/BinaryExpression';
 import { ReturnStatement } from '../ast/nodes/ReturnStatement';
 import { FunctionImport } from '../ast/nodes/FunctionImport';
-import binaryen from 'binaryen';
 import { CallExpression } from "../ast/nodes/CallExpression";
 import { NumericDataType } from "../../../wazum/dist/nodes";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral";
 import { Program } from "../ast/Program";
 import { StringLiteral } from "../ast/nodes/StringLiteral";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
+import { writeLength } from "./util";
 
 export class Generator {
   public module: w.Module = new w.Module();
@@ -114,7 +114,7 @@ export class Generator {
   }
   parseStringLiteral(node: StringLiteral): w.MemorySegment {
     const seg: w.MemorySegment = {
-      data: Uint8Array.from(node.data.split("").map(char => char.charCodeAt(0))),
+      data: writeLength(node.data.length) + node.data,
       offset: w.constant("i32", 0)
     }
     this.segments.push(seg);
