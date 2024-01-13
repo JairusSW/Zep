@@ -1,0 +1,3 @@
+[submodule "wazum"]
+	path = wazum
+	url = https://github.com/JairusSW/wazum
