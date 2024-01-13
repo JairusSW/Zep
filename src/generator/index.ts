@@ -1,4 +1,4 @@
-import { w } from "../../wazum";
+import { w } from "../../wazum/src/index";
 import { FunctionDeclaration } from '../ast/nodes/Function';
 import { getNameOf, getTypeOf, toDataType, toNumericType } from './util';
 import { BinaryExpression, Operator } from '../ast/nodes/BinaryExpression';
@@ -11,7 +11,11 @@ import { Program } from "../ast/Program";
 import { StringLiteral } from "../ast/nodes/StringLiteral";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
 import { writeLength } from "./util";
+import { Instr } from "../../wazum/src/nodes";
+import { NoInfer } from "../../wazum/dist/utils";
+import { Node } from "../ast/nodes/Node";
 
+let offset: number = 0;
 export class Generator {
   public module: w.Module = new w.Module();
   public segments: w.MemorySegment[] = [];
@@ -27,6 +31,7 @@ export class Generator {
       }
     }
   }
+
   toWat(): string {
     return this.module.compile();
   }
@@ -56,14 +61,13 @@ export class Generator {
       params.push([type, name]);
     }
 
-    /*for (const stmt of node.block.statements) {
+    let body: Instr[] = [];
+    for (const stmt of node.block.statements) {
       if (stmt instanceof CallExpression) body.push(this.parseCall(stmt));
       else if (stmt instanceof ReturnStatement) body.push(this.parseReturnStatement(stmt));
       else throw new Error("Could not parse body of FunctionDeclaration to wasm equivalent!");
-    }*/
+    }
 
-    const callExpression = this.parseCall(node.block.statements[0] as CallExpression);
-    //const ret = this.parseReturnStatement(node.block.statements[1] as ReturnStatement);
     const fn = w.func(
       name,
       {
@@ -71,7 +75,7 @@ export class Generator {
         returnType: returnType,
         locals: []
       },
-      callExpression
+      { __nodeType: "block", name: null, body, returnType } as w.Block
     );
 
     this.module.addFunc(fn, node.exported);
@@ -114,9 +118,10 @@ export class Generator {
   }
   parseStringLiteral(node: StringLiteral): w.MemorySegment {
     const seg: w.MemorySegment = {
-      data: writeLength(node.data.length) + node.data,
-      offset: w.constant("i32", 0)
+      data: "\\0" + node.data.length.toString(16) + node.data,
+      offset: w.constant("i32", offset)
     }
+    offset += 1 + node.data.length;
     this.segments.push(seg);
     return seg;
   }

@@ -7,12 +7,14 @@
  (export "memory" (memory $memory))
  (data
   (i32.const 0)
-  "\11\00hello world"
+  "\0bHello, Zep!"
  )
  (export "main" (func $main))
  (func $main
-  (call $print
-   (i32.const 0)
+  (block
+   (call $print
+    (i32.const 0)
+   )
   )
  )
 )
