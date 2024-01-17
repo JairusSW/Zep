@@ -18,7 +18,7 @@ fn add(a: i32, b: i32) -> i32 {
 }
 ```
 
-> If the return type is `void`, no result needs to be returned and `rt void` is implied.
+> If the return type is `none`, no result needs to be returned and `rt none` is implied.
 
 ## Imported Functions
 
@@ -26,7 +26,7 @@ Imported functions link a function supplied by the `host` and make it callable b
 
 ```
 #[extern]: env
-fn print(data: string) -> void
+fn print(data: string) -> none
 ```
 
 > The name of the function is imported from the specified namespace. In this case, `env`.
@@ -55,7 +55,7 @@ Modifiers are used as a marker, specifying the behavior of any element. They can
 
 ```
 #[extern]: env
-fn print(data: string) -> void
+fn print(data: string) -> none
 
 #[inline]
 fn add(a: i32, b: i32) -> i32 {

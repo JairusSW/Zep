@@ -2,6 +2,6 @@ import "std:io/print";
 
 string foo = "bar";
 
-fn main() -> void {
+fn main() -> none {
     print(foo);
 }

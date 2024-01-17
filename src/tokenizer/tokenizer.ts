@@ -31,10 +31,10 @@ export class Tokenizer {
   constructor(text: string) {
     this.text = text;
   }
-  pauseState(): void {
+  pauseState(): none {
     this.position.pauseState();
   }
-  resumeState(): void {
+  resumeState(): none {
     this.position.resumeState();
   }
   getAll(): TokenData[] {
@@ -258,7 +258,7 @@ export class Tokenizer {
       }
     }
   }
-  reset(): void {
+  reset(): none {
     this.position = new Position(0, 0);
   }
 }

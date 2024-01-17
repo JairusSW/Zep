@@ -34,7 +34,7 @@ Between the darkness and daybreak's sound.
 
 ```
 #[extern]: env
-export fn print(data: i32) -> void
+export fn print(data: i32) -> none
 ```
 
 `hello.zp`
@@ -45,7 +45,7 @@ import "std:io/print"
 
 string foo = "Hello from Zep!"
 
-fn main() -> void {
+fn main() -> none {
     // Local Scope
     print(foo)
 }
@@ -64,7 +64,7 @@ import { execSync } from "child_process";
 
 const tokenizer = new Tokenizer(`
 #[extern]: env.print
-fn print(num: i32) -> void
+fn print(num: i32) -> none
 
 export fn main(a: i32, b: i32) -> i32 {
   print(123)

@@ -6,13 +6,19 @@ import { readFileSync, writeFileSync } from "fs";
 import { execSync } from "child_process";
 
 const tokenizer = new Tokenizer(`
-#[extern]: env.print
-fn print(start: i32) -> void
+#[extern]: env.printStr
+fn printStr(start: i32) -> none
+
+#[extern]: env.printNum
+fn printNum(data: i32) -> none
+
 
 str word1 = "Hello, Zep!"
 
-export fn main() -> void {
-  print(0)
+#[export]: main
+fn main() -> none {
+  printNum(5)
+  printStr(0)
 }
 `);
 
@@ -20,6 +26,8 @@ console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
 
 const fnImport = parser.parseFunctionImport();
+
+const fnImport2 = parser.parseFunctionImport();
 const strLit = parser.parseVariableDeclaration();
 const fnMain = parser.parseFunctionDeclaration();
 console.log(
@@ -41,6 +49,7 @@ console.log(
 const generator = new Generator();
 generator.parseVariable(strLit!);
 generator.parseFnImport(fnImport!);
+generator.parseFnImport(fnImport2!);
 generator.parseFn(fnMain!);
 
 generator.module.addMemory("memory", 5, 5, generator.segments);

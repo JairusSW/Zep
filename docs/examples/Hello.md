@@ -2,9 +2,9 @@
 
 ```rust
 #[extern]: env
-fn print(data: *string) -> void
+fn print(data: *string) -> none
 
-fn main() -> void {
+fn main() -> none {
     print("Hi there... Its me, Zep!")
 }
 ```

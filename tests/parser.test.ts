@@ -38,11 +38,11 @@ describe("Should parse Expressions", () => {
 describe("Should parse Statements", () => {
   test(`
     #[extern]: env.print
-    fn print(data: i32) -> void
+    fn print(data: i32) -> none
   `, () => {
     const tokenizer = new Tokenizer(`
     #[extern]: env.print
-    fn print(data: i32) -> void
+    fn print(data: i32) -> none
   `);
     const parser = new Parser(tokenizer, "test.zp");
     const node = parser.parseFunctionImport();
@@ -52,7 +52,7 @@ describe("Should parse Statements", () => {
     expect(node?.parameters.length).toBe(1);
     expect(node?.parameters[0].name.data).toBe("data");
     expect(node?.parameters[0].type?.types[0]).toBe("i32");
-    expect(node?.returnType.types[0]).toBe("void");
+    expect(node?.returnType.types[0]).toBe("none");
     expect(parser.program.globalScope.has(node?.name.data!)).toBe(true);
 
     testScope = parser.program.globalScope;

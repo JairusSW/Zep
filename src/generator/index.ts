@@ -20,7 +20,7 @@ export class Generator {
   public module: w.Module = new w.Module();
   public segments: w.MemorySegment[] = [];
   constructor() { }
-  parseProgram(program: Program): void {
+  parseProgram(program: Program): none {
     for (const topStmt of program.topLevelStatements) {
       if (topStmt instanceof FunctionImport) {
         this.parseFnImport(topStmt);

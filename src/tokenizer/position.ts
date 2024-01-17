@@ -26,7 +26,7 @@ export class Position {
   /**
    * Increments the line number by 1 and updates the lineStart property.
    */
-  incrementLine(): void {
+  incrementLine(): none {
     this.line++;
     this.lineStart = this.index;
   }
@@ -34,14 +34,14 @@ export class Position {
   /**
    * Sets the start property to the current index value.
    */
-  markPosition(): void {
+  markPosition(): none {
     this.start = this.index;
   }
 
   /**
    * Stores the current values of index, line, start, and lineStart in the corresponding state properties.
    */
-  pauseState(): void {
+  pauseState(): none {
     this.indexState = this.index;
     this.lineState = this.line;
     this.startState = this.start;
@@ -51,7 +51,7 @@ export class Position {
   /**
    * Restores the values of index, line, start, and lineStart from the state properties.
    */
-  resumeState(): void {
+  resumeState(): none {
     this.index = this.indexState;
     this.line = this.lineState;
     this.start = this.startState;
