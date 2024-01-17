@@ -3,10 +3,22 @@
     <br>
 </p>
 
-<p align="center">
-Zep is a Homebrew compiler built from the ground up<br>
-Nothing to see here until I release specs.<br><br>
-</p>
+<div align="center">
+  <h1>Zep Language</h1>
+    <h3>Compiles to WebAssembly.<br />Tuned for WebAssembly.</h3>
+</div>
+
+## Capabilities
+- ✅ Tokenizer
+- ✅ Scopes
+
+- ✅ Parser (WIP)
+- ✅ Intermediate Representation (WIP)
+- ✅ CodeGen (WIP)
+
+## Achievements
+- ✅ Hello World with all handwritten pieces
+- ✅ Simple math operations
 
 <p align="center">
 <i>
