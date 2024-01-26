@@ -22,11 +22,13 @@ import { NumberLiteral } from "../ast/nodes/NumberLiteral.js";
 import { FunctionImport } from "../ast/nodes/FunctionImport.js";
 import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
 import { ReferenceExpression } from "../ast/nodes/ReferenceExpression.js";
-import { ErrorTypes, TokenMismatchError } from "../error/error.js";
+import { TokenMismatchError } from "../error/error.js";
 import { Range } from "../ast/Range.js";
 import { Token } from "../tokenizer/token.js";
 import { TokenData } from "../tokenizer/tokendata.js";
 import { CallExpression } from "../ast/nodes/CallExpression.js";
+import { IfStatement } from "../ast/nodes/IfStatement.js";
+import { BooleanLiteral } from "../ast/nodes/BooleanLiteral.js";
 
 export class Parser {
   public program: Program = new Program("test.zp");
@@ -44,7 +46,9 @@ export class Parser {
     this.tokenizer.resumeState();
     if ((node = this.parseFunctionDeclaration(scope))) return node;
     this.tokenizer.resumeState();
-    if ((node = this.parseReturnStatement())) return node;
+    if ((node = this.parseReturnStatement(scope))) return node;
+    this.tokenizer.resumeState();
+    if ((node = this.parseIfStatement(scope))) return node;
     this.tokenizer.resumeState();
     return null;
   }
@@ -53,6 +57,8 @@ export class Parser {
     if ((express = this.parseNumberLiteral(scope))) return express;
     this.tokenizer.resumeState();
     if ((express = this.parseStringLiteral(scope))) return express;
+    this.tokenizer.resumeState();
+    if ((express = this.parseBooleanLiteral(scope))) return express;
     this.tokenizer.resumeState();
     if ((express = this.parseBinaryExpression(scope))) return express;
     this.tokenizer.resumeState();
@@ -102,6 +108,21 @@ export class Parser {
     scope.add(name.text, node);
     return node;
   }
+  parseIfStatement(
+    scope: Scope = this.program.globalScope,
+  ): IfStatement | null {
+    this.tokenizer.pauseState();
+    if (this.tokenizer.getToken().text !== "if") return null;
+    if (this.tokenizer.getToken().text !== "(") return null;
+    const condition = this.parseBooleanLiteral();
+    if (this.tokenizer.getToken().text !== ")") return null;
+    if (!condition) return null;
+    const block = this.parseBlockExpression();
+    if (!block) return null;
+
+    const node = new IfStatement(condition, block);
+    return node;
+  }
   parseModifierExpression(
     scope: Scope = this.program.globalScope,
   ): ModifierExpression | null {
@@ -139,7 +160,7 @@ export class Parser {
       return null;
     }
     const content: TokenData[] = [contentFirstToken];
-    while (true) {
+    /*while (true) {
       const token = this.tokenizer.getToken();
       if (
         contentFirstToken.range.line < token.range.line ||
@@ -150,7 +171,7 @@ export class Parser {
       }
       this.tokenizer.pauseState();
       content.push(token);
-    }
+    }*/
     const contentId = new Identifier(
       content.map((v) => v.text).join(""),
       new Range(
@@ -171,12 +192,12 @@ export class Parser {
   ): FunctionDeclaration | null {
     this.tokenizer.pauseState();
 
-    let exported = true;
+    let exported = false;
 
-    const exp = this.tokenizer.getToken();
-    if (!isIdentifier(exp)) return null;
-    if (exp.text !== "export") exported = false;
-    const fn = exported ? this.tokenizer.getToken() : exp;
+    const exp = this.parseModifierExpression();
+    if (!exp) this.tokenizer.resumeState();
+    else if (exp.tag.data == "export") exported = true;
+    const fn = this.tokenizer.getToken();
     if (!isIdentifier(fn) || fn.text !== "fn") return null;
 
     const name = this.tokenizer.getToken();
@@ -478,6 +499,15 @@ export class Parser {
     const num = this.tokenizer.getToken(); // " ... "
     if (!isString(num)) return null;
     return new StringLiteral(num.text);
+  }
+  parseBooleanLiteral(
+    scope: Scope = this.program.globalScope,
+  ): BooleanLiteral | null {
+    this.tokenizer.pauseState();
+    const value = this.tokenizer.getToken();
+    if (value.text === "true") return new BooleanLiteral(true);
+    else if (value.text === "false") return new BooleanLiteral(false);
+    return null;
   }
 }
 

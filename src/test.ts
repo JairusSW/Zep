@@ -63,11 +63,12 @@ const module = new WebAssembly.Module(wasm);
 let mem: WebAssembly.Memory;
 const instance = new WebAssembly.Instance(module, {
   env: {
-    print: (ptr: number) => {
+    printStr: (ptr: number) => {
       const length = new Uint8Array(mem.buffer, ptr, 1)[0]
-      console.log("Length: ", length);
-      console.log("Mem: ", mem);
-      console.log("Print: " + String.fromCharCode(...[...(new Uint8Array(mem.buffer, ptr + 1, length))]))
+      console.log("String: " + String.fromCharCode(...[...(new Uint8Array(mem.buffer, ptr + 1, length))]));
+    },
+    printNum: (num: number) => {
+      console.log("Number: " + num);
     }
   }
 });

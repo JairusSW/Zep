@@ -1,5 +1,9 @@
 (module
- (import "env" "print" (func $print
+ (import "env" "printStr" (func $printStr
+   (param i32)
+  )
+ )
+ (import "env" "printNum" (func $printNum
    (param i32)
   )
  )
@@ -12,7 +16,10 @@
  (export "main" (func $main))
  (func $main
   (block
-   (call $print
+   (call $printNum
+    (i32.const 5)
+   )
+   (call $printStr
     (i32.const 0)
    )
   )
