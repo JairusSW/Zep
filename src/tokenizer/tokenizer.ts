@@ -258,6 +258,12 @@ export class Tokenizer {
       }
     }
   }
+  viewToken(): TokenData {
+    this.pauseState();
+    const tok = this.getToken();
+    this.resumeState();
+    return tok;
+  }
   reset(): none {
     this.position = new Position(0, 0);
   }

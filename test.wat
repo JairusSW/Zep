@@ -15,12 +15,13 @@
  )
  (export "main" (func $main))
  (func $main
+  (param $foo i32)
   (block
-   (call $printNum
-    (i32.const 5)
-   )
-   (call $printStr
-    (i32.const 0)
+   (loop $a
+    (call $printStr
+     (i32.const 0)
+    )
+    (br $a)
    )
   )
  )

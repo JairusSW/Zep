@@ -14,6 +14,8 @@ import { writeLength } from "./util";
 import { Instr } from "../../wazum/src/nodes";
 import { NoInfer } from "../../wazum/dist/utils";
 import { Node } from "../ast/nodes/Node";
+import { BranchStatement as BranchStatement } from "../ast/nodes/BranchStatement";
+import { BranchToStatement } from "../ast/nodes/BranchToStatement";
 
 let offset: number = 0;
 export class Generator {
@@ -65,6 +67,7 @@ export class Generator {
     for (const stmt of node.block.statements) {
       if (stmt instanceof CallExpression) body.push(this.parseCall(stmt));
       else if (stmt instanceof ReturnStatement) body.push(this.parseReturnStatement(stmt));
+      else if (stmt instanceof BranchStatement) body.push(this.parseBranch(stmt));
       else throw new Error("Could not parse body of FunctionDeclaration to wasm equivalent!");
     }
 
@@ -80,6 +83,12 @@ export class Generator {
 
     this.module.addFunc(fn, node.exported);
     return fn;
+  }
+  parseBranchTo(node: BranchToStatement): w.Branch {
+    return w.branch(node.to.data);
+  }
+  parseBranch(node: BranchStatement): w.Loop {
+    return w.loop(node.name.data, [<Instr<"none">>this.parseCall(<CallExpression>node.block.statements[0]), w.branch("a")])
   }
   parseVariable(node: VariableDeclaration): w.LocalSet {
     if (node.value instanceof StringLiteral) {

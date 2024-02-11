@@ -16,9 +16,10 @@ fn printNum(data: i32) -> none
 str word1 = "Hello, Zep!"
 
 #[export]: main
-fn main() -> none {
-  printNum(5)
-  printStr(0)
+fn main(foo: i32) -> none {
+  branch a {
+    printStr(0)
+  }
 }
 `);
 
@@ -30,6 +31,7 @@ const fnImport = parser.parseFunctionImport();
 const fnImport2 = parser.parseFunctionImport();
 const strLit = parser.parseVariableDeclaration();
 const fnMain = parser.parseFunctionDeclaration();
+console.log(fnMain?.block.statements[0].block.statements)
 console.log(
   "AST (Top Level): \n" +
   asTree(
