@@ -26,26 +26,26 @@ export class Tokenizer {
 
   public position: Position = new Position(0, 0);
 
-  private nextToken: TokenData | null = null;
+  public nextToken: TokenData | null = null;
+  private nextTokenState: TokenData | null = null;
 
   constructor(text: string) {
     this.text = text;
   }
-  pauseState(): none {
-    this.position.pauseState();
-  }
-  resumeState(): none {
-    this.position.resumeState();
+  createState(): TokenizerState {
+    const state = new TokenizerState(this, this.position, this.nextToken);
+    state.pause();
+    return state;
   }
   getAll(): TokenData[] {
-    this.pauseState();
+    const state = this.createState();
     const result: TokenData[] = [];
     while (true) {
       const token = this.getToken();
       if (token.token === Token.EOF) break;
       result.push(token);
     }
-    this.resumeState();
+    state.resume();
     return result;
   }
   getToken(): TokenData {
@@ -259,12 +259,41 @@ export class Tokenizer {
     }
   }
   viewToken(): TokenData {
-    this.pauseState();
+    const state = this.createState();
     const tok = this.getToken();
-    this.resumeState();
+    state.resume();
     return tok;
   }
-  reset(): none {
+  reset(): void {
     this.position = new Position(0, 0);
+  }
+}
+
+class TokenizerState {
+  private index: number = 0;
+  private start: number = 0;
+  private line: number = 0;
+  private lineStart: number = 0;
+  public tokenizer: Tokenizer;
+  public nextToken: TokenData | null;
+  public position: Position;
+  constructor(tokenizer: Tokenizer, position: Position, nextToken: TokenData | null = null) {
+    this.tokenizer = tokenizer;
+    this.position = position;
+    this.nextToken = nextToken;
+  }
+  pause(): void {
+    this.nextToken = this.tokenizer.nextToken;
+    this.index = this.position.index;
+    this.start = this.position.start;
+    this.line = this.position.line;
+    this.lineStart = this.position.lineStart;
+  }
+  resume(): void {
+    this.tokenizer.nextToken = this.nextToken;
+    this.position.index = this.index;
+    this.position.start = this.start;
+    this.position.line = this.line;
+    this.position.lineStart = this.lineStart;
   }
 }

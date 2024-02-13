@@ -7,11 +7,7 @@ export class Position {
   public index: number = 0;
   public line: number = 0;
   public start: number = 0;
-  private lineStart: number = 0;
-  private indexState: number = 0;
-  private startState: number = 0;
-  private lineState: number = 0;
-  private lineStartState: number = 0;
+  public lineStart: number = 0;
 
   /**
    * Creates a new Position instance.
@@ -26,7 +22,7 @@ export class Position {
   /**
    * Increments the line number by 1 and updates the lineStart property.
    */
-  incrementLine(): none {
+  incrementLine(): void {
     this.line++;
     this.lineStart = this.index;
   }
@@ -34,28 +30,8 @@ export class Position {
   /**
    * Sets the start property to the current index value.
    */
-  markPosition(): none {
+  markPosition(): void {
     this.start = this.index;
-  }
-
-  /**
-   * Stores the current values of index, line, start, and lineStart in the corresponding state properties.
-   */
-  pauseState(): none {
-    this.indexState = this.index;
-    this.lineState = this.line;
-    this.startState = this.start;
-    this.lineStartState = this.lineStart;
-  }
-
-  /**
-   * Restores the values of index, line, start, and lineStart from the state properties.
-   */
-  resumeState(): none {
-    this.index = this.indexState;
-    this.line = this.lineState;
-    this.start = this.startState;
-    this.lineStart = this.lineStartState;
   }
 
   /**

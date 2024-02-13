@@ -43,87 +43,101 @@ export class Parser {
   ) {
     this.tokenizer = tokenizer;
   }
+  parseProgram(): Program {
+    while (this.parseTopLevelStatement(this.program.globalScope)) { }
+    return this.program;
+  }
+  parseTopLevelStatement(scope: Scope = this.program.globalScope): Statement | null {
+    let node: Statement | null = null;
+    const state = this.tokenizer.createState();
+    if ((node = this.parseFunctionImport(scope))) return node;
+    state.resume();
+    if ((node = this.parseFunctionDeclaration(scope))) return node;
+    state.resume();
+    if ((node = this.parseVariableDeclaration(scope))) return node;
+    state.resume();
+    return null;
+  }
   parseStatement(scope: Scope = this.program.globalScope): Statement | null {
     let node: Statement | null = null;
-    this.tokenizer.pauseState();
+    const state = this.tokenizer.createState();
     if ((node = this.parseVariableDeclaration(scope))) return node;
-    this.tokenizer.resumeState();
-    if ((node = this.parseFunctionDeclaration(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseReturnStatement(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseIfStatement(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseCallExpression(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
+    if ((node = this.parseBranchStatement(scope))) return node;
+    state.resume();
     return null;
   }
   parseExpression(scope: Scope = this.program.globalScope): Expression | null {
     let express: Expression | null = null;
-    this.tokenizer.pauseState();
+    const state = this.tokenizer.createState();
     if ((express = this.parseNumberLiteral(scope))) return express;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((express = this.parseStringLiteral(scope))) return express;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((express = this.parseBooleanLiteral(scope))) return express;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((express = this.parseBinaryExpression(scope))) return express;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((express = this.parseReferenceExpression(scope))) return express;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((express = this.parseModifierExpression(scope))) return express;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((express = this.parseIdentifierExpression(scope))) return express;
-    this.tokenizer.resumeState();
+    state.resume();
+    if ((express = this.parseParameterExpression(scope))) return express;
+    state.resume();
     return null;
   }
   parseNode(scope: Scope = this.program.globalScope): Node | null {
-    this.tokenizer.pauseState()
+    const state = this.tokenizer.createState();
     let node: Node | null = null;
     if ((node = this.parseBranchStatement(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseBranchToStatement(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseCallExpression(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseReturnStatement(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseIfStatement(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseNumberLiteral(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseStringLiteral(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseBooleanLiteral(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseBinaryExpression(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseReferenceExpression(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     if ((node = this.parseModifierExpression(scope))) return node;
-    this.tokenizer.resumeState();
+    state.resume();
     //if ((node = this.parseIdentifierExpression(scope))) return node;
-    //this.tokenizer.resumeState();
+    //state.resume();
     return null;
   }
   parseVariableDeclaration(
     scope: Scope = this.program.globalScope,
   ): VariableDeclaration | null {
-    this.tokenizer.pauseState();
-    const type = this.tokenizer.getToken(); // TypeExpression
+    const type = this.tokenizer.getToken();
     if (!isBuiltinType(type)) return null;
     const mutableTok = this.tokenizer.getToken();
     let mutable = false;
     if (mutableTok.token === Token.Question) mutable = true;
-    let name = mutable ? this.tokenizer.getToken() : mutableTok; // Identifier
+    let name = mutable ? this.tokenizer.getToken() : mutableTok;
     if (!isIdentifier(name)) return null;
     this.tokenizer.getToken(); // =
 
-    this.tokenizer.pauseState();
     const value = this.parseExpression(); // Expression
     if (!value) {
       const value = this.tokenizer.getToken();
-      this.tokenizer.resumeState();
       new TokenMismatchError(
         "Expected to find value of variable, but found " +
         value.text +
@@ -147,7 +161,6 @@ export class Parser {
   parseIfStatement(
     scope: Scope = this.program.globalScope,
   ): IfStatement | null {
-    this.tokenizer.pauseState();
     if (this.tokenizer.getToken().text !== "if") return null;
     if (this.tokenizer.getToken().text !== "(") return null;
     const condition = this.parseBooleanLiteral();
@@ -162,8 +175,6 @@ export class Parser {
   parseModifierExpression(
     scope: Scope = this.program.globalScope,
   ): ModifierExpression | null {
-    this.tokenizer.pauseState();
-
     const hashToken = this.tokenizer.getToken();
     const openingBracketToken = this.tokenizer.getToken();
     const tagToken = this.tokenizer.getToken();
@@ -177,15 +188,14 @@ export class Parser {
     )
       return null;
 
-    this.tokenizer.pauseState();
-    const colonToken = this.tokenizer.getToken();
+    const colonToken = this.tokenizer.viewToken();
     if (colonToken.token !== Token.Colon) {
-      this.tokenizer.resumeState();
       const node = new ModifierExpression(
         new Identifier(tagToken.text, tagToken.range),
       );
       return node;
     }
+    this.tokenizer.getToken();
     const contentFirstToken = this.tokenizer.getToken();
     if (contentFirstToken.token !== Token.Identifier) {
       new TokenMismatchError(
@@ -226,12 +236,12 @@ export class Parser {
   parseFunctionDeclaration(
     scope: Scope = this.program.globalScope,
   ): FunctionDeclaration | null {
-    this.tokenizer.pauseState();
+    const state = this.tokenizer.createState();
 
     let exported = false;
 
     const exp = this.parseModifierExpression();
-    if (!exp) this.tokenizer.resumeState();
+    if (!exp) state.resume();
     else if (exp.tag.data == "export") exported = true;
     const fn = this.tokenizer.getToken();
     if (!isIdentifier(fn) || fn.text !== "fn") return null;
@@ -272,8 +282,6 @@ export class Parser {
   parseFunctionImport(
     scope: Scope = this.program.globalScope,
   ): FunctionImport | null {
-    this.tokenizer.pauseState();
-
     const hashToken = this.tokenizer.getToken();
     const openingBracketToken = this.tokenizer.getToken();
     const tagToken = this.tokenizer.getToken();
@@ -287,11 +295,9 @@ export class Parser {
     )
       return null;
 
-    this.tokenizer.pauseState();
     const colonToken = this.tokenizer.getToken();
 
     if (colonToken.token !== Token.Colon) {
-      this.tokenizer.resumeState();
       new TokenMismatchError(
         "Expected to find path to host function import, but found nothing!",
         3,
@@ -312,16 +318,17 @@ export class Parser {
 
     const content: TokenData[] = [contentFirstToken];
 
+    let state = this.tokenizer.createState();
     while (true) {
       const token = this.tokenizer.getToken();
       if (
         contentFirstToken.range.line !== token.range.line ||
         token.token === Token.EOF
       ) {
-        this.tokenizer.resumeState();
+        state.resume();
         break;
       }
-      this.tokenizer.pauseState();
+      state = this.tokenizer.createState();
       content.push(token);
     }
 
@@ -333,8 +340,6 @@ export class Parser {
         content[content.length - 1].range.end,
       ),
     );
-
-    this.tokenizer.pauseState();
 
     let exported = true;
 
@@ -387,7 +392,6 @@ export class Parser {
   parseBranchStatement(
     scope: Scope = this.program.globalScope,
   ): BranchStatement | null {
-    this.tokenizer.pauseState();
     if (this.tokenizer.getToken().text !== "branch") return null;
     const name = this.tokenizer.getToken();
     if (name.token !== Token.Identifier) return null;
@@ -411,7 +415,7 @@ export class Parser {
       }
       block = new BlockExpression(stmts);
     }
-    
+
     const node = new BranchStatement(
       new Identifier(
         name.text,
@@ -426,7 +430,6 @@ export class Parser {
   parseBranchToStatement(
     scope: Scope = this.program.globalScope,
   ): BranchToStatement | null {
-    this.tokenizer.pauseState();
     if (this.tokenizer.getToken().text !== "br") return null;
     const branchTo = this.tokenizer.getToken();
     if (branchTo.token !== Token.Identifier) return null
@@ -441,8 +444,6 @@ export class Parser {
   parseCallExpression(
     scope: Scope = this.program.globalScope,
   ): CallExpression | null {
-    this.tokenizer.pauseState();
-
     const calling = this.tokenizer.getToken();
     const leftParen = this.tokenizer.getToken();
     const args: Expression[] = [];
@@ -474,7 +475,6 @@ export class Parser {
   parseReferenceExpression(
     scope: Scope = this.program.globalScope,
   ): ReferenceExpression | null {
-    this.tokenizer.pauseState();
     const id = this.tokenizer.getToken();
     if (!isIdentifier(id)) return null;
     if (!scope.has(id.text)) return null;
@@ -483,7 +483,6 @@ export class Parser {
   parseReturnStatement(
     scope: Scope = this.program.globalScope,
   ): ReturnStatement | null {
-    this.tokenizer.pauseState();
     const rt = this.tokenizer.getToken();
     if (!isIdentifier(rt) || rt.text !== "rt") return null;
     const express = this.parseExpression(scope);
@@ -494,7 +493,6 @@ export class Parser {
   parseParameterExpression(
     scope: Scope = this.program.globalScope,
   ): ParameterExpression | null {
-    this.tokenizer.pauseState();
     const name = this.tokenizer.getToken();
     if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":")
       return null;
@@ -510,7 +508,6 @@ export class Parser {
   parseBlockExpression(
     scope: Scope = this.program.globalScope,
   ): BlockExpression | null {
-    this.tokenizer.pauseState();
     let token = this.tokenizer.getToken();
     if (token.token !== Token.LeftBracket) return null;
     const stmts: Statement[] = [];
@@ -540,10 +537,7 @@ export class Parser {
           0x01,
           left.range,
         );
-        this.tokenizer.resumeState();
-        const node = new BinaryExpression(left, op, right);
-        this.program.statements.push(node);
-        return node;
+        return null;
       }
     }
     const node = new BinaryExpression(left, op, right);
@@ -554,7 +548,6 @@ export class Parser {
   parseIdentifierExpression(
     scope: Scope = this.program.globalScope,
   ): Identifier | null {
-    this.tokenizer.pauseState();
     const id = this.tokenizer.getToken();
     if (!isIdentifier(id)) return null;
     return new Identifier(id.text, id.range);
@@ -562,7 +555,6 @@ export class Parser {
   parseNumberLiteral(
     scope: Scope = this.program.globalScope,
   ): NumberLiteral | null {
-    this.tokenizer.pauseState();
     const num = this.tokenizer.getToken(); // 1234567890_.
     if (!isNumeric(num)) return null;
     return new NumberLiteral(num.text);
@@ -570,7 +562,6 @@ export class Parser {
   parseStringLiteral(
     scope: Scope = this.program.globalScope,
   ): StringLiteral | null {
-    this.tokenizer.pauseState();
     const num = this.tokenizer.getToken(); // " ... "
     if (!isString(num)) return null;
     return new StringLiteral(num.text);
@@ -578,7 +569,6 @@ export class Parser {
   parseBooleanLiteral(
     scope: Scope = this.program.globalScope,
   ): BooleanLiteral | null {
-    this.tokenizer.pauseState();
     const value = this.tokenizer.getToken();
     if (value.text === "true") return new BooleanLiteral(true);
     else if (value.text === "false") return new BooleanLiteral(false);
