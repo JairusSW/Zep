@@ -19,7 +19,7 @@ export class BinaryExpression extends Expression {
 }
 
 export enum Operator {
-  Add,
-  Sub,
-  Assign
+  Add = "+",
+  Sub = "-",
+  Assign = "="
 }

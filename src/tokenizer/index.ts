@@ -258,9 +258,17 @@ export class Tokenizer {
       }
     }
   }
-  viewToken(): TokenData {
+  viewToken(lookahead: number = 0): TokenData {
     const state = this.createState();
-    const tok = this.getToken();
+    let tok: TokenData;
+    if (!lookahead) {
+      tok = this.getToken();
+      state.resume();
+      return tok;
+    }
+    while (lookahead--) {
+      tok = this.getToken();
+    }
     state.resume();
     return tok;
   }

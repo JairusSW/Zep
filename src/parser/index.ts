@@ -1,6 +1,6 @@
 import { Statement } from "../ast/nodes/Statement.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
-import { Tokenizer } from "../tokenizer/tokenizer.js";
+import { Tokenizer } from "../tokenizer/index.js";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
 import { StringLiteral } from "../ast/nodes/StringLiteral.js";
 import { TypeExpression } from "../ast/nodes/TypeExpression.js";
@@ -50,9 +50,9 @@ export class Parser {
   parseTopLevelStatement(scope: Scope = this.program.globalScope): Statement | null {
     let node: Statement | null = null;
     const state = this.tokenizer.createState();
-    if ((node = this.parseFunctionImport(scope))) return node;
-    state.resume();
     if ((node = this.parseFunctionDeclaration(scope))) return node;
+    state.resume();
+    if ((node = this.parseFunctionImport(scope))) return node;
     state.resume();
     if ((node = this.parseVariableDeclaration(scope))) return node;
     state.resume();
@@ -73,24 +73,24 @@ export class Parser {
     state.resume();
     return null;
   }
-  parseExpression(scope: Scope = this.program.globalScope): Expression | null {
+  parseExpression(scope: Scope = this.program.globalScope, besides: string | null = null): Expression | null {
     let express: Expression | null = null;
     const state = this.tokenizer.createState();
-    if ((express = this.parseNumberLiteral(scope))) return express;
+    if (besides !== "NumberLiteral" && (express = this.parseNumberLiteral(scope))) return express;
     state.resume();
-    if ((express = this.parseStringLiteral(scope))) return express;
+    if (besides !== "StringLiteral" && (express = this.parseStringLiteral(scope))) return express;
     state.resume();
-    if ((express = this.parseBooleanLiteral(scope))) return express;
+    if (besides !== "BooleanLiteral" && (express = this.parseBooleanLiteral(scope))) return express;
     state.resume();
-    if ((express = this.parseBinaryExpression(scope))) return express;
+    if (besides !== "BinaryExpression" && (express = this.parseBinaryExpression(scope))) return express;
     state.resume();
-    if ((express = this.parseReferenceExpression(scope))) return express;
+    if (besides !== "ReferenceExpression" && (express = this.parseReferenceExpression(scope))) return express;
     state.resume();
-    if ((express = this.parseModifierExpression(scope))) return express;
+    if (besides !== "ModifierExpression" && (express = this.parseModifierExpression(scope))) return express;
     state.resume();
-    if ((express = this.parseIdentifierExpression(scope))) return express;
+    if (besides !== "IdentifierExpression" && (express = this.parseIdentifierExpression(scope))) return express;
     state.resume();
-    if ((express = this.parseParameterExpression(scope))) return express;
+    if (besides !== "ParameterExpression" && (express = this.parseParameterExpression(scope))) return express;
     state.resume();
     return null;
   }
@@ -476,7 +476,6 @@ export class Parser {
     scope: Scope = this.program.globalScope,
   ): ReferenceExpression | null {
     const id = this.tokenizer.getToken();
-    if (!isIdentifier(id)) return null;
     if (!scope.has(id.text)) return null;
     return new ReferenceExpression(scope.get(id.text)! as Statement);
   }
@@ -512,7 +511,7 @@ export class Parser {
     if (token.token !== Token.LeftBracket) return null;
     const stmts: Statement[] = [];
     while (true) {
-      let stmt: Node | null = this.parseNode();
+      let stmt: Node | null = this.parseNode(scope);
       if (stmt) stmts.push(stmt);
       else break;
     }
@@ -522,12 +521,13 @@ export class Parser {
   parseBinaryExpression(
     scope: Scope = this.program.globalScope,
   ): BinaryExpression | null {
-    this.tokenizer.pauseState();
-    let left: Expression | null = this.parseReferenceExpression(scope);
+    let left: Expression | null = this.parseExpression(scope, "BinaryExpression");
     const op = tokenToOp(this.tokenizer.getToken());
-    let right: Expression | null = this.parseReferenceExpression(scope);
+    let right: Expression | null = this.parseExpression(scope, "BinaryExpression");
 
-    if (op === null || !left || !right) return null;
+    if (op === null || !left || !right) {
+      return null;
+    }
     if (left instanceof Identifier) {
       if (scope.has(left.data)) {
         left = new ReferenceExpression(left);
