@@ -13,13 +13,16 @@ const start = Date.now();
 const tokenizer = new Tokenizer(`
 #[export]: add
 fn add(a: i32, b: i32) -> i32 {
-  rt a + b
+  #[export]: main
+  fn main() -> none {}
+  i32? c = a + b
+  rt c
 }
 `);
 
 console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
 const program = parser.parseProgram();
-console.dir(program, { depth: null });
-
+//console.dir(program, { depth: null });
+console.log(program);
 console.log("Transpiled:\n" + Transpile.from(program));

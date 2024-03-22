@@ -22,7 +22,7 @@ import { NumberLiteral } from "../ast/nodes/NumberLiteral.js";
 import { FunctionImport } from "../ast/nodes/FunctionImport.js";
 import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
 import { ReferenceExpression } from "../ast/nodes/ReferenceExpression.js";
-import { TokenMismatchError } from "../error/error.js";
+import { CompileTimeError, ErrorTypes, SyntaxError, TokenMismatchError } from "../error/error.js";
 import { Range } from "../ast/Range.js";
 import { Token } from "../tokenizer/token.js";
 import { TokenData } from "../tokenizer/tokendata.js";
@@ -119,6 +119,10 @@ export class Parser {
     state.resume();
     if ((node = this.parseModifierExpression(scope))) return node;
     state.resume();
+    if ((node = this.parseVariableDeclaration(scope))) return node;
+    state.resume();
+    if ((node = this.parseFunctionDeclaration(scope))) return node;
+    state.resume();
     //if ((node = this.parseIdentifierExpression(scope))) return node;
     //state.resume();
     return null;
@@ -135,7 +139,7 @@ export class Parser {
     if (!isIdentifier(name)) return null;
     this.tokenizer.getToken(); // =
 
-    const value = this.parseExpression(); // Expression
+    const value = this.parseExpression(scope, "IdentifierExpression"); // Expression
     if (!value) {
       const value = this.tokenizer.getToken();
       new TokenMismatchError(
@@ -154,7 +158,6 @@ export class Parser {
       mutable,
     );
 
-    this.program.statements.push(node);
     scope.add(name.text, node);
     return node;
   }
@@ -274,7 +277,25 @@ export class Parser {
       exported
     );
 
-    if (exported && scope.parentScope) throw new Error("Exported functions must occur at the global scope!");
+    if (scope.parentScope) {
+      if (exported) {
+        new SyntaxError(
+          this.program,
+          "Warn", "Exported functions must occur at the global scope! Not exporting function and moving on.",
+          0x1,
+          fn.range,
+          "WARN"
+        );
+      } else {
+        new SyntaxError(
+          this.program,
+          "Error", "Closures not yet supported!",
+          0x2,
+          fn.range,
+          "FAIL"
+        );
+      }
+    }
     this.program.globalScope.add(name.text, node);
     this.program.topLevelStatements.push(node);
     return node;
