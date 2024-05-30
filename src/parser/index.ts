@@ -32,6 +32,8 @@ import { BooleanLiteral } from "../ast/nodes/BooleanLiteral.js";
 import { Node } from "../ast/nodes/Node.js";
 import { BranchStatement } from "../ast/nodes/BranchStatement.js";
 import { BranchToStatement } from "../ast/nodes/BranchToStatement.js";
+import { EnumDeclaration } from "../ast/nodes/EnumDeclaration.js";
+import { EnumElement } from "../ast/nodes/EnumElement.js";
 
 export class Parser {
   public program: Program = new Program("test.zp");
@@ -55,6 +57,8 @@ export class Parser {
     if ((node = this.parseFunctionImport(scope))) return node;
     state.resume();
     if ((node = this.parseVariableDeclaration(scope))) return node;
+    state.resume();
+    if ((node = this.parseEnumDeclaration(scope))) return node;
     state.resume();
     return null;
   }
@@ -161,6 +165,115 @@ export class Parser {
     scope.add(name.text, node);
     return node;
   }
+  parseFunctionDeclaration(
+    scope: Scope = this.program.globalScope,
+  ): FunctionDeclaration | null {
+    const state = this.tokenizer.createState();
+
+    let exported = false;
+
+    const exp = this.parseModifierExpression();
+    if (!exp) state.resume();
+    else if (exp.tag.data == "export") exported = true;
+    const fn = this.tokenizer.getToken();
+    if (!isIdentifier(fn) || fn.text !== "fn") return null;
+
+    const name = this.tokenizer.getToken();
+    if (!isIdentifier(name)) return null;
+    if (this.tokenizer.getToken().token !== Token.LeftParen) return null;
+    const params: ParameterExpression[] = [];
+    const blockScope = new Scope(scope);
+    while (true) {
+      const param = this.parseParameterExpression(blockScope);
+      if (!param) break;
+      params.push(param);
+      const tok = this.tokenizer.getToken().token;
+      if (tok !== Token.Comma) break;
+    }
+    if (this.tokenizer.getToken().token !== Token.Sub) return null;
+    if (this.tokenizer.getToken().token !== Token.GreaterThan) return null;
+    const returnType = this.tokenizer.getToken();
+    if (!isBuiltinType(returnType)) return null;
+    const block = this.parseBlockExpression(blockScope);
+    if (!block) return null;
+
+    const node = new FunctionDeclaration(
+      new Identifier(name.text, name.range),
+      params,
+      new TypeExpression([returnType.text], false),
+      block,
+      new Scope(scope),
+      exported
+    );
+
+    if (scope.parentScope) {
+      if (exported) {
+        new SyntaxError(
+          this.program,
+          "Warn", "Exported functions must occur at the global scope! Not exporting function and moving on.",
+          0x1,
+          fn.range,
+          "WARN"
+        );
+      } else {
+        new SyntaxError(
+          this.program,
+          "Error", "Closures not yet supported!",
+          0x2,
+          fn.range,
+          "FAIL"
+        );
+      }
+    }
+    this.program.globalScope.add(name.text, node);
+    this.program.topLevelStatements.push(node);
+    return node;
+  }
+  parseEnumDeclaration(
+    scope: Scope = this.program.globalScope,
+  ): EnumDeclaration | null {
+    this.tokenizer.createState();
+    if (this.tokenizer.getToken().text != "enum") return null;
+    const name = this.tokenizer.getToken();
+    if (this.tokenizer.getToken().text != "{") return null;
+
+    const elements: EnumElement[] = [];
+
+    let index = 0;
+    while (true) {
+      const name = this.tokenizer.getToken();
+      if (name.token !== Token.Identifier) return null;
+      const trailing = this.tokenizer.getToken();
+      if (trailing.text === "}" || trailing.text === ",") {
+        const element = new EnumElement(
+          new Identifier(
+            name.text,
+            name.range
+          ),
+          new NumberLiteral(
+            index.toString()
+          )
+        );
+
+        index++;
+        elements.push(element);
+        if (trailing.text === "}") break;
+      }
+    }
+
+    const node = new EnumDeclaration(
+      new Identifier(
+        name.text,
+        name.range
+      ),
+      elements
+    );
+
+    this.program.globalScope.add(name.text, node);
+    this.program.topLevelStatements.push(node);
+
+    return node;
+  }
   parseIfStatement(
     scope: Scope = this.program.globalScope,
   ): IfStatement | null {
@@ -233,71 +346,6 @@ export class Parser {
       new Identifier(tagToken.text, tagToken.range),
       contentId,
     );
-    return node;
-  }
-
-  parseFunctionDeclaration(
-    scope: Scope = this.program.globalScope,
-  ): FunctionDeclaration | null {
-    const state = this.tokenizer.createState();
-
-    let exported = false;
-
-    const exp = this.parseModifierExpression();
-    if (!exp) state.resume();
-    else if (exp.tag.data == "export") exported = true;
-    const fn = this.tokenizer.getToken();
-    if (!isIdentifier(fn) || fn.text !== "fn") return null;
-
-    const name = this.tokenizer.getToken();
-    if (!isIdentifier(name)) return null;
-    if (this.tokenizer.getToken().token !== Token.LeftParen) return null;
-    const params: ParameterExpression[] = [];
-    const blockScope = new Scope(scope);
-    while (true) {
-      const param = this.parseParameterExpression(blockScope);
-      if (!param) break;
-      params.push(param);
-      const tok = this.tokenizer.getToken().token;
-      if (tok !== Token.Comma) break;
-    }
-    if (this.tokenizer.getToken().token !== Token.Sub) return null;
-    if (this.tokenizer.getToken().token !== Token.GreaterThan) return null;
-    const returnType = this.tokenizer.getToken();
-    if (!isBuiltinType(returnType)) return null;
-    const block = this.parseBlockExpression(blockScope);
-    if (!block) return null;
-
-    const node = new FunctionDeclaration(
-      new Identifier(name.text, name.range),
-      params,
-      new TypeExpression([returnType.text], false),
-      block,
-      new Scope(scope),
-      exported
-    );
-
-    if (scope.parentScope) {
-      if (exported) {
-        new SyntaxError(
-          this.program,
-          "Warn", "Exported functions must occur at the global scope! Not exporting function and moving on.",
-          0x1,
-          fn.range,
-          "WARN"
-        );
-      } else {
-        new SyntaxError(
-          this.program,
-          "Error", "Closures not yet supported!",
-          0x2,
-          fn.range,
-          "FAIL"
-        );
-      }
-    }
-    this.program.globalScope.add(name.text, node);
-    this.program.topLevelStatements.push(node);
     return node;
   }
   parseFunctionImport(
@@ -490,7 +538,6 @@ export class Parser {
       args,
     );
 
-    this.program.statements.push(node);
     return node;
   }
   parseReferenceExpression(
@@ -498,7 +545,7 @@ export class Parser {
   ): ReferenceExpression | null {
     const id = this.tokenizer.getToken();
     if (!scope.has(id.text)) return null;
-    return new ReferenceExpression(scope.get(id.text)! as Statement);
+    return new ReferenceExpression(id.text, scope.get(id.text)! as Statement);
   }
   parseReturnStatement(
     scope: Scope = this.program.globalScope,
@@ -551,7 +598,7 @@ export class Parser {
     }
     if (left instanceof Identifier) {
       if (scope.has(left.data)) {
-        left = new ReferenceExpression(left);
+        left = new ReferenceExpression(left.data, left);
       } else {
         new TokenMismatchError(
           `Cannot find name ${left.data} in scope`,
@@ -562,7 +609,6 @@ export class Parser {
       }
     }
     const node = new BinaryExpression(left, op, right);
-    this.program.statements.push(node);
     // Check scope
     return node;
   }

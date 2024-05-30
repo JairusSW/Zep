@@ -1,20 +1,18 @@
+import { writeFileSync } from "fs";
 import { Parser } from "./parser";
 import { Tokenizer } from "./tokenizer";
-import { TreeObject, asTree } from "treeify";
-import { Generator } from "./generator/index.js";
-import { readFileSync, writeFileSync } from "fs";
-import { execSync } from "child_process";
-import { FunctionImport } from "./ast/nodes/FunctionImport.js";
-import { VariableDeclaration } from "./ast/nodes/VariableDeclaration.js";
-import { FunctionDeclaration } from "./ast/nodes/Function.js";
 import { Transpile } from "./transpiler/transpiler";
 
 const start = Date.now();
 const tokenizer = new Tokenizer(`
+enum Axis {
+  X,
+  Y,
+  Z
+}
+
 #[export]: add
 fn add(a: i32, b: i32) -> i32 {
-  #[export]: main
-  fn main() -> none {}
   i32? c = a + b
   rt c
 }
@@ -25,4 +23,8 @@ const parser = new Parser(tokenizer, "test.zp");
 const program = parser.parseProgram();
 //console.dir(program, { depth: null });
 console.log(program);
-console.log("Transpiled:\n" + Transpile.from(program));
+
+const transpiled = Transpile.from(program);
+console.log("Transpiled:\n" + transpiled);
+
+writeFileSync("./test.ts", transpiled);

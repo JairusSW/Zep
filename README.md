@@ -1,12 +1,13 @@
-<p align="center">
-    <img width="800" src="https://raw.githubusercontent.com/JairusSW/Zep/master/assets/logo.svg" alt="logo">
-    <br>
-</p>
-
-<div align="center">
-  <h1>Zep Language</h1>
-    <h3>Compiles to WebAssembly.<br />Tuned for WebAssembly.</h3>
-</div>
+<h3 align="center">
+<pre>
+███████╗███████╗██████╗ 
+╚══███╔╝██╔════╝██╔══██╗
+  ███╔╝ █████╗  ██████╔╝
+ ███╔╝  ██╔══╝  ██╔═══╝ 
+███████╗███████╗██║     
+╚══════╝╚══════╝╚═╝     
+                        
+v0.0.0-wip</pre></h3>
 
 ## Capabilities
 - ✅ Tokenizer

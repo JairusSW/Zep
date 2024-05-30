@@ -1,6 +1,7 @@
 import { Program } from "../ast/Program";
 import { BinaryExpression } from "../ast/nodes/BinaryExpression";
 import { BooleanLiteral } from "../ast/nodes/BooleanLiteral";
+import { EnumDeclaration } from "../ast/nodes/EnumDeclaration";
 import { FunctionDeclaration } from "../ast/nodes/Function";
 import { Identifier } from "../ast/nodes/Identifier";
 import { Node } from "../ast/nodes/Node";
@@ -22,27 +23,28 @@ export class Transpile {
             }
             return out;
         }
-        if (node instanceof NumberLiteral) return Transpile.num(node);
-        if (node instanceof StringLiteral) return Transpile.str(node);
-        if (node instanceof VariableDeclaration) return Transpile.var(node);
-        if (node instanceof FunctionDeclaration) return Transpile.fn(node);
-        if (node instanceof BinaryExpression) return Transpile.binxp(node);
-        if (node instanceof ReturnStatement) return Transpile.rt(node);
-        if (node instanceof ReferenceExpression) return Transpile.ref(node);
-        if (node instanceof ParameterExpression) return Transpile.param(node);
-        if (node instanceof Identifier) return Transpile.id(node);
+        if (node instanceof NumberLiteral) return Transpile.NumberLiteral(node);
+        if (node instanceof StringLiteral) return Transpile.StringLiteral(node);
+        if (node instanceof VariableDeclaration) return Transpile.VariableDeclaration(node);
+        if (node instanceof FunctionDeclaration) return Transpile.FunctionDeclaration(node);
+        if (node instanceof EnumDeclaration) return Transpile.EnumDeclaration(node);
+        if (node instanceof BinaryExpression) return Transpile.BinaryExpression(node);
+        if (node instanceof ReturnStatement) return Transpile.ReturnStatement(node);
+        if (node instanceof ReferenceExpression) return Transpile.ReferenceExpression(node);
+        if (node instanceof ParameterExpression) return Transpile.ParameterExpression(node);
+        if (node instanceof Identifier) return Transpile.Identifier(node);
         return "nop";
     }
-    static num(node: NumberLiteral) {
+    static NumberLiteral(node: NumberLiteral) {
         return node.data;
     }
-    static str(node: StringLiteral) {
+    static StringLiteral(node: StringLiteral) {
         return node.data;
     }
-    static var(node: VariableDeclaration) {
-        return `${depth}${node.mutable ? "let" : "const"} ${node.name.data} = ${Transpile.from(node.value)};`;
+    static VariableDeclaration(node: VariableDeclaration) {
+        return `${depth}${node.mutable ? "let" : "const"} ${node.name.data} = ${Transpile.from(node.value)}`;
     }
-    static fn(node: FunctionDeclaration) {
+    static FunctionDeclaration(node: FunctionDeclaration) {
         let params = "";
         let body = "";
         for (const param of node.parameters) {
@@ -59,19 +61,36 @@ export class Transpile {
         // Can be done more efficiently with a loop - 1
         return `${depth}${node.exported ? "export " : ""}function ${node.name.data}(${params}) {${body ? "\n" + body : ""}}`;
     }
-    static binxp(node: BinaryExpression) {
+    static EnumDeclaration(node: EnumDeclaration) {
+        let body = "";
+        const end = node.elements.length - 1;
+
+        depth += "  ";
+        for (let i = 0; i < end; i++) {
+            const element = node.elements[i];
+            body += `${depth}${element.name.data} = ${element.value.data},\n`;
+        }
+        const lastElement = node.elements[end];
+        body += `${depth}${lastElement.name.data} = ${lastElement.value.data}\n`;
+
+        depth = depth.slice(0, depth.length - 2);
+
+        return `enum ${node.name.data} {\n${body}}`;
+    }
+    static BinaryExpression(node: BinaryExpression) {
         return Transpile.from(node.left) + " " + node.operand + " " + Transpile.from(node.right);
     }
-    static rt(node: ReturnStatement) {
-        return depth + Transpile.from(node.returning);
+    static ReturnStatement(node: ReturnStatement) {
+        // @ts-ignore
+        return depth + "return " + node.returning.name;
     }
-    static ref(node: ReferenceExpression) {
+    static ReferenceExpression(node: ReferenceExpression) {
         return Transpile.from(node.referencing);
     }
-    static id(node: Identifier) {
+    static Identifier(node: Identifier) {
         return node.data;
     }
-    static param(node: ParameterExpression) {
+    static ParameterExpression(node: ParameterExpression) {
         return node.name.data;
     }
 }
