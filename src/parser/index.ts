@@ -239,40 +239,36 @@ export class Parser {
 
     const elements: EnumElement[] = [];
 
-    let index = 0;
+    let elementName = this.tokenizer.getToken();
+    if (elementName.token !== Token.Identifier) return null;
     let elementValue: NumberLiteral | null = null;
-    let elementName: TokenData;
+
+    let index = 0;
     while (true) {
-      if (!elementValue) {
-        elementName = this.tokenizer.getToken();
-        if (elementName.token !== Token.Identifier) return null;
-      }
       const trailing = this.tokenizer.getToken();
       if (trailing.text === "}" || trailing.text === ",") {
         const element = new EnumElement(
           new Identifier(
-            name.text,
-            name.range
+            elementName.text,
+            elementName.range
           ),
           elementValue || new NumberLiteral(
             index.toString()
           )
         );
-        console.log("Element: ", element)
+
         if (elementValue) elementValue = null;
+
         index++;
         elements.push(element);
         if (trailing.text === "}") break;
+
+        elementName = this.tokenizer.getToken();
+        if (elementName.token !== Token.Identifier) return null;
       } else if (trailing.text === "=") {
         elementValue = this.parseNumberLiteral(scope);
-        console.log("Value: ", elementValue);
         if (!elementValue) {
-          new CompileTimeError(
-            "Value of an enum element must be of type number or string!",
-            ErrorTypes.TypeError,
-            12
-          );
-          break;
+
         }
       }
     }
