@@ -5,10 +5,10 @@
 
 ```rust
 #[extern]: env.print
-fn print(data: i32) -> none
+fn print(data: i32) -> void
 
 #[export]: main
-fn main() -> none {
+fn main() -> void {
   print(5)
   
   for i in 0..5 {

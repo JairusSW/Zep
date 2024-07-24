@@ -5,22 +5,15 @@ import { Transpile } from "./transpiler/transpiler";
 
 const start = Date.now();
 const tokenizer = new Tokenizer(`
-fn main() -> none {
-    print("Hi there... Its me, Zep!")
+#[extern]: env.print
+fn print(num: i32) -> void
+
+#[export]: main
+fn main(a: i32, b: i32) -> i32 {
+  print(123)
+  rt a + b
 }
 `);
-
-// enum Axis {
-//   X = 5,
-//   Y,
-//   Z
-// }
-
-// #[export]: add
-// fn add(a: i32, b: i32) -> i32 {
-//   i32? c = a + b
-//   rt c
-// }
 
 console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");

@@ -1,8 +1,10 @@
 import { Program } from "../ast/Program";
 import { BinaryExpression } from "../ast/nodes/BinaryExpression";
 import { BooleanLiteral } from "../ast/nodes/BooleanLiteral";
+import { CallExpression } from "../ast/nodes/CallExpression";
 import { EnumDeclaration } from "../ast/nodes/EnumDeclaration";
 import { FunctionDeclaration } from "../ast/nodes/Function";
+import { FunctionImport } from "../ast/nodes/FunctionImport";
 import { Identifier } from "../ast/nodes/Identifier";
 import { Node } from "../ast/nodes/Node";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral";
@@ -27,6 +29,8 @@ export class Transpile {
         if (node instanceof StringLiteral) return Transpile.StringLiteral(node);
         if (node instanceof VariableDeclaration) return Transpile.VariableDeclaration(node);
         if (node instanceof FunctionDeclaration) return Transpile.FunctionDeclaration(node);
+        if (node instanceof CallExpression) return Transpile.CallExpression(node);
+        if (node instanceof FunctionImport) return Transpile.FunctionImport(node);
         if (node instanceof EnumDeclaration) return Transpile.EnumDeclaration(node);
         if (node instanceof BinaryExpression) return Transpile.BinaryExpression(node);
         if (node instanceof ReturnStatement) return Transpile.ReturnStatement(node);
@@ -61,6 +65,23 @@ export class Transpile {
         // Can be done more efficiently with a loop - 1
         return `${depth}${node.exported ? "export " : ""}function ${node.name.data}(${params}) {${body ? "\n" + body : ""}}`;
     }
+    static FunctionImport(node: FunctionImport) {
+        let params = "";
+        for (const param of node.parameters) {
+            params += `${param.name.data}: ${param.type?.types[0].toString()}, `;
+        }
+        if (params) params = params.slice(0, params.length - 2);
+        const returnType = node.returnType.types[0];
+        return `${depth}${node.exported ? "export " : ""}declare function ${node.name.data}(${params}): ${returnType}`;
+    }
+    static CallExpression(node: CallExpression) {
+        let params = "";
+        for (const param of node.parameters) {
+            params += `${Transpile.from(param)}, `;
+        }
+        if (params) params = params.slice(0, params.length - 2);
+        return `${depth}${node.calling.data}(${params})`;
+    }
     static EnumDeclaration(node: EnumDeclaration) {
         let body = "";
         const end = node.elements.length - 1;
@@ -82,7 +103,7 @@ export class Transpile {
     }
     static ReturnStatement(node: ReturnStatement) {
         // @ts-ignore
-        return depth + "return " + node.returning.name;
+        return depth + "return " + Transpile.from(node.returning);
     }
     static ReferenceExpression(node: ReferenceExpression) {
         return Transpile.from(node.referencing);

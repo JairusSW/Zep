@@ -26,7 +26,7 @@ v0.0.0-wip</pre></h3>
 
 ```
 #[extern]: env
-export fn print(data: i32) -> none
+export fn print(data: i32) -> void
 ```
 
 `hello.zp`
@@ -37,7 +37,7 @@ import "std:io/print"
 
 string foo = "Hello from Zep!"
 
-fn main() -> none {
+fn main() -> void {
     // Local Scope
     print(foo)
 }
@@ -56,7 +56,7 @@ import { execSync } from "child_process";
 
 const tokenizer = new Tokenizer(`
 #[extern]: env.print
-fn print(num: i32) -> none
+fn print(num: i32) -> void
 
 export fn main(a: i32, b: i32) -> i32 {
   print(123)

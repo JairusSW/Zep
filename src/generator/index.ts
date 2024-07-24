@@ -88,7 +88,7 @@ export class Generator {
     return w.branch(node.to.data);
   }
   parseBranch(node: BranchStatement): w.Loop {
-    return w.loop(node.name.data, [<Instr<"none">>this.parseCall(<CallExpression>node.block.statements[0]), w.branch("a")])
+    return w.loop(node.name.data, [<Instr<"void">>this.parseCall(<CallExpression>node.block.statements[0]), w.branch("a")])
   }
   parseVariable(node: VariableDeclaration): w.LocalSet {
     if (node.value instanceof StringLiteral) {

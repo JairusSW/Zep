@@ -10,7 +10,7 @@ export function toDataType(type: string): w.DataType {
     case "i64":
     case "f32":
     case "f64": return type as w.DataType;
-    case "none": return "none";
+    case "void": return "void";
     default: throw new Error(`Could not convert type '${type}' to wasm data type!`);
   }
 }

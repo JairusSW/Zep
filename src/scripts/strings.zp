@@ -1,5 +1,5 @@
 import "std:io/print"
 
-fn main() -> none {
+fn main() -> void {
     print("Hello, from Zep!")
 }

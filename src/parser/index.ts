@@ -327,7 +327,7 @@ export class Parser {
     const contentFirstToken = this.tokenizer.getToken();
     if (contentFirstToken.token !== Token.Identifier) {
       new TokenMismatchError(
-        "Expected to find content to modifier, but found none!",
+        "Expected to find content to modifier, but found void!",
         2,
         contentFirstToken.range,
       );
@@ -390,7 +390,7 @@ export class Parser {
     const contentFirstToken = this.tokenizer.getToken();
     if (contentFirstToken.token !== Token.Identifier) {
       new TokenMismatchError(
-        "Expected to find content to modifier, but found none!",
+        "Expected to find content to modifier, but found void!",
         2,
         contentFirstToken.range,
       );

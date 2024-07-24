@@ -6,7 +6,7 @@ Host Imports allow Zep to interact with the greater world. The security of these
 
 ```rust
 #[extern]: env.print
-fn print(data: i32) -> none
+fn print(data: i32) -> void
 ```
 
 This imports a function provided by the host from the namespace `env`` and the name `print`and assigns all calls to`print` to instead call the host function.

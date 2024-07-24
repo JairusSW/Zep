@@ -1,2 +1,2 @@
 #[extern]: env
-export fn print(data: i32) -> none
+export fn print(data: i32) -> void

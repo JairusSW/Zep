@@ -5,6 +5,6 @@ usize __data_end = 1024
 usize? __heap_base = __data_end + 65536
 
 #[export]: malloc
-fn malloc(bytes: i32): none {
+fn malloc(bytes: i32): void {
   
 }

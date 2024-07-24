@@ -14,7 +14,7 @@ const builtinTypes = [
   "u64",
   "f32",
   "f64",
-  "none",
+  "void",
 ];
 
 export function isBuiltinType(token: TokenData): boolean {
