@@ -6,7 +6,7 @@ import { Transpile } from "./transpiler/transpiler";
 const start = Date.now();
 const tokenizer = new Tokenizer(`
 enum Axis {
-  X,
+  X = 5,
   Y,
   Z
 }
@@ -22,7 +22,7 @@ console.log(tokenizer.getAll());
 const parser = new Parser(tokenizer, "test.zp");
 const program = parser.parseProgram();
 //console.dir(program, { depth: null });
-console.log(program);
+console.dir(program, { depth: 10 });
 
 const transpiled = Transpile.from(program);
 console.log("Transpiled:\n" + transpiled);

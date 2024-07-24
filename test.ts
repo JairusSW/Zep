@@ -1,7 +1,7 @@
 enum Axis {
-  X = 0,
-  Y = 1,
-  Z = 2
+  Axis = 5,
+  Axis = 1,
+  Axis = 2
 }
 export function add(a: i32, b: i32) {
   let c = a + b
