@@ -14,34 +14,13 @@ v0.0.0-wip</pre></h3>
 - ✅ Scopes
 
 - ✅ Parser (WIP)
-- ✅ Intermediate Representation (WIP)
+- ✅ IR (WIP)
 - ✅ CodeGen (WIP)
+- ✅ Transpile to AssemblyScript
 
 ## Achievements
 - ✅ Hello World with all handwritten pieces
 - ✅ Simple math operations
-
-<p align="center">
-<i>
-- Scene 001 -<br>
-Gently it touches the ground,<br>
-A footprint without a sound,<br>
-Its form remarkably delicate,<br>
-Creating code, light and intricate.<br>
-In this Tyrant's paradise,<br>
-hand-tuned control, yet precise.<br><br>
-- Scene 002 -<br>
-Welcome, Zep, our hero.<br>
-In the realm of the One and Zero,<br>
-where the ruler's grip, firm and tight<br>
-the developer is given power, shining bright.<br><br>
-- Scene 003 -<br>
-Reveal to us this Zep, they pled<br>
-If only it was ready, was said.<br>
-And so there was silence oh so profound,<br>
-Between the darkness and daybreak's sound.
-</i>
-</p>
 
 `std:io.zp`
 
