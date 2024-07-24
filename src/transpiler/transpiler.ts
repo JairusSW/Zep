@@ -6,6 +6,7 @@ import { EnumDeclaration } from "../ast/nodes/EnumDeclaration";
 import { FunctionDeclaration } from "../ast/nodes/Function";
 import { FunctionImport } from "../ast/nodes/FunctionImport";
 import { Identifier } from "../ast/nodes/Identifier";
+import { IfStatement } from "../ast/nodes/IfStatement";
 import { Node } from "../ast/nodes/Node";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral";
 import { ParameterExpression } from "../ast/nodes/ParameterExpression";
@@ -25,17 +26,22 @@ export class Transpile {
             }
             return out;
         }
-        if (node instanceof NumberLiteral) return Transpile.NumberLiteral(node);
-        if (node instanceof StringLiteral) return Transpile.StringLiteral(node);
         if (node instanceof VariableDeclaration) return Transpile.VariableDeclaration(node);
         if (node instanceof FunctionDeclaration) return Transpile.FunctionDeclaration(node);
+        if (node instanceof EnumDeclaration) return Transpile.EnumDeclaration(node);
+
         if (node instanceof CallExpression) return Transpile.CallExpression(node);
         if (node instanceof FunctionImport) return Transpile.FunctionImport(node);
-        if (node instanceof EnumDeclaration) return Transpile.EnumDeclaration(node);
         if (node instanceof BinaryExpression) return Transpile.BinaryExpression(node);
         if (node instanceof ReturnStatement) return Transpile.ReturnStatement(node);
         if (node instanceof ReferenceExpression) return Transpile.ReferenceExpression(node);
         if (node instanceof ParameterExpression) return Transpile.ParameterExpression(node);
+        if (node instanceof IfStatement) return Transpile.IfStatement(node);
+
+        if (node instanceof NumberLiteral) return Transpile.NumberLiteral(node);
+        if (node instanceof StringLiteral) return Transpile.StringLiteral(node);
+        if (node instanceof BooleanLiteral) return Transpile.BooleanLiteral(node);
+
         if (node instanceof Identifier) return Transpile.Identifier(node);
         return "nop";
     }
@@ -113,5 +119,18 @@ export class Transpile {
     }
     static ParameterExpression(node: ParameterExpression) {
         return node.name.data;
+    }
+    static IfStatement(node: IfStatement) {
+        let body = "{";
+        depth += "  ";
+        for (const stmt of node.block.statements) {
+            body += Transpile.from(stmt) + "\n";
+        }
+        depth = depth.slice(0, depth.length - 2);
+        body += "}";
+        return depth + "if (" + Transpile.from(node.condition) + ") " + body;
+    }
+    static BooleanLiteral(node: BooleanLiteral) {
+        return node.value.toString();
     }
 }

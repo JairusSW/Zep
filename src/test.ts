@@ -8,9 +8,10 @@ const tokenizer = new Tokenizer(`
 #[extern]: env.print
 fn print(num: i32) -> void
 
-#[export]: main
+#[export]
 fn main(a: i32, b: i32) -> i32 {
   print(123)
+  if (true) {}
   rt a + b
 }
 `);

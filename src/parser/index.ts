@@ -105,11 +105,11 @@ export class Parser {
     state.resume();
     if ((node = this.parseBranchToStatement(scope))) return node;
     state.resume();
+    if ((node = this.parseIfStatement(scope))) return node;
+    state.resume();
     if ((node = this.parseCallExpression(scope))) return node;
     state.resume();
     if ((node = this.parseReturnStatement(scope))) return node;
-    state.resume();
-    if ((node = this.parseIfStatement(scope))) return node;
     state.resume();
     if ((node = this.parseNumberLiteral(scope))) return node;
     state.resume();
@@ -595,6 +595,7 @@ export class Parser {
       if (stmt) stmts.push(stmt);
       else break;
     }
+    if (this.tokenizer.getToken().token !== Token.RightBracket) return null;
     const node = new BlockExpression(stmts);
     return node;
   }

@@ -15,6 +15,7 @@
     "@types/node": "^20.14.12",
     "@types/treeify": "^1.0.3",
     "@types/yargs": "^17.0.32",
+    "assemblyscript": "^0.27.29",
     "blessed": "^0.1.81",
     "bun-types": "^1.1.20",
     "prettier": "^3.3.3",
