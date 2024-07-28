@@ -1,17 +1,20 @@
-import { w } from 'wazum';
-import { Expression } from '../ast/nodes/Expression';
-import { ReferenceExpression } from '../ast/nodes/ReferenceExpression';
-import { ParameterExpression } from '../ast/nodes/ParameterExpression';
-import { VariableDeclaration } from '../ast/nodes/VariableDeclaration';
-import { Node } from '../ast/nodes/Node';
+import { w } from "wazum";
+import { Expression } from "../ast/nodes/Expression";
+import { ReferenceExpression } from "../ast/nodes/ReferenceExpression";
+import { ParameterExpression } from "../ast/nodes/ParameterExpression";
+import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
+import { Node } from "../ast/nodes/Node";
 export function toDataType(type: string): w.DataType {
   switch (type) {
     case "i32":
     case "i64":
     case "f32":
-    case "f64": return type as w.DataType;
-    case "void": return "void";
-    default: throw new Error(`Could not convert type '${type}' to wasm data type!`);
+    case "f64":
+      return type as w.DataType;
+    case "void":
+      return "void";
+    default:
+      throw new Error(`Could not convert type '${type}' to wasm data type!`);
   }
 }
 
@@ -20,11 +23,12 @@ export function toNumericType(type: string): w.NumericDataType {
     case "i32":
     case "i64":
     case "f32":
-    case "f64": return type as w.NumericDataType;
-    default: throw new Error(`Could not convert type '${type}' to wasm numeric type!`);
+    case "f64":
+      return type as w.NumericDataType;
+    default:
+      throw new Error(`Could not convert type '${type}' to wasm numeric type!`);
   }
 }
-
 
 export function getTypeOf(node: Node): w.NumericDataType {
   if (node instanceof ReferenceExpression) {
@@ -52,11 +56,12 @@ export function getNameOf(node: Node): string {
 
 // shitty af
 export function writeLength(value: number): string {
-  const high = (value >> 8) & 0xFF;
-  const low = value & 0xFF;
+  const high = (value >> 8) & 0xff;
+  const low = value & 0xff;
 
-  const highString = high > 9 ? high.toString() : high.toString().padStart(2, '0');
-  const lowString = low > 9 ? low.toString() : low.toString().padStart(2, '0');
+  const highString =
+    high > 9 ? high.toString() : high.toString().padStart(2, "0");
+  const lowString = low > 9 ? low.toString() : low.toString().padStart(2, "0");
 
   return `\\${lowString}\\${highString}`;
 }

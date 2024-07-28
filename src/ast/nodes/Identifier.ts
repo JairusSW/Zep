@@ -3,10 +3,9 @@ import { Expression } from "./Expression.js";
 
 export class Identifier extends Expression {
   public nameOf: string = "Identifier";
-  constructor(
-    public data: string,
-    public range: Range,
-  ) {
+  public data: string;
+  constructor(value: string, range: Range) {
     super();
+    this.data = value;
   }
 }

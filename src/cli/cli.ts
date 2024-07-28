@@ -7,9 +7,17 @@ import { Generator } from "../generator/index.js";
   const args = process.argv.slice(2);
 
   if (!args.length) {
-    console.log(chalk.bold.blueBright("Zep") + " is a homebrew compiler built from the ground up." + "\n");
-    console.log(chalk.bold("Usage: zpc <command> " + chalk.cyanBright("[...flags]") + " [...args]") + "\n");
-    console.log(chalk.bold("Commands:") + "\n")
+    console.log(
+      chalk.bold.blueBright("Zep") +
+        " is a homebrew compiler built from the ground up." +
+        "\n",
+    );
+    console.log(
+      chalk.bold(
+        "Usage: zpc <command> " + chalk.cyanBright("[...flags]") + " [...args]",
+      ) + "\n",
+    );
+    console.log(chalk.bold("Commands:") + "\n");
     console.log(
       `  ${chalk.bold.blueBright("run")}    ${chalk.dim(
         "./main.zp",
@@ -30,8 +38,9 @@ import { Generator } from "../generator/index.js";
   } else if (args[0] === "run") {
     const input = args[1];
     if (input.endsWith(".wat")) {
-      Bun.spawnSync([`wat2wasm ${input} -o ${input.slice(0, input.length - 4)}.wasm`]);
-
+      Bun.spawnSync([
+        `wat2wasm ${input} -o ${input.slice(0, input.length - 4)}.wasm`,
+      ]);
     }
   }
 

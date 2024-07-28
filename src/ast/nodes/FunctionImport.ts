@@ -1,3 +1,4 @@
+import { Range } from "../Range.js";
 import { Identifier } from "./Identifier.js";
 import { ParameterExpression } from "./ParameterExpression.js";
 import { Statement } from "./Statement.js";
@@ -16,7 +17,8 @@ export class FunctionImport extends Statement {
     name: Identifier,
     parameters: ParameterExpression[],
     returnType: TypeExpression,
-    exported: boolean
+    exported: boolean,
+    range: Range,
   ) {
     super();
     this.path = path;
@@ -24,5 +26,6 @@ export class FunctionImport extends Statement {
     this.parameters = parameters;
     this.returnType = returnType;
     this.exported = exported;
+    this.range = range;
   }
 }

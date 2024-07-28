@@ -34,6 +34,7 @@ import { BranchStatement } from "../ast/nodes/BranchStatement.js";
 import { BranchToStatement } from "../ast/nodes/BranchToStatement.js";
 import { EnumDeclaration } from "../ast/nodes/EnumDeclaration.js";
 import { EnumElement } from "../ast/nodes/EnumElement.js";
+import { ParenthesizedExpression } from "../ast/nodes/PathenthesizedExpression.js";
 
 export class Parser {
   public program: Program = new Program("test.zp");
@@ -49,7 +50,7 @@ export class Parser {
     while (this.parseTopLevelStatement(this.program.globalScope)) { }
     return this.program;
   }
-  parseTopLevelStatement(scope: Scope = this.program.globalScope): Statement | null {
+  parseTopLevelStatement(scope: Scope): Statement | null {
     let node: Statement | null = null;
     const state = this.tokenizer.createState();
     if ((node = this.parseFunctionDeclaration(scope))) return node;
@@ -62,7 +63,7 @@ export class Parser {
     state.resume();
     return null;
   }
-  parseStatement(scope: Scope = this.program.globalScope): Statement | null {
+  parseStatement(scope: Scope): Statement | null {
     let node: Statement | null = null;
     const state = this.tokenizer.createState();
     if ((node = this.parseVariableDeclaration(scope))) return node;
@@ -77,7 +78,7 @@ export class Parser {
     state.resume();
     return null;
   }
-  parseExpression(scope: Scope = this.program.globalScope, besides: string | null = null): Expression | null {
+  parseExpression(scope: Scope, besides: string | null = null): Expression | null {
     let express: Expression | null = null;
     const state = this.tokenizer.createState();
     if (besides !== "NumberLiteral" && (express = this.parseNumberLiteral(scope))) return express;
@@ -98,7 +99,7 @@ export class Parser {
     state.resume();
     return null;
   }
-  parseNode(scope: Scope = this.program.globalScope): Node | null {
+  parseNode(scope: Scope): Node | null {
     const state = this.tokenizer.createState();
     let node: Node | null = null;
     if ((node = this.parseBranchStatement(scope))) return node;
@@ -131,9 +132,7 @@ export class Parser {
     //state.resume();
     return null;
   }
-  parseVariableDeclaration(
-    scope: Scope = this.program.globalScope,
-  ): VariableDeclaration | null {
+  parseVariableDeclaration(scope: Scope): VariableDeclaration | null {
     const type = this.tokenizer.getToken();
     if (!isBuiltinType(type)) return null;
     const mutableTok = this.tokenizer.getToken();
@@ -165,14 +164,12 @@ export class Parser {
     scope.add(name.text, node);
     return node;
   }
-  parseFunctionDeclaration(
-    scope: Scope = this.program.globalScope,
-  ): FunctionDeclaration | null {
+  parseFunctionDeclaration(scope: Scope): FunctionDeclaration | null {
     const state = this.tokenizer.createState();
 
     let exported = false;
 
-    const exp = this.parseModifierExpression();
+    const exp = this.parseModifierExpression(scope);
     if (!exp) state.resume();
     else if (exp.tag.data == "export") exported = true;
     const fn = this.tokenizer.getToken();
@@ -229,9 +226,7 @@ export class Parser {
     this.program.topLevelStatements.push(node);
     return node;
   }
-  parseEnumDeclaration(
-    scope: Scope = this.program.globalScope,
-  ): EnumDeclaration | null {
+  parseEnumDeclaration(scope: Scope): EnumDeclaration | null {
     this.tokenizer.createState();
     if (this.tokenizer.getToken().text != "enum") return null;
     const name = this.tokenizer.getToken();
@@ -286,23 +281,19 @@ export class Parser {
 
     return node;
   }
-  parseIfStatement(
-    scope: Scope = this.program.globalScope,
-  ): IfStatement | null {
+  parseIfStatement(scope: Scope): IfStatement | null {
     if (this.tokenizer.getToken().text !== "if") return null;
     if (this.tokenizer.getToken().text !== "(") return null;
-    const condition = this.parseBooleanLiteral();
+    const condition = this.parseBooleanLiteral(scope);
     if (this.tokenizer.getToken().text !== ")") return null;
     if (!condition) return null;
-    const block = this.parseBlockExpression();
+    const block = this.parseBlockExpression(scope);
     if (!block) return null;
 
     const node = new IfStatement(condition, block);
     return node;
   }
-  parseModifierExpression(
-    scope: Scope = this.program.globalScope,
-  ): ModifierExpression | null {
+  parseModifierExpression(scope: Scope): ModifierExpression | null {
     const hashToken = this.tokenizer.getToken();
     const openingBracketToken = this.tokenizer.getToken();
     const tagToken = this.tokenizer.getToken();
@@ -360,9 +351,7 @@ export class Parser {
     );
     return node;
   }
-  parseFunctionImport(
-    scope: Scope = this.program.globalScope,
-  ): FunctionImport | null {
+  parseFunctionImport(scope: Scope): FunctionImport | null {
     const hashToken = this.tokenizer.getToken();
     const openingBracketToken = this.tokenizer.getToken();
     const tagToken = this.tokenizer.getToken();
@@ -470,9 +459,7 @@ export class Parser {
 
     return node;
   }
-  parseBranchStatement(
-    scope: Scope = this.program.globalScope,
-  ): BranchStatement | null {
+  parseBranchStatement(scope: Scope): BranchStatement | null {
     if (this.tokenizer.getToken().text !== "branch") return null;
     const name = this.tokenizer.getToken();
     if (name.token !== Token.Identifier) return null;
@@ -480,7 +467,7 @@ export class Parser {
     let block: BlockExpression;
 
     if (this.tokenizer.viewToken().token !== Token.LeftBracket) {
-      const stmt = this.parseNode();
+      const stmt = this.parseNode(scope);
       if (!stmt) return null;
       block = new BlockExpression([
         stmt
@@ -508,9 +495,7 @@ export class Parser {
     return node;
   }
 
-  parseBranchToStatement(
-    scope: Scope = this.program.globalScope,
-  ): BranchToStatement | null {
+  parseBranchToStatement(scope: Scope): BranchToStatement | null {
     if (this.tokenizer.getToken().text !== "br") return null;
     const branchTo = this.tokenizer.getToken();
     if (branchTo.token !== Token.Identifier) return null
@@ -522,9 +507,7 @@ export class Parser {
     );
     return node;
   }
-  parseCallExpression(
-    scope: Scope = this.program.globalScope,
-  ): CallExpression | null {
+  parseCallExpression(scope: Scope): CallExpression | null {
     const calling = this.tokenizer.getToken();
     const leftParen = this.tokenizer.getToken();
     const args: Expression[] = [];
@@ -552,16 +535,12 @@ export class Parser {
 
     return node;
   }
-  parseReferenceExpression(
-    scope: Scope = this.program.globalScope,
-  ): ReferenceExpression | null {
+  parseReferenceExpression(scope: Scope): ReferenceExpression | null {
     const id = this.tokenizer.getToken();
     if (!scope.has(id.text)) return null;
     return new ReferenceExpression(id.text, scope.get(id.text)! as Statement);
   }
-  parseReturnStatement(
-    scope: Scope = this.program.globalScope,
-  ): ReturnStatement | null {
+  parseReturnStatement(scope: Scope): ReturnStatement | null {
     const rt = this.tokenizer.getToken();
     if (!isIdentifier(rt) || rt.text !== "rt") return null;
     const express = this.parseExpression(scope);
@@ -569,9 +548,7 @@ export class Parser {
     const node = new ReturnStatement(express);
     return node;
   }
-  parseParameterExpression(
-    scope: Scope = this.program.globalScope,
-  ): ParameterExpression | null {
+  parseParameterExpression(scope: Scope): ParameterExpression | null {
     const name = this.tokenizer.getToken();
     if (!isIdentifier(name) || this.tokenizer.getToken().text !== ":")
       return null;
@@ -584,9 +561,7 @@ export class Parser {
     scope.add(name.text, node);
     return node;
   }
-  parseBlockExpression(
-    scope: Scope = this.program.globalScope,
-  ): BlockExpression | null {
+  parseBlockExpression(scope: Scope): BlockExpression | null {
     let token = this.tokenizer.getToken();
     if (token.token !== Token.LeftBracket) return null;
     const stmts: Statement[] = [];
@@ -599,9 +574,7 @@ export class Parser {
     const node = new BlockExpression(stmts);
     return node;
   }
-  parseBinaryExpression(
-    scope: Scope = this.program.globalScope,
-  ): BinaryExpression | null {
+  parseBinaryExpression(scope: Scope): BinaryExpression | null {
     let left: Expression | null = this.parseExpression(scope, "BinaryExpression");
     const op = tokenToOp(this.tokenizer.getToken());
     let right: Expression | null = this.parseExpression(scope, "BinaryExpression");
@@ -625,30 +598,30 @@ export class Parser {
     // Check scope
     return node;
   }
-  parseIdentifierExpression(
-    scope: Scope = this.program.globalScope,
-  ): Identifier | null {
+  parseParenthesizedExpression(scope: Scope) {
+    if (this.tokenizer.getToken().text !== "(") return null;
+    const expression = this.parseExpression(scope);
+    if (this.tokenizer.getToken().text !== ")") return null;
+    if (!expression) return null;
+    
+    const node = new ParenthesizedExpression(expression, Range.from())
+  }
+  parseIdentifierExpression(scope: Scope): Identifier | null {
     const id = this.tokenizer.getToken();
     if (!isIdentifier(id)) return null;
     return new Identifier(id.text, id.range);
   }
-  parseNumberLiteral(
-    scope: Scope = this.program.globalScope,
-  ): NumberLiteral | null {
+  parseNumberLiteral(scope: Scope): NumberLiteral | null {
     const num = this.tokenizer.getToken(); // 1234567890_.
     if (!isNumeric(num)) return null;
     return new NumberLiteral(num.text);
   }
-  parseStringLiteral(
-    scope: Scope = this.program.globalScope,
-  ): StringLiteral | null {
+  parseStringLiteral(scope: Scope): StringLiteral | null {
     const num = this.tokenizer.getToken(); // " ... "
     if (!isString(num)) return null;
     return new StringLiteral(num.text);
   }
-  parseBooleanLiteral(
-    scope: Scope = this.program.globalScope,
-  ): BooleanLiteral | null {
+  parseBooleanLiteral(scope: Scope): BooleanLiteral | null {
     const value = this.tokenizer.getToken();
     if (value.text === "true") return new BooleanLiteral(true);
     else if (value.text === "false") return new BooleanLiteral(false);

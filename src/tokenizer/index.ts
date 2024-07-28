@@ -49,7 +49,7 @@ export class Tokenizer {
     return result;
   }
   getToken(): TokenData {
-    if (this.position.index >= this.text.length) {
+    if (this.position.current >= this.text.length) {
       this.position.markPosition();
       return new TokenData(Token.EOF, "", this.position.toRange());
     }
@@ -58,42 +58,47 @@ export class Tokenizer {
       const tok = this.nextToken;
       this.position.markPosition();
       this.nextToken = null;
-      this.position.index++;
+      this.position.current++;
       tok.range = this.position.toRange();
       return tok;
     }
 
     while (true) {
-      const code = this.text.charCodeAt(this.position.index);
+      const code = this.text.charCodeAt(this.position.current);
       switch (code) {
         case 32 /*" "*/:
         case 9 /* \t */:
-          this.position.index++;
+          this.position.current++;
           break;
         case 10 /* \n */:
           this.position.incrementLine();
-          this.position.index++;
+          this.position.current++;
           break;
         default:
-          let char = this.text[this.position.index];
+          let char = this.text[this.position.current];
 
-          const punct = isPunctuation(char, this.position);
-          if (punct) {
-            punct.range.end += punct.text.length;
-            this.position.index++;
-            this.tokens.push(punct);
-            return punct;
+          const pun = isPunctuation(char, this.position);
+          if (pun) {
+            pun.range.end.column += pun.text.length;
+            this.position.current++;
+            this.tokens.push(pun);
+            return pun;
           }
 
           this.position.markPosition();
 
-          while (this.position.index < this.text.length) {
-            char = this.text[this.position.index];
+          while (this.position.current < this.text.length) {
+            char = this.text[this.position.current];
             if (char === "\n") {
               const txt = this.text.slice(
                 this.position.start,
-                this.position.index,
+                this.position.current,
               );
+
+              for (let i = 0; i < txt.length; i++) {
+                if (txt[i] === "\n") this.position.incrementLine();
+              }
+
               const tok = new TokenData(
                 Token.Identifier,
                 txt,
@@ -119,41 +124,52 @@ export class Tokenizer {
                 return tok;
               } else {
                 this.position.incrementLine();
-                this.position.index++;
+                this.position.current++;
                 return tok;
               }
-            } else if (char == "\"") {
-              this.position.index++;
+            } else if (char == '"') {
+              this.position.current++;
               this.position.markPosition();
               while (true) {
-                char = this.text[this.position.index];
-                if (char === "\"") {
-                  const txt = this.text.slice(this.position.start, this.position.index);
+                char = this.text[this.position.current];
+                if (char === '"') {
+                  const txt = this.text.slice(
+                    this.position.start,
+                    this.position.current,
+                  );
+                  for (let i = 0; i < txt.length; i++) {
+                    if (txt[i] === "\n") this.position.incrementLine();
+                  }
                   const tok = new TokenData(
                     Token.String,
                     txt,
                     this.position.toRange(),
-                  )
-                  this.position.index++;
+                  );
+                  this.position.current++;
                   this.tokens.push(tok);
                   return tok;
-                }
-                if (this.position.index >= this.text.length) {
+                } else if (char === "\n") {
+                  this.position.incrementLine();
+                } else if (this.position.current >= this.text.length) {
                   this.position.markPosition();
                   return new TokenData(Token.EOF, "", this.position.toRange());
                 }
-                this.position.index++;
+                this.position.current++;
               }
             } else {
-              const punct = isPunctuation(char, this.position);
-              if (punct) {
-                this.nextToken = punct;
+              const pun = isPunctuation(char, this.position);
+              if (pun) {
+                this.nextToken = pun;
                 const txt = this.text.slice(
                   this.position.start,
-                  this.position.index,
+                  this.position.current,
                 );
                 const firstChar = txt[0];
                 const lastChar = txt[txt.length - 1];
+
+                for (let i = 0; i < txt.length; i++) {
+                  if (txt[i] === "\n") this.position.incrementLine();
+                }
 
                 if (firstChar == '"' && lastChar == '"') {
                   const tok = new TokenData(
@@ -183,10 +199,14 @@ export class Tokenizer {
               } else if (isWhitespace(char)) {
                 const txt = this.text.slice(
                   this.position.start,
-                  this.position.index,
+                  this.position.current,
                 );
                 const firstChar = txt[0];
                 const lastChar = txt[txt.length - 1];
+
+                for (let i = 0; i < txt.length; i++) {
+                  if (txt[i] === "\n") this.position.incrementLine();
+                }
 
                 if (firstChar == '"' && lastChar == '"') {
                   const tok = new TokenData(
@@ -194,7 +214,7 @@ export class Tokenizer {
                     txt,
                     this.position.toRange(),
                   );
-                  this.position.index++;
+                  this.position.current++;
                   this.tokens.push(tok);
                   return tok;
                 } else if (!isNaN(parseFloat(txt))) {
@@ -203,7 +223,7 @@ export class Tokenizer {
                     txt,
                     this.position.toRange(),
                   );
-                  this.position.index++;
+                  this.position.current++;
                   this.tokens.push(tok);
                   return tok;
                 } else {
@@ -212,26 +232,34 @@ export class Tokenizer {
                     txt,
                     this.position.toRange(),
                   );
-                  this.position.index++;
+                  this.position.current++;
                   this.tokens.push(tok);
                   return tok;
                 }
               } else {
-                this.position.index++;
+                this.position.current++;
               }
             }
           }
           // bad design choice
-          const txt = this.text.slice(this.position.start, this.position.index);
+          const txt = this.text.slice(
+            this.position.start,
+            this.position.current
+          );
           const firstChar = txt[0];
           const lastChar = txt[txt.length - 1];
+
+          for (let i = 0; i < txt.length; i++) {
+            if (txt[i] === "\n") this.position.incrementLine();
+          }
+          
           if (firstChar == '"' && lastChar == '"') {
             const tok = new TokenData(
               Token.String,
               txt,
               this.position.toRange(),
             );
-            this.position.index++;
+            this.position.current++;
             this.tokens.push(tok);
             return tok;
           } else if (!isNaN(parseFloat(txt))) {
@@ -240,7 +268,7 @@ export class Tokenizer {
               txt,
               this.position.toRange(),
             );
-            this.position.index++;
+            this.position.current++;
             this.tokens.push(tok);
             return tok;
           } else {
@@ -251,7 +279,7 @@ export class Tokenizer {
               txt,
               this.position.toRange(),
             );
-            this.position.index++;
+            this.position.current++;
             this.tokens.push(tok);
             return tok;
           }
@@ -260,7 +288,7 @@ export class Tokenizer {
   }
   viewToken(lookahead: number = 0): TokenData {
     const state = this.createState();
-    let tok: TokenData;
+    let tok!: TokenData;
     if (!lookahead) {
       tok = this.getToken();
       state.resume();
@@ -285,23 +313,27 @@ class TokenizerState {
   public tokenizer: Tokenizer;
   public nextToken: TokenData | null;
   public position: Position;
-  constructor(tokenizer: Tokenizer, position: Position, nextToken: TokenData | null = null) {
+  constructor(
+    tokenizer: Tokenizer,
+    position: Position,
+    nextToken: TokenData | null = null,
+  ) {
     this.tokenizer = tokenizer;
     this.position = position;
     this.nextToken = nextToken;
   }
   pause(): void {
     this.nextToken = this.tokenizer.nextToken;
-    this.index = this.position.index;
+    this.index = this.position.current;
     this.start = this.position.start;
     this.line = this.position.line;
-    this.lineStart = this.position.lineStart;
+    this.lineStart = this.position.line_start;
   }
   resume(): void {
     this.tokenizer.nextToken = this.nextToken;
-    this.position.index = this.index;
+    this.position.current = this.index;
     this.position.start = this.start;
     this.position.line = this.line;
-    this.position.lineStart = this.lineStart;
+    this.position.line_start = this.lineStart;
   }
 }

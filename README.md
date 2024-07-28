@@ -10,6 +10,7 @@
 v0.0.0-wip</pre></h3>
 
 ## Capabilities
+
 - ✅ Tokenizer
 - ✅ Scopes
 
@@ -19,6 +20,7 @@ v0.0.0-wip</pre></h3>
 - ✅ Transpile to AssemblyScript
 
 ## Achievements
+
 - ✅ Hello World with all handwritten pieces
 - ✅ Simple math operations
 

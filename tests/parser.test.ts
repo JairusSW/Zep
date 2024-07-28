@@ -119,7 +119,14 @@ describe("Should parse Statements", () => {
 
     expect(node?.block.statements.length).toBe(1);
 
-    expect(((((node?.block.statements[0] as ReturnStatement).returning as BinaryExpression).left) as ReferenceExpression).referencing as Iden)
+    expect(
+      (
+        (
+          (node?.block.statements[0] as ReturnStatement)
+            .returning as BinaryExpression
+        ).left as ReferenceExpression
+      ).referencing as Iden,
+    );
 
     expect(parser.program.globalScope.has(node?.name.data!)).toBe(true);
 

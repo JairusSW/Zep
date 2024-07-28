@@ -2,7 +2,6 @@
 
 ## Design
 
-
 ```rust
 #[extern]: env.print
 fn print(data: i32) -> void
@@ -10,7 +9,7 @@ fn print(data: i32) -> void
 #[export]: main
 fn main() -> void {
   print(5)
-  
+
   for i in 0..5 {
     print(i)
   }

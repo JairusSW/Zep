@@ -1,9 +1,15 @@
+import { Range } from "../Range";
 import { Expression } from "./Expression";
 import { Statement } from "./Statement";
 
 export class ReferenceExpression extends Expression {
   public nameOf: string = "ReferenceExpression";
-  constructor(public name: string, public referencing: Statement) {
+  public name: string;
+  public referencing: Statement;
+  constructor(name: string, referencing: Statement, range: Range) {
     super();
+    this.name = name;
+    this.referencing = referencing;
+    this.range = range;
   }
 }

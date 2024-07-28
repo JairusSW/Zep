@@ -15,7 +15,7 @@ import { TypeExpression } from "../ast/nodes/TypeExpression.js";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
 
 export class Visitor {
-  constructor() { }
+  constructor() {}
   visit(node: Node) {
     if (node instanceof BinaryExpression) {
       this.visitBinaryExpression(node);
@@ -69,7 +69,7 @@ export class Visitor {
     this.visit(node.returnType);
     this.visit(node.block);
   }
-  visitIdentifier(node: Identifier) { }
+  visitIdentifier(node: Identifier) {}
   visitImportDeclaration(node: ImportDeclaration) {
     this.visit(node.path);
   }
@@ -83,7 +83,7 @@ export class Visitor {
     this.visit(node.tag);
     if (node.content) this.visit(node.content);
   }
-  visitNumberLiteral(node: NumberLiteral) { }
+  visitNumberLiteral(node: NumberLiteral) {}
   visitParameterExpression(node: ParameterExpression) {
     this.visit(node.name);
     if (node.type) this.visit(node.type);
@@ -91,8 +91,8 @@ export class Visitor {
   visitReturnStatement(node: ReturnStatement) {
     this.visit(node.returning);
   }
-  visitStringLiteral(node: StringLiteral) { }
-  visitTypeExpression(node: TypeExpression) { }
+  visitStringLiteral(node: StringLiteral) {}
+  visitTypeExpression(node: TypeExpression) {}
   visitVariableDeclaration(node: VariableDeclaration) {
     this.visit(node.name);
     this.visit(node.value);

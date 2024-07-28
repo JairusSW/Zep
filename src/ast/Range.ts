@@ -1,12 +1,17 @@
-import { Program } from "./Program";
+export class RangeData {
+  public line: number = 0;
+  public column: number = 0;
+}
 
 export class Range {
-  public line: number;
-  public start: number;
-  public end: number;
-  constructor(line: number, start: number, end: number) {
-    this.line = line;
+  public start: RangeData;
+  public end: RangeData;
+  // public source: Source;
+  constructor(start: RangeData, end: RangeData) {
     this.start = start;
     this.end = end;
+  }
+  static from(start: Range, end: Range): Range {
+    return new Range(start.start, end.end);
   }
 }

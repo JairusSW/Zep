@@ -1,4 +1,4 @@
-import { isBuiltinType, isEquals } from "../../util/types/checkers.js";
+import { Range } from "../Range.js";
 import { Expression } from "./Expression.js";
 import { Identifier } from "./Identifier.js";
 import { Statement } from "./Statement.js";
@@ -15,11 +15,13 @@ export class VariableDeclaration extends Statement {
     name: Identifier,
     type: TypeExpression,
     mutable: boolean,
+    range: Range,
   ) {
     super();
     this.value = value;
     this.name = name;
     this.type = type;
     this.mutable = mutable;
+    this.range = range;
   }
 }

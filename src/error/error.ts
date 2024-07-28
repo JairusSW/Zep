@@ -5,7 +5,7 @@ import { Program } from "../ast/Program";
 export enum ErrorTypes {
   TokenMismatch,
   TypeError,
-  SyntaxError
+  SyntaxError,
 }
 
 export class CompileTimeError {
@@ -38,7 +38,14 @@ export class TokenMismatchError extends CompileTimeError {
 
 export class SyntaxError extends CompileTimeError {
   public range: Range;
-  constructor(program: Program, prefix: string,message: string, code: number, range: Range, action: "FAIL" | "WARN" | "INFO") {
+  constructor(
+    program: Program,
+    prefix: string,
+    message: string,
+    code: number,
+    range: Range,
+    action: "FAIL" | "WARN" | "INFO",
+  ) {
     super(message, ErrorTypes.SyntaxError, code);
     this.range = range;
     let color;

@@ -1,4 +1,5 @@
 import { Scope } from "../../checker/scope/Scope.js";
+import { Range } from "../Range.js";
 import { BlockExpression } from "./BlockExpression.js";
 import { Identifier } from "./Identifier.js";
 import { ParameterExpression } from "./ParameterExpression.js";
@@ -10,7 +11,6 @@ export class FunctionDeclaration extends Statement {
   public name: Identifier;
   public parameters: ParameterExpression[];
   public returnType: TypeExpression;
-  //public genericType: TypeExpression | null;
   public block: BlockExpression;
   public scope: Scope;
   public exported: boolean;
@@ -20,7 +20,8 @@ export class FunctionDeclaration extends Statement {
     returnType: TypeExpression,
     block: BlockExpression,
     scope: Scope,
-    exported: boolean
+    exported: boolean,
+    range: Range,
   ) {
     super();
     this.name = name;
@@ -32,5 +33,6 @@ export class FunctionDeclaration extends Statement {
     for (const param of this.parameters) {
       this.scope.add(param.name.data, param);
     }
+    this.range = range;
   }
 }

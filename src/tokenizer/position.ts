@@ -4,10 +4,13 @@ import { Range } from "../ast/Range";
  * Represents a position in a text document.
  */
 export class Position {
-  public index: number = 0;
-  public line: number = 0;
-  public start: number = 0;
-  public lineStart: number = 0;
+  public current = 0;
+  public line = 0;
+  public line_start = 0;
+
+  public start = 0;
+  public start_line = 0;
+  public start_line_start = 0;
 
   /**
    * Creates a new Position instance.
@@ -15,7 +18,7 @@ export class Position {
    * @param line The current line number in the text document.
    */
   constructor(index: number, line: number) {
-    this.index = index;
+    this.current = index;
     this.line = line;
   }
 
@@ -24,14 +27,16 @@ export class Position {
    */
   incrementLine(): void {
     this.line++;
-    this.lineStart = this.index;
+    this.line_start = this.current;
   }
 
   /**
    * Sets the start property to the current index value.
    */
   markPosition(): void {
-    this.start = this.index;
+    this.start = this.current;
+    this.start_line = this.line;
+    this.start_line_start = this.line_start;
   }
 
   /**
@@ -40,9 +45,14 @@ export class Position {
    */
   toRange(): Range {
     return new Range(
-      this.line,
-      this.start - this.lineStart,
-      this.index - this.lineStart,
+      {
+        line: this.start - this.start_line_start,
+        column: this.start_line
+      },
+      {
+        line: this.current - this.line_start,
+        column: this.line
+      }
     );
   }
 }
