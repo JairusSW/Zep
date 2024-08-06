@@ -190,6 +190,7 @@ export class Tokenizer {
                 this.position.toRange(),
               );
               this.tokens.push(tok);
+              if (txt == "") throw "Hadfew"
               return tok;
             }
           } else if (isWhitespace(char)) {
@@ -197,6 +198,10 @@ export class Tokenizer {
               this.position.start,
               this.position.current,
             );
+            if (!txt) {
+              this.position.current++;
+              return this.getToken();
+            }
             const firstChar = txt[0];
             const lastChar = txt[txt.length - 1];
 
@@ -238,6 +243,10 @@ export class Tokenizer {
         this.position.start,
         this.position.current
       );
+      if (!txt) {
+        this.position.current++;
+        return this.getToken();
+      }
       const firstChar = txt[0];
       const lastChar = txt[txt.length - 1];
 

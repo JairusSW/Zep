@@ -135,10 +135,11 @@ export class Transpile {
     let body = "{";
     depth += "  ";
     for (const stmt of node.block.statements) {
-      body += Transpile.from(stmt) + "\n";
+      body += "\n" + Transpile.from(stmt);
     }
     depth = depth.slice(0, depth.length - 2);
-    body += "}";
+    if (body.length > 1) body += "\n"
+    body += depth + "}";
     return depth + "if (" + Transpile.from(node.condition) + ") " + body;
   }
   static BooleanLiteral(node: BooleanLiteral) {

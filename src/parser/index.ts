@@ -81,13 +81,13 @@ export class Parser {
   parseExpression(scope: Scope, besides: string | null = null): Expression | null {
     let express: Expression | null = null;
     const state = this.tokenizer.createState();
+    if (besides !== "BinaryExpression" && (express = this.parseBinaryExpression(scope))) return express;
+    state.resume();
     if (besides !== "NumberLiteral" && (express = this.parseNumberLiteral(scope))) return express;
     state.resume();
     if (besides !== "StringLiteral" && (express = this.parseStringLiteral(scope))) return express;
     state.resume();
     if (besides !== "BooleanLiteral" && (express = this.parseBooleanLiteral(scope))) return express;
-    state.resume();
-    if (besides !== "BinaryExpression" && (express = this.parseBinaryExpression(scope))) return express;
     state.resume();
     if (besides !== "ReferenceExpression" && (express = this.parseReferenceExpression(scope))) return express;
     state.resume();
@@ -171,6 +171,7 @@ export class Parser {
     let exported = false;
 
     const exp = this.parseModifierExpression(scope);
+    console.log("exp:: ", exp)
     if (!exp) state.resume();
     else if (exp.tag.data == "export") exported = true;
     const fn = this.tokenizer.getToken();
@@ -398,7 +399,7 @@ export class Parser {
     while (true) {
       const token = this.tokenizer.getToken();
       if (
-        contentFirstToken.range.start !== token.range.start ||
+        contentFirstToken.range.start.line !== token.range.start.line ||
         token.token === Token.EOF
       ) {
         state.resume();
@@ -413,12 +414,9 @@ export class Parser {
       this.tokenizer.position.toRange()
     );
 
-    let exported = true;
+    let exported = false;
 
-    const exp = this.tokenizer.getToken();
-    if (!isIdentifier(exp)) return null;
-    if (exp.text !== "export") exported = false;
-    const fn = exported ? this.tokenizer.getToken() : exp;
+    const fn = this.tokenizer.getToken();
     if (!isIdentifier(fn) || fn.text !== "fn") return null;
 
     const name = this.tokenizer.getToken();

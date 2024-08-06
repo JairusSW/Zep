@@ -9,7 +9,8 @@
   "contributors": [],
   "license": "MIT",
   "scripts": {
-    "run:test": "bun run ./src/test.ts"
+    "run:test": "bun run ./src/test.ts",
+    "run:test:debug": "tsx ./src/test.ts"
   },
   "devDependencies": {
     "@types/node": "^20.14.12",
@@ -21,6 +22,7 @@
     "prettier": "^3.3.3",
     "tinybench": "^2.8.0",
     "treeify": "^1.1.0",
+    "tsx": "^4.16.5",
     "typescript": "^5.5.4"
   },
   "dependencies": {

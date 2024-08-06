@@ -11,7 +11,9 @@ fn print(num: i32) -> void
 #[export]
 fn main(a: i32, b: i32) -> i32 {
   print(123)
-  if (true) {}
+  if (true) {
+    print(12 + 3)
+  }
   rt a + b
 }
 `);
