@@ -1,9 +1,9 @@
-import { Program } from "../ast/Program";
+import { Source } from "../ast/Source";
 import { FunctionDeclaration } from "../ast/nodes/Function";
 import { ErrorTypes } from "../error/error";
 
 export class Validator {
-  constructor(public program: Program) {}
+  constructor(public program: Source) {}
   validate() {}
   validateFunctionDeclaration(node: FunctionDeclaration): {
     valid: boolean;

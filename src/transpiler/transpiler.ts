@@ -1,4 +1,4 @@
-import { Program } from "../ast/Program";
+import { Source } from "../ast/Source";
 import { BinaryExpression } from "../ast/nodes/BinaryExpression";
 import { BooleanLiteral } from "../ast/nodes/BooleanLiteral";
 import { CallExpression } from "../ast/nodes/CallExpression";
@@ -18,8 +18,8 @@ import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
 let depth = "";
 
 export class Transpile {
-  static from(node: Node | Program): string {
-    if (node instanceof Program) {
+  static from(node: Node | Source): string {
+    if (node instanceof Source) {
       let out = "";
       for (const top of node.topLevelStatements) {
         out += Transpile.from(top) + "\n";

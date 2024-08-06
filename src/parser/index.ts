@@ -4,7 +4,7 @@ import { Tokenizer } from "../tokenizer/index.js";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
 import { StringLiteral } from "../ast/nodes/StringLiteral.js";
 import { TypeExpression } from "../ast/nodes/TypeExpression.js";
-import { Program } from "../ast/Program.js";
+import { Source } from "../ast/Source.js";
 import { FunctionDeclaration } from "../ast/nodes/Function.js";
 import { BlockExpression } from "../ast/nodes/BlockExpression.js";
 import { ParameterExpression } from "../ast/nodes/ParameterExpression.js";
@@ -37,7 +37,7 @@ import { EnumElement } from "../ast/nodes/EnumElement.js";
 import { ParenthesizedExpression } from "../ast/nodes/PathenthesizedExpression.js";
 
 export class Parser {
-  public program: Program = new Program("test.zp");
+  public program: Source = new Source("test.zp");
   public pos: number = 0;
   public tokenizer: Tokenizer;
   constructor(
@@ -46,7 +46,7 @@ export class Parser {
   ) {
     this.tokenizer = tokenizer;
   }
-  parseProgram(): Program {
+  parseSource(): Source {
     while (this.parseTopLevelStatement(this.program.globalScope)) { }
     return this.program;
   }
@@ -157,8 +157,9 @@ export class Parser {
     const node = new VariableDeclaration(
       value,
       new Identifier(name.text, name.range),
-      new TypeExpression([type.text]),
+      new TypeExpression([type.text], false, type.range),
       mutable,
+      Range.from(value.range, this.tokenizer.position.toRange())
     );
 
     scope.add(name.text, node);
@@ -197,10 +198,11 @@ export class Parser {
     const node = new FunctionDeclaration(
       new Identifier(name.text, name.range),
       params,
-      new TypeExpression([returnType.text], false),
+      new TypeExpression([returnType.text], false, returnType.range),
       block,
       new Scope(scope),
-      exported
+      exported,
+      Range.from(exp?.range || fn.range, this.tokenizer.position.toRange())
     );
 
     if (scope.parentScope) {
@@ -239,8 +241,9 @@ export class Parser {
     let elementValue: NumberLiteral | null = null;
 
     let index = 0;
+    let trailing!: TokenData;
     while (true) {
-      const trailing = this.tokenizer.getToken();
+      trailing = this.tokenizer.getToken();
       if (trailing.text === "}" || trailing.text === ",") {
         const element = new EnumElement(
           new Identifier(
@@ -248,8 +251,10 @@ export class Parser {
             elementName.range
           ),
           elementValue || new NumberLiteral(
-            index.toString()
-          )
+            index.toString(),
+            this.tokenizer.position.toRange()
+          ),
+          Range.from(elementName.range, this.tokenizer.position.toRange())
         );
 
         if (elementValue) elementValue = null;
@@ -273,7 +278,8 @@ export class Parser {
         name.text,
         name.range
       ),
-      elements
+      elements,
+      Range.from(elementName.range, trailing.range)
     );
 
     this.program.globalScope.add(name.text, node);
@@ -283,6 +289,7 @@ export class Parser {
   }
   parseIfStatement(scope: Scope): IfStatement | null {
     if (this.tokenizer.getToken().text !== "if") return null;
+    const start = this.tokenizer.position.toRange();
     if (this.tokenizer.getToken().text !== "(") return null;
     const condition = this.parseBooleanLiteral(scope);
     if (this.tokenizer.getToken().text !== ")") return null;
@@ -290,7 +297,7 @@ export class Parser {
     const block = this.parseBlockExpression(scope);
     if (!block) return null;
 
-    const node = new IfStatement(condition, block);
+    const node = new IfStatement(condition, block, Range.from(start, block.range));
     return node;
   }
   parseModifierExpression(scope: Scope): ModifierExpression | null {
@@ -311,6 +318,8 @@ export class Parser {
     if (colonToken.token !== Token.Colon) {
       const node = new ModifierExpression(
         new Identifier(tagToken.text, tagToken.range),
+        null,
+        Range.from(hashToken.range, colonToken.range)
       );
       return node;
     }
@@ -339,15 +348,12 @@ export class Parser {
     }*/
     const contentId = new Identifier(
       content.map((v) => v.text).join(""),
-      new Range(
-        contentFirstToken.range.line,
-        contentFirstToken.range.start,
-        content[content.length - 1].range.end,
-      ),
+      this.tokenizer.position.toRange(),
     );
     const node = new ModifierExpression(
       new Identifier(tagToken.text, tagToken.range),
       contentId,
+      Range.from(hashToken.range, contentId.range)
     );
     return node;
   }
@@ -392,7 +398,7 @@ export class Parser {
     while (true) {
       const token = this.tokenizer.getToken();
       if (
-        contentFirstToken.range.line !== token.range.line ||
+        contentFirstToken.range.start !== token.range.start ||
         token.token === Token.EOF
       ) {
         state.resume();
@@ -404,11 +410,7 @@ export class Parser {
 
     const contentId = new Identifier(
       content.map((v) => v.text).join(""),
-      new Range(
-        contentFirstToken.range.line,
-        contentFirstToken.range.start,
-        content[content.length - 1].range.end,
-      ),
+      this.tokenizer.position.toRange()
     );
 
     let exported = true;
@@ -449,8 +451,9 @@ export class Parser {
       contentId,
       new Identifier(name.text, name.range),
       params,
-      new TypeExpression([returnType.text], false),
-      exported
+      new TypeExpression([returnType.text], false, returnType.range),
+      exported,
+      Range.from(hashToken.range, returnType.range)
     );
 
     scope.add(name.text, node);
@@ -461,35 +464,20 @@ export class Parser {
   }
   parseBranchStatement(scope: Scope): BranchStatement | null {
     if (this.tokenizer.getToken().text !== "branch") return null;
+    const start = this.tokenizer.position.toRange();
     const name = this.tokenizer.getToken();
     if (name.token !== Token.Identifier) return null;
 
-    let block: BlockExpression;
-
-    if (this.tokenizer.viewToken().token !== Token.LeftBracket) {
-      const stmt = this.parseNode(scope);
-      if (!stmt) return null;
-      block = new BlockExpression([
-        stmt
-      ]);
-    } else {
-      scope.add(name.text, new Statement())
-      if (this.tokenizer.getToken().token !== Token.LeftBracket) return null;
-      const stmts: Statement[] = [];
-      while (true) {
-        let stmt: Node | null = this.parseCallExpression(scope);
-        if (stmt) stmts.push(stmt);
-        else break;
-      }
-      block = new BlockExpression(stmts);
-    }
+    const block = this.parseBlockExpression(scope);
+    if (!block) return null;
 
     const node = new BranchStatement(
       new Identifier(
         name.text,
         name.range
       ),
-      block
+      block,
+      Range.from(start, block)
     );
     scope.add(name.text, node);
     return node;
@@ -497,13 +485,15 @@ export class Parser {
 
   parseBranchToStatement(scope: Scope): BranchToStatement | null {
     if (this.tokenizer.getToken().text !== "br") return null;
+    const start = this.tokenizer.position.toRange();
     const branchTo = this.tokenizer.getToken();
     if (branchTo.token !== Token.Identifier) return null
     const node = new BranchToStatement(
       new Identifier(
         branchTo.text,
         branchTo.range
-      )
+      ),
+      Range.from(start, branchTo.range)
     );
     return node;
   }
@@ -531,6 +521,7 @@ export class Parser {
     const node = new CallExpression(
       new Identifier(calling.text, calling.range),
       args,
+      Range.from(calling.range, args[args.length - 1].range)
     );
 
     return node;
@@ -538,14 +529,21 @@ export class Parser {
   parseReferenceExpression(scope: Scope): ReferenceExpression | null {
     const id = this.tokenizer.getToken();
     if (!scope.has(id.text)) return null;
-    return new ReferenceExpression(id.text, scope.get(id.text)! as Statement);
+    return new ReferenceExpression(
+      id.text,
+      scope.get(id.text)! as Statement,
+      id.range
+    );
   }
   parseReturnStatement(scope: Scope): ReturnStatement | null {
     const rt = this.tokenizer.getToken();
     if (!isIdentifier(rt) || rt.text !== "rt") return null;
-    const express = this.parseExpression(scope);
-    if (!express) return null;
-    const node = new ReturnStatement(express);
+    const expr = this.parseExpression(scope);
+    if (!expr) return null;
+    const node = new ReturnStatement(
+      expr,
+      Range.from(rt.range, expr.range)
+    );
     return node;
   }
   parseParameterExpression(scope: Scope): ParameterExpression | null {
@@ -556,7 +554,8 @@ export class Parser {
     if (!isBuiltinType(type)) return null;
     const node = new ParameterExpression(
       new Identifier(name.text, name.range),
-      new TypeExpression([type.text], false),
+      new TypeExpression([type.text], false, type.range),
+      Range.from(name.range, type.range)
     );
     scope.add(name.text, node);
     return node;
@@ -571,7 +570,11 @@ export class Parser {
       else break;
     }
     if (this.tokenizer.getToken().token !== Token.RightBracket) return null;
-    const node = new BlockExpression(stmts);
+    const node = new BlockExpression(
+      stmts,
+      scope,
+      Range.from(token.range, this.tokenizer.position.toRange())
+    );
     return node;
   }
   parseBinaryExpression(scope: Scope): BinaryExpression | null {
@@ -584,7 +587,11 @@ export class Parser {
     }
     if (left instanceof Identifier) {
       if (scope.has(left.data)) {
-        left = new ReferenceExpression(left.data, left);
+        left = new ReferenceExpression(
+          left.data,
+          left,
+          left.range
+        );
       } else {
         new TokenMismatchError(
           `Cannot find name ${left.data} in scope`,
@@ -594,17 +601,23 @@ export class Parser {
         return null;
       }
     }
-    const node = new BinaryExpression(left, op, right);
+    const node = new BinaryExpression(
+      left,
+      op,
+      right,
+      Range.from(left.range, right.range)
+    );
     // Check scope
     return node;
   }
   parseParenthesizedExpression(scope: Scope) {
     if (this.tokenizer.getToken().text !== "(") return null;
-    const expression = this.parseExpression(scope);
+    const start = this.tokenizer.position.toRange();
+    const expr = this.parseExpression(scope);
     if (this.tokenizer.getToken().text !== ")") return null;
-    if (!expression) return null;
-    
-    const node = new ParenthesizedExpression(expression, Range.from())
+    if (!expr) return null;
+
+    const node = new ParenthesizedExpression(expr, Range.from(start, expr.range))
   }
   parseIdentifierExpression(scope: Scope): Identifier | null {
     const id = this.tokenizer.getToken();
@@ -614,17 +627,17 @@ export class Parser {
   parseNumberLiteral(scope: Scope): NumberLiteral | null {
     const num = this.tokenizer.getToken(); // 1234567890_.
     if (!isNumeric(num)) return null;
-    return new NumberLiteral(num.text);
+    return new NumberLiteral(num.text, num.range);
   }
   parseStringLiteral(scope: Scope): StringLiteral | null {
-    const num = this.tokenizer.getToken(); // " ... "
-    if (!isString(num)) return null;
-    return new StringLiteral(num.text);
+    const str = this.tokenizer.getToken(); // " ... "
+    if (!isString(str)) return null;
+    return new StringLiteral(str.text, str.range);
   }
   parseBooleanLiteral(scope: Scope): BooleanLiteral | null {
     const value = this.tokenizer.getToken();
-    if (value.text === "true") return new BooleanLiteral(true);
-    else if (value.text === "false") return new BooleanLiteral(false);
+    if (value.text === "true") return new BooleanLiteral(true, value.range);
+    else if (value.text === "false") return new BooleanLiteral(false, value.range);
     return null;
   }
 }

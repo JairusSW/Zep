@@ -16,10 +16,9 @@ fn main(a: i32, b: i32) -> i32 {
 }
 `);
 
-console.log(tokenizer.getAll());
+console.dir(tokenizer.getAll(), { depth: 10 });
 const parser = new Parser(tokenizer, "test.zp");
-const program = parser.parseProgram();
-//console.dir(program, { depth: null });
+const program = parser.parseSource();
 console.dir(program, { depth: 10 });
 
 const transpiled = Transpile.from(program);

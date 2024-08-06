@@ -7,7 +7,7 @@ import { FunctionImport } from "../ast/nodes/FunctionImport";
 import { CallExpression } from "../ast/nodes/CallExpression";
 import { NumericDataType } from "../../../wazum/dist/nodes";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral";
-import { Program } from "../ast/Program";
+import { Source } from "../ast/Source";
 import { StringLiteral } from "../ast/nodes/StringLiteral";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
 import { writeLength } from "./util";
@@ -22,7 +22,7 @@ export class Generator {
   public module: w.Module = new w.Module();
   public segments: w.MemorySegment[] = [];
   constructor() {}
-  parseProgram(program: Program): void {
+  parseProgram(program: Source): void {
     for (const topStmt of program.topLevelStatements) {
       if (topStmt instanceof FunctionImport) {
         this.parseFnImport(topStmt);

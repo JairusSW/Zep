@@ -46,12 +46,12 @@ export class Position {
   toRange(): Range {
     return new Range(
       {
-        line: this.start - this.start_line_start,
-        column: this.start_line
+        line: this.start_line,
+        column: this.start - this.start_line_start
       },
       {
-        line: this.current - this.line_start,
-        column: this.line
+        line: this.line,
+        column: this.current - this.line_start
       }
     );
   }

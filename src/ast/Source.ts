@@ -1,7 +1,7 @@
 import { Scope } from "../checker/scope/Scope.js";
 import { Statement } from "./nodes/Statement.js";
 
-export class Program {
+export class Source {
   public topLevelStatements: Statement[] = [];
   public statements: Statement[] = [];
   public globalScope: Scope = new Scope();

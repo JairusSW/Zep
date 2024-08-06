@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { Range } from "../ast/Range";
-import { Program } from "../ast/Program";
+import { Source } from "../ast/Source";
 
 export enum ErrorTypes {
   TokenMismatch,
@@ -39,7 +39,7 @@ export class TokenMismatchError extends CompileTimeError {
 export class SyntaxError extends CompileTimeError {
   public range: Range;
   constructor(
-    program: Program,
+    program: Source,
     prefix: string,
     message: string,
     code: number,
