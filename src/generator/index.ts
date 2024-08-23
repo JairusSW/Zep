@@ -16,6 +16,7 @@ import { NoInfer } from "../../wazum/dist/utils";
 import { Node } from "../ast/nodes/Node";
 import { BranchStatement as BranchStatement } from "../ast/nodes/BranchStatement";
 import { BranchToStatement } from "../ast/nodes/BranchToStatement";
+import { IfStatement } from "../ast/nodes/IfStatement";
 
 let offset: number = 0;
 export class Generator {
@@ -70,6 +71,8 @@ export class Generator {
         body.push(this.parseReturnStatement(stmt));
       else if (stmt instanceof BranchStatement)
         body.push(this.parseBranch(stmt));
+      else if (stmt instanceof IfStatement) 
+        body.push(this.parseIfStmt(stmt));
       else
         throw new Error(
           "Could not parse body of FunctionDeclaration to wasm equivalent!",
@@ -97,6 +100,12 @@ export class Generator {
       <Instr<"void">>this.parseCall(<CallExpression>node.block.statements[0]),
       w.branch("a"),
     ]);
+  }
+  parseIfStmt(node: IfStatement): w.BranchIf {
+    return w.branchIf(
+      "block",
+      w.constant("i32", 1)
+    )
   }
   parseVariable(node: VariableDeclaration): w.LocalSet {
     if (node.value instanceof StringLiteral) {
