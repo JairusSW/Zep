@@ -1,0 +1,2213 @@
+[
+  TokenData {
+    text: "#",
+    token: 19,
+    range: Range {
+      start: {
+        line: 1,
+        column: 1,
+      },
+      end: {
+        line: 1,
+        column: 2,
+      },
+    },
+  }, TokenData {
+    text: "[",
+    token: 12,
+    range: Range {
+      start: {
+        line: 1,
+        column: 2,
+      },
+      end: {
+        line: 1,
+        column: 3,
+      },
+    },
+  }, TokenData {
+    text: "extern",
+    token: 0,
+    range: Range {
+      start: {
+        line: 1,
+        column: 3,
+      },
+      end: {
+        line: 1,
+        column: 9,
+      },
+    },
+  }, TokenData {
+    text: "]",
+    token: 13,
+    range: Range {
+      start: {
+        line: 1,
+        column: 9,
+      },
+      end: {
+        line: 1,
+        column: 10,
+      },
+    },
+  }, TokenData {
+    text: ":",
+    token: 6,
+    range: Range {
+      start: {
+        line: 1,
+        column: 10,
+      },
+      end: {
+        line: 1,
+        column: 11,
+      },
+    },
+  }, TokenData {
+    text: "env",
+    token: 0,
+    range: Range {
+      start: {
+        line: 1,
+        column: 12,
+      },
+      end: {
+        line: 1,
+        column: 15,
+      },
+    },
+  }, TokenData {
+    text: ".",
+    token: 14,
+    range: Range {
+      start: {
+        line: 1,
+        column: 15,
+      },
+      end: {
+        line: 1,
+        column: 16,
+      },
+    },
+  }, TokenData {
+    text: "print",
+    token: 0,
+    range: Range {
+      start: {
+        line: 1,
+        column: 16,
+      },
+      end: {
+        line: 1,
+        column: 21,
+      },
+    },
+  }, TokenData {
+    text: "fn",
+    token: 0,
+    range: Range {
+      start: {
+        line: 2,
+        column: 1,
+      },
+      end: {
+        line: 2,
+        column: 3,
+      },
+    },
+  }, TokenData {
+    text: "print",
+    token: 0,
+    range: Range {
+      start: {
+        line: 2,
+        column: 4,
+      },
+      end: {
+        line: 2,
+        column: 9,
+      },
+    },
+  }, TokenData {
+    text: "(",
+    token: 8,
+    range: Range {
+      start: {
+        line: 2,
+        column: 9,
+      },
+      end: {
+        line: 2,
+        column: 10,
+      },
+    },
+  }, TokenData {
+    text: "num",
+    token: 0,
+    range: Range {
+      start: {
+        line: 2,
+        column: 10,
+      },
+      end: {
+        line: 2,
+        column: 13,
+      },
+    },
+  }, TokenData {
+    text: ":",
+    token: 6,
+    range: Range {
+      start: {
+        line: 2,
+        column: 13,
+      },
+      end: {
+        line: 2,
+        column: 14,
+      },
+    },
+  }, TokenData {
+    text: "i32",
+    token: 0,
+    range: Range {
+      start: {
+        line: 2,
+        column: 15,
+      },
+      end: {
+        line: 2,
+        column: 18,
+      },
+    },
+  }, TokenData {
+    text: ")",
+    token: 9,
+    range: Range {
+      start: {
+        line: 2,
+        column: 18,
+      },
+      end: {
+        line: 2,
+        column: 19,
+      },
+    },
+  }, TokenData {
+    text: "-",
+    token: 16,
+    range: Range {
+      start: {
+        line: 2,
+        column: 20,
+      },
+      end: {
+        line: 2,
+        column: 21,
+      },
+    },
+  }, TokenData {
+    text: ">",
+    token: 17,
+    range: Range {
+      start: {
+        line: 2,
+        column: 21,
+      },
+      end: {
+        line: 2,
+        column: 22,
+      },
+    },
+  }, TokenData {
+    text: "void",
+    token: 0,
+    range: Range {
+      start: {
+        line: 2,
+        column: 23,
+      },
+      end: {
+        line: 2,
+        column: 27,
+      },
+    },
+  }, TokenData {
+    text: "#",
+    token: 19,
+    range: Range {
+      start: {
+        line: 4,
+        column: 1,
+      },
+      end: {
+        line: 4,
+        column: 2,
+      },
+    },
+  }, TokenData {
+    text: "[",
+    token: 12,
+    range: Range {
+      start: {
+        line: 4,
+        column: 2,
+      },
+      end: {
+        line: 4,
+        column: 3,
+      },
+    },
+  }, TokenData {
+    text: "export",
+    token: 0,
+    range: Range {
+      start: {
+        line: 4,
+        column: 3,
+      },
+      end: {
+        line: 4,
+        column: 9,
+      },
+    },
+  }, TokenData {
+    text: "]",
+    token: 13,
+    range: Range {
+      start: {
+        line: 4,
+        column: 9,
+      },
+      end: {
+        line: 4,
+        column: 10,
+      },
+    },
+  }, TokenData {
+    text: "fn",
+    token: 0,
+    range: Range {
+      start: {
+        line: 5,
+        column: 1,
+      },
+      end: {
+        line: 5,
+        column: 3,
+      },
+    },
+  }, TokenData {
+    text: "main",
+    token: 0,
+    range: Range {
+      start: {
+        line: 5,
+        column: 4,
+      },
+      end: {
+        line: 5,
+        column: 8,
+      },
+    },
+  }, TokenData {
+    text: "(",
+    token: 8,
+    range: Range {
+      start: {
+        line: 5,
+        column: 8,
+      },
+      end: {
+        line: 5,
+        column: 9,
+      },
+    },
+  }, TokenData {
+    text: "a",
+    token: 0,
+    range: Range {
+      start: {
+        line: 5,
+        column: 9,
+      },
+      end: {
+        line: 5,
+        column: 10,
+      },
+    },
+  }, TokenData {
+    text: ":",
+    token: 6,
+    range: Range {
+      start: {
+        line: 5,
+        column: 10,
+      },
+      end: {
+        line: 5,
+        column: 11,
+      },
+    },
+  }, TokenData {
+    text: "i32",
+    token: 0,
+    range: Range {
+      start: {
+        line: 5,
+        column: 12,
+      },
+      end: {
+        line: 5,
+        column: 15,
+      },
+    },
+  }, TokenData {
+    text: ",",
+    token: 7,
+    range: Range {
+      start: {
+        line: 5,
+        column: 15,
+      },
+      end: {
+        line: 5,
+        column: 16,
+      },
+    },
+  }, TokenData {
+    text: "b",
+    token: 0,
+    range: Range {
+      start: {
+        line: 5,
+        column: 17,
+      },
+      end: {
+        line: 5,
+        column: 18,
+      },
+    },
+  }, TokenData {
+    text: ":",
+    token: 6,
+    range: Range {
+      start: {
+        line: 5,
+        column: 18,
+      },
+      end: {
+        line: 5,
+        column: 19,
+      },
+    },
+  }, TokenData {
+    text: "i32",
+    token: 0,
+    range: Range {
+      start: {
+        line: 5,
+        column: 20,
+      },
+      end: {
+        line: 5,
+        column: 23,
+      },
+    },
+  }, TokenData {
+    text: ")",
+    token: 9,
+    range: Range {
+      start: {
+        line: 5,
+        column: 23,
+      },
+      end: {
+        line: 5,
+        column: 24,
+      },
+    },
+  }, TokenData {
+    text: "-",
+    token: 16,
+    range: Range {
+      start: {
+        line: 5,
+        column: 25,
+      },
+      end: {
+        line: 5,
+        column: 26,
+      },
+    },
+  }, TokenData {
+    text: ">",
+    token: 17,
+    range: Range {
+      start: {
+        line: 5,
+        column: 26,
+      },
+      end: {
+        line: 5,
+        column: 27,
+      },
+    },
+  }, TokenData {
+    text: "i32",
+    token: 0,
+    range: Range {
+      start: {
+        line: 5,
+        column: 28,
+      },
+      end: {
+        line: 5,
+        column: 31,
+      },
+    },
+  }, TokenData {
+    text: "{",
+    token: 10,
+    range: Range {
+      start: {
+        line: 5,
+        column: 32,
+      },
+      end: {
+        line: 5,
+        column: 33,
+      },
+    },
+  }, TokenData {
+    text: "print",
+    token: 0,
+    range: Range {
+      start: {
+        line: 6,
+        column: 3,
+      },
+      end: {
+        line: 6,
+        column: 8,
+      },
+    },
+  }, TokenData {
+    text: "(",
+    token: 8,
+    range: Range {
+      start: {
+        line: 6,
+        column: 8,
+      },
+      end: {
+        line: 6,
+        column: 9,
+      },
+    },
+  }, TokenData {
+    text: "123",
+    token: 1,
+    range: Range {
+      start: {
+        line: 6,
+        column: 9,
+      },
+      end: {
+        line: 6,
+        column: 12,
+      },
+    },
+  }, TokenData {
+    text: ")",
+    token: 9,
+    range: Range {
+      start: {
+        line: 6,
+        column: 12,
+      },
+      end: {
+        line: 6,
+        column: 13,
+      },
+    },
+  }, TokenData {
+    text: "if",
+    token: 0,
+    range: Range {
+      start: {
+        line: 7,
+        column: 3,
+      },
+      end: {
+        line: 7,
+        column: 5,
+      },
+    },
+  }, TokenData {
+    text: "(",
+    token: 8,
+    range: Range {
+      start: {
+        line: 7,
+        column: 6,
+      },
+      end: {
+        line: 7,
+        column: 7,
+      },
+    },
+  }, TokenData {
+    text: "true",
+    token: 0,
+    range: Range {
+      start: {
+        line: 7,
+        column: 7,
+      },
+      end: {
+        line: 7,
+        column: 11,
+      },
+    },
+  }, TokenData {
+    text: ")",
+    token: 9,
+    range: Range {
+      start: {
+        line: 7,
+        column: 11,
+      },
+      end: {
+        line: 7,
+        column: 12,
+      },
+    },
+  }, TokenData {
+    text: "{",
+    token: 10,
+    range: Range {
+      start: {
+        line: 7,
+        column: 13,
+      },
+      end: {
+        line: 7,
+        column: 14,
+      },
+    },
+  }, TokenData {
+    text: "print",
+    token: 0,
+    range: Range {
+      start: {
+        line: 8,
+        column: 5,
+      },
+      end: {
+        line: 8,
+        column: 10,
+      },
+    },
+  }, TokenData {
+    text: "(",
+    token: 8,
+    range: Range {
+      start: {
+        line: 8,
+        column: 10,
+      },
+      end: {
+        line: 8,
+        column: 11,
+      },
+    },
+  }, TokenData {
+    text: "12",
+    token: 1,
+    range: Range {
+      start: {
+        line: 8,
+        column: 11,
+      },
+      end: {
+        line: 8,
+        column: 13,
+      },
+    },
+  }, TokenData {
+    text: "+",
+    token: 15,
+    range: Range {
+      start: {
+        line: 8,
+        column: 14,
+      },
+      end: {
+        line: 8,
+        column: 15,
+      },
+    },
+  }, TokenData {
+    text: "3",
+    token: 1,
+    range: Range {
+      start: {
+        line: 8,
+        column: 16,
+      },
+      end: {
+        line: 8,
+        column: 17,
+      },
+    },
+  }, TokenData {
+    text: ")",
+    token: 9,
+    range: Range {
+      start: {
+        line: 8,
+        column: 17,
+      },
+      end: {
+        line: 8,
+        column: 18,
+      },
+    },
+  }, TokenData {
+    text: "}",
+    token: 11,
+    range: Range {
+      start: {
+        line: 9,
+        column: 3,
+      },
+      end: {
+        line: 9,
+        column: 4,
+      },
+    },
+  }, TokenData {
+    text: "rt",
+    token: 0,
+    range: Range {
+      start: {
+        line: 10,
+        column: 3,
+      },
+      end: {
+        line: 10,
+        column: 5,
+      },
+    },
+  }, TokenData {
+    text: "a",
+    token: 0,
+    range: Range {
+      start: {
+        line: 10,
+        column: 6,
+      },
+      end: {
+        line: 10,
+        column: 7,
+      },
+    },
+  }, TokenData {
+    text: "+",
+    token: 15,
+    range: Range {
+      start: {
+        line: 10,
+        column: 8,
+      },
+      end: {
+        line: 10,
+        column: 9,
+      },
+    },
+  }, TokenData {
+    text: "b",
+    token: 0,
+    range: Range {
+      start: {
+        line: 10,
+        column: 10,
+      },
+      end: {
+        line: 10,
+        column: 11,
+      },
+    },
+  }, TokenData {
+    text: "}",
+    token: 11,
+    range: Range {
+      start: {
+        line: 11,
+        column: 1,
+      },
+      end: {
+        line: 11,
+        column: 2,
+      },
+    },
+  }
+]
+exp::  ModifierExpression {
+  nameOf: "ModifierExpression",
+  range: Range {
+    start: {
+      line: 1,
+      column: 1,
+    },
+    end: -1,
+  },
+  tag: Identifier {
+    nameOf: "Identifier",
+    range: Range {
+      start: -1,
+      end: -1,
+    },
+    data: "extern",
+  },
+  content: Identifier {
+    nameOf: "Identifier",
+    range: Range {
+      start: -1,
+      end: -1,
+    },
+    data: "env",
+  },
+}
+exp::  ModifierExpression {
+  nameOf: "ModifierExpression",
+  range: Range {
+    start: {
+      line: 4,
+      column: 1,
+    },
+    end: {
+      line: 5,
+      column: 3,
+    },
+  },
+  tag: Identifier {
+    nameOf: "Identifier",
+    range: Range {
+      start: -1,
+      end: -1,
+    },
+    data: "export",
+  },
+  content: null,
+}
+exp::  null
+exp::  null
+exp::  null
+Source {
+  name: "test.zp",
+  topLevelStatements: [
+    FunctionImport {
+      nameOf: "FunctionImport",
+      range: Range {
+        start: {
+          line: 1,
+          column: 1,
+        },
+        end: {
+          line: 2,
+          column: 27,
+        },
+      },
+      path: Identifier {
+        nameOf: "Identifier",
+        range: Range {
+          start: -1,
+          end: -1,
+        },
+        data: "env.print",
+      },
+      name: Identifier {
+        nameOf: "Identifier",
+        range: Range {
+          start: -1,
+          end: -1,
+        },
+        data: "print",
+      },
+      parameters: [
+        ParameterExpression {
+          nameOf: "ParameterExpression",
+          range: Range {
+            start: {
+              line: 2,
+              column: 10,
+            },
+            end: {
+              line: 2,
+              column: 18,
+            },
+          },
+          name: Identifier {
+            nameOf: "Identifier",
+            range: Range {
+              start: -1,
+              end: -1,
+            },
+            data: "num",
+          },
+          type: TypeExpression {
+            nameOf: "TypeExpression",
+            range: Range {
+              start: {
+                line: 2,
+                column: 15,
+              },
+              end: {
+                line: 2,
+                column: 18,
+              },
+            },
+            types: [ "i32" ],
+            union: false,
+          },
+        }
+      ],
+      returnType: TypeExpression {
+        nameOf: "TypeExpression",
+        range: Range {
+          start: {
+            line: 2,
+            column: 23,
+          },
+          end: {
+            line: 2,
+            column: 27,
+          },
+        },
+        types: [ "void" ],
+        union: false,
+      },
+      exported: false,
+    }, FunctionDeclaration {
+      nameOf: "FunctionDeclaration",
+      range: Range {
+        start: {
+          line: 4,
+          column: 1,
+        },
+        end: {
+          line: 11,
+          column: 2,
+        },
+      },
+      name: Identifier {
+        nameOf: "Identifier",
+        range: Range {
+          start: -1,
+          end: -1,
+        },
+        data: "main",
+      },
+      parameters: [
+        ParameterExpression {
+          nameOf: "ParameterExpression",
+          range: Range {
+            start: {
+              line: 5,
+              column: 9,
+            },
+            end: {
+              line: 5,
+              column: 15,
+            },
+          },
+          name: Identifier {
+            nameOf: "Identifier",
+            range: Range {
+              start: -1,
+              end: -1,
+            },
+            data: "a",
+          },
+          type: TypeExpression {
+            nameOf: "TypeExpression",
+            range: Range {
+              start: {
+                line: 5,
+                column: 12,
+              },
+              end: {
+                line: 5,
+                column: 15,
+              },
+            },
+            types: [ "i32" ],
+            union: false,
+          },
+        }, ParameterExpression {
+          nameOf: "ParameterExpression",
+          range: Range {
+            start: {
+              line: 5,
+              column: 17,
+            },
+            end: {
+              line: 5,
+              column: 23,
+            },
+          },
+          name: Identifier {
+            nameOf: "Identifier",
+            range: Range {
+              start: -1,
+              end: -1,
+            },
+            data: "b",
+          },
+          type: TypeExpression {
+            nameOf: "TypeExpression",
+            range: Range {
+              start: {
+                line: 5,
+                column: 20,
+              },
+              end: {
+                line: 5,
+                column: 23,
+              },
+            },
+            types: [ "i32" ],
+            union: false,
+          },
+        }
+      ],
+      returnType: TypeExpression {
+        nameOf: "TypeExpression",
+        range: Range {
+          start: {
+            line: 5,
+            column: 28,
+          },
+          end: {
+            line: 5,
+            column: 31,
+          },
+        },
+        types: [ "i32" ],
+        union: false,
+      },
+      block: BlockExpression {
+        nameOf: "BlockExpression",
+        range: Range {
+          start: {
+            line: 5,
+            column: 32,
+          },
+          end: {
+            line: 11,
+            column: 2,
+          },
+        },
+        statements: [
+          CallExpression {
+            nameOf: "CallExpression",
+            range: Range {
+              start: {
+                line: 6,
+                column: 3,
+              },
+              end: {
+                line: 6,
+                column: 12,
+              },
+            },
+            calling: Identifier {
+              nameOf: "Identifier",
+              range: Range {
+                start: -1,
+                end: -1,
+              },
+              data: "print",
+            },
+            parameters: [
+              NumberLiteral {
+                nameOf: "NumberLiteral",
+                range: Range {
+                  start: {
+                    line: 6,
+                    column: 9,
+                  },
+                  end: {
+                    line: 6,
+                    column: 12,
+                  },
+                },
+                data: "123",
+              }
+            ],
+          }, IfStatement {
+            nameOf: "IfStatement",
+            range: Range {
+              start: {
+                line: 7,
+                column: 3,
+              },
+              end: {
+                line: 9,
+                column: 4,
+              },
+            },
+            condition: BooleanLiteral {
+              nameOf: "BooleanLiteral",
+              range: Range {
+                start: {
+                  line: 7,
+                  column: 7,
+                },
+                end: {
+                  line: 7,
+                  column: 11,
+                },
+              },
+              value: true,
+            },
+            block: BlockExpression {
+              nameOf: "BlockExpression",
+              range: Range {
+                start: {
+                  line: 7,
+                  column: 13,
+                },
+                end: {
+                  line: 9,
+                  column: 4,
+                },
+              },
+              statements: [
+                CallExpression {
+                  nameOf: "CallExpression",
+                  range: Range {
+                    start: {
+                      line: 8,
+                      column: 5,
+                    },
+                    end: {
+                      line: 8,
+                      column: 17,
+                    },
+                  },
+                  calling: Identifier {
+                    nameOf: "Identifier",
+                    range: Range {
+                      start: -1,
+                      end: -1,
+                    },
+                    data: "print",
+                  },
+                  parameters: [
+                    BinaryExpression {
+                      nameOf: "BinaryExpression",
+                      range: [Object ...],
+                      left: [Object ...],
+                      operand: "+",
+                      right: [Object ...],
+                    }
+                  ],
+                }
+              ],
+              scope: Scope {
+                parentScope: Scope {
+                  parentScope: null,
+                  nodes: Map(2) {
+                    "print": FunctionImport {
+                      nameOf: "FunctionImport",
+                      range: [Object ...],
+                      path: [Object ...],
+                      name: [Object ...],
+                      parameters: [
+                        [Object ...]
+                      ],
+                      returnType: [Object ...],
+                      exported: false,
+                    },
+                    "main": [Circular],
+                  },
+                  add: [Function: add],
+                  has: [Function: has],
+                  get: [Function: get],
+                },
+                nodes: Map(2) {
+                  "a": ParameterExpression {
+                    nameOf: "ParameterExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    name: Identifier {
+                      nameOf: "Identifier",
+                      range: [Object ...],
+                      data: "a",
+                    },
+                    type: TypeExpression {
+                      nameOf: "TypeExpression",
+                      range: [Object ...],
+                      types: [ "i32" ],
+                      union: false,
+                    },
+                  },
+                  "b": ParameterExpression {
+                    nameOf: "ParameterExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    name: Identifier {
+                      nameOf: "Identifier",
+                      range: [Object ...],
+                      data: "b",
+                    },
+                    type: TypeExpression {
+                      nameOf: "TypeExpression",
+                      range: [Object ...],
+                      types: [ "i32" ],
+                      union: false,
+                    },
+                  },
+                },
+                add: [Function: add],
+                has: [Function: has],
+                get: [Function: get],
+              },
+            },
+          }, ReturnStatement {
+            nameOf: "ReturnStatement",
+            range: Range {
+              start: {
+                line: 10,
+                column: 3,
+              },
+              end: {
+                line: 10,
+                column: 11,
+              },
+            },
+            returning: BinaryExpression {
+              nameOf: "BinaryExpression",
+              range: Range {
+                start: {
+                  line: 10,
+                  column: 6,
+                },
+                end: {
+                  line: 10,
+                  column: 11,
+                },
+              },
+              left: ReferenceExpression {
+                nameOf: "ReferenceExpression",
+                range: Range {
+                  start: {
+                    line: 10,
+                    column: 6,
+                  },
+                  end: {
+                    line: 10,
+                    column: 7,
+                  },
+                },
+                name: "a",
+                referencing: ParameterExpression {
+                  nameOf: "ParameterExpression",
+                  range: Range {
+                    start: {
+                      line: 5,
+                      column: 9,
+                    },
+                    end: {
+                      line: 5,
+                      column: 15,
+                    },
+                  },
+                  name: Identifier {
+                    nameOf: "Identifier",
+                    range: Range {
+                      start: -1,
+                      end: -1,
+                    },
+                    data: "a",
+                  },
+                  type: TypeExpression {
+                    nameOf: "TypeExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    types: [ "i32" ],
+                    union: false,
+                  },
+                },
+              },
+              operand: "+",
+              right: ReferenceExpression {
+                nameOf: "ReferenceExpression",
+                range: Range {
+                  start: {
+                    line: 10,
+                    column: 10,
+                  },
+                  end: {
+                    line: 10,
+                    column: 11,
+                  },
+                },
+                name: "b",
+                referencing: ParameterExpression {
+                  nameOf: "ParameterExpression",
+                  range: Range {
+                    start: {
+                      line: 5,
+                      column: 17,
+                    },
+                    end: {
+                      line: 5,
+                      column: 23,
+                    },
+                  },
+                  name: Identifier {
+                    nameOf: "Identifier",
+                    range: Range {
+                      start: -1,
+                      end: -1,
+                    },
+                    data: "b",
+                  },
+                  type: TypeExpression {
+                    nameOf: "TypeExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    types: [ "i32" ],
+                    union: false,
+                  },
+                },
+              },
+            },
+          }
+        ],
+        scope: Scope {
+          parentScope: Scope {
+            parentScope: null,
+            nodes: Map(2) {
+              "print": FunctionImport {
+                nameOf: "FunctionImport",
+                range: Range {
+                  start: {
+                    line: 1,
+                    column: 1,
+                  },
+                  end: {
+                    line: 2,
+                    column: 27,
+                  },
+                },
+                path: Identifier {
+                  nameOf: "Identifier",
+                  range: Range {
+                    start: -1,
+                    end: -1,
+                  },
+                  data: "env.print",
+                },
+                name: Identifier {
+                  nameOf: "Identifier",
+                  range: Range {
+                    start: -1,
+                    end: -1,
+                  },
+                  data: "print",
+                },
+                parameters: [
+                  ParameterExpression {
+                    nameOf: "ParameterExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    name: Identifier {
+                      nameOf: "Identifier",
+                      range: [Object ...],
+                      data: "num",
+                    },
+                    type: TypeExpression {
+                      nameOf: "TypeExpression",
+                      range: [Object ...],
+                      types: [ "i32" ],
+                      union: false,
+                    },
+                  }
+                ],
+                returnType: TypeExpression {
+                  nameOf: "TypeExpression",
+                  range: Range {
+                    start: {
+                      line: 2,
+                      column: 23,
+                    },
+                    end: {
+                      line: 2,
+                      column: 27,
+                    },
+                  },
+                  types: [ "void" ],
+                  union: false,
+                },
+                exported: false,
+              },
+              "main": [Circular],
+            },
+            add: [Function: add],
+            has: [Function: has],
+            get: [Function: get],
+          },
+          nodes: Map(2) {
+            "a": ParameterExpression {
+              nameOf: "ParameterExpression",
+              range: Range {
+                start: {
+                  line: 5,
+                  column: 9,
+                },
+                end: {
+                  line: 5,
+                  column: 15,
+                },
+              },
+              name: Identifier {
+                nameOf: "Identifier",
+                range: Range {
+                  start: -1,
+                  end: -1,
+                },
+                data: "a",
+              },
+              type: TypeExpression {
+                nameOf: "TypeExpression",
+                range: Range {
+                  start: {
+                    line: 5,
+                    column: 12,
+                  },
+                  end: {
+                    line: 5,
+                    column: 15,
+                  },
+                },
+                types: [ "i32" ],
+                union: false,
+              },
+            },
+            "b": ParameterExpression {
+              nameOf: "ParameterExpression",
+              range: Range {
+                start: {
+                  line: 5,
+                  column: 17,
+                },
+                end: {
+                  line: 5,
+                  column: 23,
+                },
+              },
+              name: Identifier {
+                nameOf: "Identifier",
+                range: Range {
+                  start: -1,
+                  end: -1,
+                },
+                data: "b",
+              },
+              type: TypeExpression {
+                nameOf: "TypeExpression",
+                range: Range {
+                  start: {
+                    line: 5,
+                    column: 20,
+                  },
+                  end: {
+                    line: 5,
+                    column: 23,
+                  },
+                },
+                types: [ "i32" ],
+                union: false,
+              },
+            },
+          },
+          add: [Function: add],
+          has: [Function: has],
+          get: [Function: get],
+        },
+      },
+      scope: Scope {
+        parentScope: Scope {
+          parentScope: null,
+          nodes: Map(2) {
+            "print": FunctionImport {
+              nameOf: "FunctionImport",
+              range: Range {
+                start: {
+                  line: 1,
+                  column: 1,
+                },
+                end: {
+                  line: 2,
+                  column: 27,
+                },
+              },
+              path: Identifier {
+                nameOf: "Identifier",
+                range: Range {
+                  start: -1,
+                  end: -1,
+                },
+                data: "env.print",
+              },
+              name: Identifier {
+                nameOf: "Identifier",
+                range: Range {
+                  start: -1,
+                  end: -1,
+                },
+                data: "print",
+              },
+              parameters: [
+                ParameterExpression {
+                  nameOf: "ParameterExpression",
+                  range: Range {
+                    start: {
+                      line: 2,
+                      column: 10,
+                    },
+                    end: {
+                      line: 2,
+                      column: 18,
+                    },
+                  },
+                  name: Identifier {
+                    nameOf: "Identifier",
+                    range: Range {
+                      start: -1,
+                      end: -1,
+                    },
+                    data: "num",
+                  },
+                  type: TypeExpression {
+                    nameOf: "TypeExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    types: [ "i32" ],
+                    union: false,
+                  },
+                }
+              ],
+              returnType: TypeExpression {
+                nameOf: "TypeExpression",
+                range: Range {
+                  start: {
+                    line: 2,
+                    column: 23,
+                  },
+                  end: {
+                    line: 2,
+                    column: 27,
+                  },
+                },
+                types: [ "void" ],
+                union: false,
+              },
+              exported: false,
+            },
+            "main": [Circular],
+          },
+          add: [Function: add],
+          has: [Function: has],
+          get: [Function: get],
+        },
+        nodes: Map(2) {
+          "a": ParameterExpression {
+            nameOf: "ParameterExpression",
+            range: Range {
+              start: {
+                line: 5,
+                column: 9,
+              },
+              end: {
+                line: 5,
+                column: 15,
+              },
+            },
+            name: Identifier {
+              nameOf: "Identifier",
+              range: Range {
+                start: -1,
+                end: -1,
+              },
+              data: "a",
+            },
+            type: TypeExpression {
+              nameOf: "TypeExpression",
+              range: Range {
+                start: {
+                  line: 5,
+                  column: 12,
+                },
+                end: {
+                  line: 5,
+                  column: 15,
+                },
+              },
+              types: [ "i32" ],
+              union: false,
+            },
+          },
+          "b": ParameterExpression {
+            nameOf: "ParameterExpression",
+            range: Range {
+              start: {
+                line: 5,
+                column: 17,
+              },
+              end: {
+                line: 5,
+                column: 23,
+              },
+            },
+            name: Identifier {
+              nameOf: "Identifier",
+              range: Range {
+                start: -1,
+                end: -1,
+              },
+              data: "b",
+            },
+            type: TypeExpression {
+              nameOf: "TypeExpression",
+              range: Range {
+                start: {
+                  line: 5,
+                  column: 20,
+                },
+                end: {
+                  line: 5,
+                  column: 23,
+                },
+              },
+              types: [ "i32" ],
+              union: false,
+            },
+          },
+        },
+        add: [Function: add],
+        has: [Function: has],
+        get: [Function: get],
+      },
+      exported: true,
+    }
+  ],
+  statements: [],
+  globalScope: Scope {
+    parentScope: null,
+    nodes: Map(2) {
+      "print": FunctionImport {
+        nameOf: "FunctionImport",
+        range: Range {
+          start: {
+            line: 1,
+            column: 1,
+          },
+          end: {
+            line: 2,
+            column: 27,
+          },
+        },
+        path: Identifier {
+          nameOf: "Identifier",
+          range: Range {
+            start: -1,
+            end: -1,
+          },
+          data: "env.print",
+        },
+        name: Identifier {
+          nameOf: "Identifier",
+          range: Range {
+            start: -1,
+            end: -1,
+          },
+          data: "print",
+        },
+        parameters: [
+          ParameterExpression {
+            nameOf: "ParameterExpression",
+            range: Range {
+              start: {
+                line: 2,
+                column: 10,
+              },
+              end: {
+                line: 2,
+                column: 18,
+              },
+            },
+            name: Identifier {
+              nameOf: "Identifier",
+              range: Range {
+                start: -1,
+                end: -1,
+              },
+              data: "num",
+            },
+            type: TypeExpression {
+              nameOf: "TypeExpression",
+              range: Range {
+                start: {
+                  line: 2,
+                  column: 15,
+                },
+                end: {
+                  line: 2,
+                  column: 18,
+                },
+              },
+              types: [ "i32" ],
+              union: false,
+            },
+          }
+        ],
+        returnType: TypeExpression {
+          nameOf: "TypeExpression",
+          range: Range {
+            start: {
+              line: 2,
+              column: 23,
+            },
+            end: {
+              line: 2,
+              column: 27,
+            },
+          },
+          types: [ "void" ],
+          union: false,
+        },
+        exported: false,
+      },
+      "main": FunctionDeclaration {
+        nameOf: "FunctionDeclaration",
+        range: Range {
+          start: {
+            line: 4,
+            column: 1,
+          },
+          end: {
+            line: 11,
+            column: 2,
+          },
+        },
+        name: Identifier {
+          nameOf: "Identifier",
+          range: Range {
+            start: -1,
+            end: -1,
+          },
+          data: "main",
+        },
+        parameters: [
+          ParameterExpression {
+            nameOf: "ParameterExpression",
+            range: Range {
+              start: {
+                line: 5,
+                column: 9,
+              },
+              end: {
+                line: 5,
+                column: 15,
+              },
+            },
+            name: Identifier {
+              nameOf: "Identifier",
+              range: Range {
+                start: -1,
+                end: -1,
+              },
+              data: "a",
+            },
+            type: TypeExpression {
+              nameOf: "TypeExpression",
+              range: Range {
+                start: {
+                  line: 5,
+                  column: 12,
+                },
+                end: {
+                  line: 5,
+                  column: 15,
+                },
+              },
+              types: [ "i32" ],
+              union: false,
+            },
+          }, ParameterExpression {
+            nameOf: "ParameterExpression",
+            range: Range {
+              start: {
+                line: 5,
+                column: 17,
+              },
+              end: {
+                line: 5,
+                column: 23,
+              },
+            },
+            name: Identifier {
+              nameOf: "Identifier",
+              range: Range {
+                start: -1,
+                end: -1,
+              },
+              data: "b",
+            },
+            type: TypeExpression {
+              nameOf: "TypeExpression",
+              range: Range {
+                start: {
+                  line: 5,
+                  column: 20,
+                },
+                end: {
+                  line: 5,
+                  column: 23,
+                },
+              },
+              types: [ "i32" ],
+              union: false,
+            },
+          }
+        ],
+        returnType: TypeExpression {
+          nameOf: "TypeExpression",
+          range: Range {
+            start: {
+              line: 5,
+              column: 28,
+            },
+            end: {
+              line: 5,
+              column: 31,
+            },
+          },
+          types: [ "i32" ],
+          union: false,
+        },
+        block: BlockExpression {
+          nameOf: "BlockExpression",
+          range: Range {
+            start: {
+              line: 5,
+              column: 32,
+            },
+            end: {
+              line: 11,
+              column: 2,
+            },
+          },
+          statements: [
+            CallExpression {
+              nameOf: "CallExpression",
+              range: Range {
+                start: {
+                  line: 6,
+                  column: 3,
+                },
+                end: {
+                  line: 6,
+                  column: 12,
+                },
+              },
+              calling: Identifier {
+                nameOf: "Identifier",
+                range: Range {
+                  start: -1,
+                  end: -1,
+                },
+                data: "print",
+              },
+              parameters: [
+                NumberLiteral {
+                  nameOf: "NumberLiteral",
+                  range: Range {
+                    start: {
+                      line: 6,
+                      column: 9,
+                    },
+                    end: {
+                      line: 6,
+                      column: 12,
+                    },
+                  },
+                  data: "123",
+                }
+              ],
+            }, IfStatement {
+              nameOf: "IfStatement",
+              range: Range {
+                start: {
+                  line: 7,
+                  column: 3,
+                },
+                end: {
+                  line: 9,
+                  column: 4,
+                },
+              },
+              condition: BooleanLiteral {
+                nameOf: "BooleanLiteral",
+                range: Range {
+                  start: {
+                    line: 7,
+                    column: 7,
+                  },
+                  end: {
+                    line: 7,
+                    column: 11,
+                  },
+                },
+                value: true,
+              },
+              block: BlockExpression {
+                nameOf: "BlockExpression",
+                range: Range {
+                  start: {
+                    line: 7,
+                    column: 13,
+                  },
+                  end: {
+                    line: 9,
+                    column: 4,
+                  },
+                },
+                statements: [
+                  CallExpression {
+                    nameOf: "CallExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    calling: Identifier {
+                      nameOf: "Identifier",
+                      range: [Object ...],
+                      data: "print",
+                    },
+                    parameters: [
+                      [Object ...]
+                    ],
+                  }
+                ],
+                scope: Scope {
+                  parentScope: [Circular],
+                  nodes: Map(2) {
+                    "a": ParameterExpression {
+                      nameOf: "ParameterExpression",
+                      range: [Object ...],
+                      name: [Object ...],
+                      type: [Object ...],
+                    },
+                    "b": ParameterExpression {
+                      nameOf: "ParameterExpression",
+                      range: [Object ...],
+                      name: [Object ...],
+                      type: [Object ...],
+                    },
+                  },
+                  add: [Function: add],
+                  has: [Function: has],
+                  get: [Function: get],
+                },
+              },
+            }, ReturnStatement {
+              nameOf: "ReturnStatement",
+              range: Range {
+                start: {
+                  line: 10,
+                  column: 3,
+                },
+                end: {
+                  line: 10,
+                  column: 11,
+                },
+              },
+              returning: BinaryExpression {
+                nameOf: "BinaryExpression",
+                range: Range {
+                  start: {
+                    line: 10,
+                    column: 6,
+                  },
+                  end: {
+                    line: 10,
+                    column: 11,
+                  },
+                },
+                left: ReferenceExpression {
+                  nameOf: "ReferenceExpression",
+                  range: Range {
+                    start: {
+                      line: 10,
+                      column: 6,
+                    },
+                    end: {
+                      line: 10,
+                      column: 7,
+                    },
+                  },
+                  name: "a",
+                  referencing: ParameterExpression {
+                    nameOf: "ParameterExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    name: Identifier {
+                      nameOf: "Identifier",
+                      range: [Object ...],
+                      data: "a",
+                    },
+                    type: TypeExpression {
+                      nameOf: "TypeExpression",
+                      range: [Object ...],
+                      types: [ "i32" ],
+                      union: false,
+                    },
+                  },
+                },
+                operand: "+",
+                right: ReferenceExpression {
+                  nameOf: "ReferenceExpression",
+                  range: Range {
+                    start: {
+                      line: 10,
+                      column: 10,
+                    },
+                    end: {
+                      line: 10,
+                      column: 11,
+                    },
+                  },
+                  name: "b",
+                  referencing: ParameterExpression {
+                    nameOf: "ParameterExpression",
+                    range: Range {
+                      start: [Object ...],
+                      end: [Object ...],
+                    },
+                    name: Identifier {
+                      nameOf: "Identifier",
+                      range: [Object ...],
+                      data: "b",
+                    },
+                    type: TypeExpression {
+                      nameOf: "TypeExpression",
+                      range: [Object ...],
+                      types: [ "i32" ],
+                      union: false,
+                    },
+                  },
+                },
+              },
+            }
+          ],
+          scope: Scope {
+            parentScope: [Circular],
+            nodes: Map(2) {
+              "a": ParameterExpression {
+                nameOf: "ParameterExpression",
+                range: Range {
+                  start: {
+                    line: 5,
+                    column: 9,
+                  },
+                  end: {
+                    line: 5,
+                    column: 15,
+                  },
+                },
+                name: Identifier {
+                  nameOf: "Identifier",
+                  range: Range {
+                    start: -1,
+                    end: -1,
+                  },
+                  data: "a",
+                },
+                type: TypeExpression {
+                  nameOf: "TypeExpression",
+                  range: Range {
+                    start: {
+                      line: 5,
+                      column: 12,
+                    },
+                    end: {
+                      line: 5,
+                      column: 15,
+                    },
+                  },
+                  types: [ "i32" ],
+                  union: false,
+                },
+              },
+              "b": ParameterExpression {
+                nameOf: "ParameterExpression",
+                range: Range {
+                  start: {
+                    line: 5,
+                    column: 17,
+                  },
+                  end: {
+                    line: 5,
+                    column: 23,
+                  },
+                },
+                name: Identifier {
+                  nameOf: "Identifier",
+                  range: Range {
+                    start: -1,
+                    end: -1,
+                  },
+                  data: "b",
+                },
+                type: TypeExpression {
+                  nameOf: "TypeExpression",
+                  range: Range {
+                    start: {
+                      line: 5,
+                      column: 20,
+                    },
+                    end: {
+                      line: 5,
+                      column: 23,
+                    },
+                  },
+                  types: [ "i32" ],
+                  union: false,
+                },
+              },
+            },
+            add: [Function: add],
+            has: [Function: has],
+            get: [Function: get],
+          },
+        },
+        scope: Scope {
+          parentScope: [Circular],
+          nodes: Map(2) {
+            "a": ParameterExpression {
+              nameOf: "ParameterExpression",
+              range: Range {
+                start: {
+                  line: 5,
+                  column: 9,
+                },
+                end: {
+                  line: 5,
+                  column: 15,
+                },
+              },
+              name: Identifier {
+                nameOf: "Identifier",
+                range: Range {
+                  start: -1,
+                  end: -1,
+                },
+                data: "a",
+              },
+              type: TypeExpression {
+                nameOf: "TypeExpression",
+                range: Range {
+                  start: {
+                    line: 5,
+                    column: 12,
+                  },
+                  end: {
+                    line: 5,
+                    column: 15,
+                  },
+                },
+                types: [ "i32" ],
+                union: false,
+              },
+            },
+            "b": ParameterExpression {
+              nameOf: "ParameterExpression",
+              range: Range {
+                start: {
+                  line: 5,
+                  column: 17,
+                },
+                end: {
+                  line: 5,
+                  column: 23,
+                },
+              },
+              name: Identifier {
+                nameOf: "Identifier",
+                range: Range {
+                  start: -1,
+                  end: -1,
+                },
+                data: "b",
+              },
+              type: TypeExpression {
+                nameOf: "TypeExpression",
+                range: Range {
+                  start: {
+                    line: 5,
+                    column: 20,
+                  },
+                  end: {
+                    line: 5,
+                    column: 23,
+                  },
+                },
+                types: [ "i32" ],
+                union: false,
+              },
+            },
+          },
+          add: [Function: add],
+          has: [Function: has],
+          get: [Function: get],
+        },
+        exported: true,
+      },
+    },
+    add: [Function: add],
+    has: [Function: has],
+    get: [Function: get],
+  },
+}
+Transpiled:
+declare function print(num: i32): void
+export function main(a: i32, b: i32) {
+  print(123)
+  if (true) {
+    print(12 + 3)
+  }
+  return a + b
+}
+

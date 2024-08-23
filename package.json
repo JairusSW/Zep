@@ -13,22 +13,20 @@
     "run:test:debug": "tsx ./src/test.ts"
   },
   "devDependencies": {
-    "@types/node": "^20.14.12",
-    "@types/treeify": "^1.0.3",
-    "@types/yargs": "^17.0.32",
+    "@types/node": "^22.5.0",
+    "@types/yargs": "^17.0.33",
     "assemblyscript": "^0.27.29",
-    "blessed": "^0.1.81",
-    "bun-types": "^1.1.20",
+    "bun-types": "^1.1.25",
     "prettier": "^3.3.3",
-    "tinybench": "^2.8.0",
+    "tinybench": "^2.9.0",
     "treeify": "^1.1.0",
-    "tsx": "^4.16.5",
+    "tsx": "^4.17.0",
     "typescript": "^5.5.4"
   },
   "dependencies": {
     "binaryen": "^118.0.0",
     "chalk": "^5.3.0",
-    "wasmati": "^0.2.0",
+    "wasmati": "^0.2.2",
     "wazum": "^0.0.13",
     "yargs": "^17.7.2"
   },
