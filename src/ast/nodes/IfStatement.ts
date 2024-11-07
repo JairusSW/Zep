@@ -1,16 +1,16 @@
 import { Range } from "../Range";
-import { BlockExpression } from "./BlockExpression";
+import { Node } from "./Node";
 import { Expression } from "./Expression.js";
 import { Statement } from "./Statement.js";
 
 export class IfStatement extends Statement {
   public nameOf: string = "IfStatement";
   public condition: Expression;
-  public block: BlockExpression;
-  constructor(condition: Expression, block: BlockExpression, range: Range) {
+  public body: Node;
+  constructor(condition: Expression, block: Node, range: Range) {
     super();
     this.condition = condition;
-    this.block = block;
+    this.body = block;
     this.range = range;
   }
 }

@@ -29,12 +29,13 @@ import { TokenData } from "../tokenizer/tokendata.js";
 import { CallExpression } from "../ast/nodes/CallExpression.js";
 import { IfStatement } from "../ast/nodes/IfStatement.js";
 import { BooleanLiteral } from "../ast/nodes/BooleanLiteral.js";
-import { Node } from "../ast/nodes/Node.js";
+import { Node, NodeKind } from "../ast/nodes/Node.js";
 import { BranchStatement } from "../ast/nodes/BranchStatement.js";
 import { BranchToStatement } from "../ast/nodes/BranchToStatement.js";
 import { EnumDeclaration } from "../ast/nodes/EnumDeclaration.js";
 import { EnumElement } from "../ast/nodes/EnumElement.js";
 import { ParenthesizedExpression } from "../ast/nodes/PathenthesizedExpression.js";
+import { WhileStatement } from "../ast/nodes/WhileStatement.js";
 
 export class Parser {
   public program: Source = new Source("test.zp");
@@ -61,6 +62,8 @@ export class Parser {
     state.resume();
     if ((node = this.parseEnumDeclaration(scope))) return node;
     state.resume();
+    if ((node = this.parseIfStatement(scope))) return node;
+    state.resume();
     return null;
   }
   parseStatement(scope: Scope): Statement | null {
@@ -72,9 +75,11 @@ export class Parser {
     state.resume();
     if ((node = this.parseIfStatement(scope))) return node;
     state.resume();
-    if ((node = this.parseCallExpression(scope))) return node;
-    state.resume();
     if ((node = this.parseBranchStatement(scope))) return node;
+    state.resume();
+    if ((node = this.parseWhileStatement(scope))) return node;
+    state.resume();
+    if ((node = this.parseCallExpression(scope))) return node;
     state.resume();
     return null;
   }
@@ -97,40 +102,15 @@ export class Parser {
     state.resume();
     if (besides !== "ParameterExpression" && (express = this.parseParameterExpression(scope))) return express;
     state.resume();
+    if (besides !== "ParenthesizedExpression" && (express = this.parseParenthesizedExpression(scope))) return express;
+    state.resume();
+    if (besides !== "BlockExpression" && (express = this.parseBlockExpression(scope))) return express;
+    state.resume();
     return null;
   }
-  parseNode(scope: Scope): Node | null {
-    const state = this.tokenizer.createState();
-    let node: Node | null = null;
-    if ((node = this.parseBranchStatement(scope))) return node;
-    state.resume();
-    if ((node = this.parseBranchToStatement(scope))) return node;
-    state.resume();
-    if ((node = this.parseIfStatement(scope))) return node;
-    state.resume();
-    if ((node = this.parseCallExpression(scope))) return node;
-    state.resume();
-    if ((node = this.parseReturnStatement(scope))) return node;
-    state.resume();
-    if ((node = this.parseNumberLiteral(scope))) return node;
-    state.resume();
-    if ((node = this.parseStringLiteral(scope))) return node;
-    state.resume();
-    if ((node = this.parseBooleanLiteral(scope))) return node;
-    state.resume();
-    if ((node = this.parseBinaryExpression(scope))) return node;
-    state.resume();
-    if ((node = this.parseReferenceExpression(scope))) return node;
-    state.resume();
-    if ((node = this.parseModifierExpression(scope))) return node;
-    state.resume();
-    if ((node = this.parseVariableDeclaration(scope))) return node;
-    state.resume();
-    if ((node = this.parseFunctionDeclaration(scope))) return node;
-    state.resume();
-    //if ((node = this.parseIdentifierExpression(scope))) return node;
-    //state.resume();
-    return null;
+  parseNode(scope: Scope, besides: string | null = null): Node | null {
+    let node: Node | null = this.parseStatement(scope) || this.parseExpression(scope, besides);
+    return node;
   }
   parseVariableDeclaration(scope: Scope): VariableDeclaration | null {
     const type = this.tokenizer.getToken();
@@ -171,7 +151,6 @@ export class Parser {
     let exported = false;
 
     const exp = this.parseModifierExpression(scope);
-    console.log("exp:: ", exp)
     if (!exp) state.resume();
     else if (exp.tag.data == "export") exported = true;
     const fn = this.tokenizer.getToken();
@@ -291,11 +270,9 @@ export class Parser {
   parseIfStatement(scope: Scope): IfStatement | null {
     if (this.tokenizer.getToken().text !== "if") return null;
     const start = this.tokenizer.position.toRange();
-    if (this.tokenizer.getToken().text !== "(") return null;
-    const condition = this.parseBooleanLiteral(scope);
-    if (this.tokenizer.getToken().text !== ")") return null;
+    const condition = this.parseExpression(scope);
     if (!condition) return null;
-    const block = this.parseBlockExpression(scope);
+    const block = this.parseNode(scope);
     if (!block) return null;
 
     const node = new IfStatement(condition, block, Range.from(start, block.range));
@@ -466,16 +443,16 @@ export class Parser {
     const name = this.tokenizer.getToken();
     if (name.token !== Token.Identifier) return null;
 
-    const block = this.parseBlockExpression(scope);
-    if (!block) return null;
+    const body = this.parseNode(scope);
+    if (!body) return null;
 
     const node = new BranchStatement(
       new Identifier(
         name.text,
         name.range
       ),
-      block,
-      Range.from(start, block)
+      body,
+      Range.from(start, body.range)
     );
     scope.add(name.text, node);
     return node;
@@ -608,14 +585,15 @@ export class Parser {
     // Check scope
     return node;
   }
-  parseParenthesizedExpression(scope: Scope) {
+  parseParenthesizedExpression(scope: Scope): ParenthesizedExpression | null {
     if (this.tokenizer.getToken().text !== "(") return null;
     const start = this.tokenizer.position.toRange();
-    const expr = this.parseExpression(scope);
+    const expr = this.parseExpression(scope, "ParenthesizedExpression");
     if (this.tokenizer.getToken().text !== ")") return null;
     if (!expr) return null;
 
-    const node = new ParenthesizedExpression(expr, Range.from(start, expr.range))
+    const node = new ParenthesizedExpression(expr, Range.from(start, expr.range));
+    return node;
   }
   parseIdentifierExpression(scope: Scope): Identifier | null {
     const id = this.tokenizer.getToken();
@@ -637,6 +615,17 @@ export class Parser {
     if (value.text === "true") return new BooleanLiteral(true, value.range);
     else if (value.text === "false") return new BooleanLiteral(false, value.range);
     return null;
+  }
+  parseWhileStatement(scope: Scope): WhileStatement | null {
+    if (this.tokenizer.getToken().text !== "while") return null;
+    const start = this.tokenizer.position.toRange();
+    const condition = this.parseExpression(scope);
+    if (!condition) return null;
+    const body = this.parseStatement(scope);
+    if (!body) return null;
+
+    const node = new WhileStatement(condition, body, Range.from(start, body.range));
+    return node;
   }
 }
 

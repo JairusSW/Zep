@@ -1,5 +1,6 @@
 import { Source } from "../ast/Source";
 import { BinaryExpression } from "../ast/nodes/BinaryExpression";
+import { BlockExpression } from "../ast/nodes/BlockExpression";
 import { BooleanLiteral } from "../ast/nodes/BooleanLiteral";
 import { CallExpression } from "../ast/nodes/CallExpression";
 import { EnumDeclaration } from "../ast/nodes/EnumDeclaration";
@@ -10,10 +11,12 @@ import { IfStatement } from "../ast/nodes/IfStatement";
 import { Node } from "../ast/nodes/Node";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral";
 import { ParameterExpression } from "../ast/nodes/ParameterExpression";
+import { ParenthesizedExpression } from "../ast/nodes/PathenthesizedExpression";
 import { ReferenceExpression } from "../ast/nodes/ReferenceExpression";
 import { ReturnStatement } from "../ast/nodes/ReturnStatement";
 import { StringLiteral } from "../ast/nodes/StringLiteral";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
+import { WhileStatement } from "../ast/nodes/WhileStatement";
 
 let depth = "";
 
@@ -26,22 +29,24 @@ export class Transpile {
       }
       return out;
     }
-    if (node instanceof VariableDeclaration)
-      return Transpile.VariableDeclaration(node);
-    if (node instanceof FunctionDeclaration)
-      return Transpile.FunctionDeclaration(node);
+    // Declaration
+    if (node instanceof VariableDeclaration) return Transpile.VariableDeclaration(node);
+    if (node instanceof FunctionDeclaration) return Transpile.FunctionDeclaration(node);
+    if (node instanceof FunctionImport) return Transpile.FunctionImport(node);
     if (node instanceof EnumDeclaration) return Transpile.EnumDeclaration(node);
 
-    if (node instanceof CallExpression) return Transpile.CallExpression(node);
-    if (node instanceof FunctionImport) return Transpile.FunctionImport(node);
-    if (node instanceof BinaryExpression)
-      return Transpile.BinaryExpression(node);
+    // Statement
     if (node instanceof ReturnStatement) return Transpile.ReturnStatement(node);
-    if (node instanceof ReferenceExpression)
-      return Transpile.ReferenceExpression(node);
-    if (node instanceof ParameterExpression)
-      return Transpile.ParameterExpression(node);
     if (node instanceof IfStatement) return Transpile.IfStatement(node);
+    if (node instanceof WhileStatement) return Transpile.WhileStatement(node);
+
+    // Expression
+    if (node instanceof ParenthesizedExpression) return Transpile.ParenthesizedExpression(node);
+    if (node instanceof CallExpression) return Transpile.CallExpression(node);
+    if (node instanceof BinaryExpression) return Transpile.BinaryExpression(node);
+    if (node instanceof ReferenceExpression) return Transpile.ReferenceExpression(node);
+    if (node instanceof ParameterExpression) return Transpile.ParameterExpression(node);
+    if (node instanceof BlockExpression) return Transpile.BlockExpression(node);
 
     if (node instanceof NumberLiteral) return Transpile.NumberLiteral(node);
     if (node instanceof StringLiteral) return Transpile.StringLiteral(node);
@@ -54,7 +59,7 @@ export class Transpile {
     return node.data;
   }
   static StringLiteral(node: StringLiteral) {
-    return node.data;
+    return "\"" + node.data + "\"";
   }
   static VariableDeclaration(node: VariableDeclaration) {
     return `${depth}${node.mutable ? "let" : "const"} ${node.name.data} = ${Transpile.from(node.value)}`;
@@ -67,14 +72,11 @@ export class Transpile {
     }
     if (params) params = params.slice(0, params.length - 2);
 
-    depth += "  ";
-    for (const stmt of node.block.statements) {
-      body += Transpile.from(stmt) + "\n";
-    }
-    depth = depth.slice(0, depth.length - 2);
+    body += Transpile.from(node.block);
+    const returnType = node.returnType.types[0];
     // Slice off the ", " at the end
     // Can be done more efficiently with a loop - 1
-    return `${depth}${node.exported ? "export " : ""}function ${node.name.data}(${params}) {${body ? "\n" + body : ""}}`;
+    return `${depth}${node.exported ? "export " : ""}function ${node.name.data}(${params}): ${returnType} ${body}`;
   }
   static FunctionImport(node: FunctionImport) {
     let params = "";
@@ -91,7 +93,7 @@ export class Transpile {
       params += `${Transpile.from(param)}, `;
     }
     if (params) params = params.slice(0, params.length - 2);
-    return `${depth}${node.calling.data}(${params})`;
+    return `${node.calling.data}(${params})`;
   }
   static EnumDeclaration(node: EnumDeclaration) {
     let body = "";
@@ -120,7 +122,7 @@ export class Transpile {
   }
   static ReturnStatement(node: ReturnStatement) {
     // @ts-ignore
-    return depth + "return " + Transpile.from(node.returning);
+    return "return " + Transpile.from(node.returning);
   }
   static ReferenceExpression(node: ReferenceExpression) {
     return Transpile.from(node.referencing);
@@ -132,17 +134,26 @@ export class Transpile {
     return node.name.data;
   }
   static IfStatement(node: IfStatement) {
+    return "if " + Transpile.from(node.condition) + " " + Transpile.from(node.body);
+  }
+  static BlockExpression(node: BlockExpression) {
     let body = "{";
     depth += "  ";
-    for (const stmt of node.block.statements) {
-      body += "\n" + Transpile.from(stmt);
+    for (const stmt of node.statements) {
+      body += "\n" + depth + Transpile.from(stmt);
     }
     depth = depth.slice(0, depth.length - 2);
     if (body.length > 1) body += "\n"
     body += depth + "}";
-    return depth + "if (" + Transpile.from(node.condition) + ") " + body;
+    return body;
+  }
+  static WhileStatement(node: WhileStatement) {
+    return "while " + Transpile.from(node.condition) + " " + Transpile.from(node.body);
   }
   static BooleanLiteral(node: BooleanLiteral) {
     return node.value.toString();
+  }
+  static ParenthesizedExpression(node: ParenthesizedExpression) {
+    return "(" + Transpile.from(node.expression) + ")";
   }
 }
