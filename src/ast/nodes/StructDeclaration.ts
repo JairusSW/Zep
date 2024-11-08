@@ -1,16 +1,16 @@
 import { Range } from "../Range";
 import { Identifier } from "./Identifier";
 import { Statement } from "./Statement";
-import { StructMember } from "./StructMember";
+import { StructFieldDeclaration } from "./StructFieldDeclaration";
 
 export class StructDeclaration extends Statement {
     public nameOf = "StructDeclaration";
     public name: Identifier;
-    public members: StructMember[];
-    constructor(name: Identifier, members: StructMember[], range: Range) {
+    public fields: StructFieldDeclaration[];
+    constructor(name: Identifier, fields: StructFieldDeclaration[], range: Range) {
         super();
         this.name = name;
-        this.members = members;
+        this.fields = fields;
         this.range = range;
     }
 }

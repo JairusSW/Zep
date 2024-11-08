@@ -15,6 +15,8 @@ import { ParenthesizedExpression } from "../ast/nodes/PathenthesizedExpression";
 import { ReferenceExpression } from "../ast/nodes/ReferenceExpression";
 import { ReturnStatement } from "../ast/nodes/ReturnStatement";
 import { StringLiteral } from "../ast/nodes/StringLiteral";
+import { StructDeclaration } from "../ast/nodes/StructDeclaration";
+import { StructFieldDeclaration } from "../ast/nodes/StructFieldDeclaration";
 import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
 import { WhileStatement } from "../ast/nodes/WhileStatement";
 
@@ -25,7 +27,7 @@ export class Transpile {
     if (node instanceof Source) {
       let out = "";
       for (const top of node.topLevelStatements) {
-        out += Transpile.from(top) + "\n";
+        out += Transpile.from(top) + "\n\n";
       }
       return out;
     }
@@ -34,6 +36,7 @@ export class Transpile {
     if (node instanceof FunctionDeclaration) return Transpile.FunctionDeclaration(node);
     if (node instanceof FunctionImport) return Transpile.FunctionImport(node);
     if (node instanceof EnumDeclaration) return Transpile.EnumDeclaration(node);
+    if (node instanceof StructDeclaration) return Transpile.StructDeclaration(node);
 
     // Statement
     if (node instanceof ReturnStatement) return Transpile.ReturnStatement(node);
@@ -89,7 +92,7 @@ export class Transpile {
   }
   static CallExpression(node: CallExpression) {
     let params = "";
-    for (const param of node.parameters) {
+    for (let param of node.parameters) {
       params += `${Transpile.from(param)}, `;
     }
     if (params) params = params.slice(0, params.length - 2);
@@ -112,20 +115,14 @@ export class Transpile {
     return `enum ${node.name.data} {\n${body}}`;
   }
   static BinaryExpression(node: BinaryExpression) {
-    return (
-      Transpile.from(node.left) +
-      " " +
-      node.operand +
-      " " +
-      Transpile.from(node.right)
-    );
+    return Transpile.from(node.left) + " " + node.operand + " " + Transpile.from(node.right);
   }
   static ReturnStatement(node: ReturnStatement) {
     // @ts-ignore
     return "return " + Transpile.from(node.returning);
   }
   static ReferenceExpression(node: ReferenceExpression) {
-    return Transpile.from(node.referencing);
+    return node.name;
   }
   static Identifier(node: Identifier) {
     return node.data;
@@ -143,7 +140,7 @@ export class Transpile {
       body += "\n" + depth + Transpile.from(stmt);
     }
     depth = depth.slice(0, depth.length - 2);
-    if (body.length > 1) body += "\n"
+    if (body.length > 1) body += "\n";
     body += depth + "}";
     return body;
   }
@@ -155,5 +152,18 @@ export class Transpile {
   }
   static ParenthesizedExpression(node: ParenthesizedExpression) {
     return "(" + Transpile.from(node.expression) + ")";
+  }
+  static StructDeclaration(node: StructDeclaration) {
+    let fields = "";
+    depth += "  ";
+    for (const field of node.fields) {
+      fields += "\n" + depth + Transpile.StructFieldDeclaration(field);
+    }
+    depth = depth.slice(0, depth.length - 2);
+    if (fields.length > 1) fields += "\n";
+    return "struct {" + fields + "}";
+  }
+  static StructFieldDeclaration(node: StructFieldDeclaration) {
+    return node.name.data + ": " + node.type.types[0] + (node.value? " = " + Transpile.from(node.value) : "");
   }
 }

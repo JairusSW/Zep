@@ -24,6 +24,8 @@ export class BinaryExpression extends Expression {
 export enum Operator {
   Add = "+",
   Sub = "-",
-  Assign = "=",
-  Mod = "%"
+  Mod = "%",
+  Equals = "=",
+  EqualsEquals = "==",
+  EqualsEqualsEquals = "===",
 }

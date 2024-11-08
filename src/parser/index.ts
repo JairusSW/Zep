@@ -36,6 +36,8 @@ import { EnumDeclaration } from "../ast/nodes/EnumDeclaration.js";
 import { EnumElement } from "../ast/nodes/EnumElement.js";
 import { ParenthesizedExpression } from "../ast/nodes/PathenthesizedExpression.js";
 import { WhileStatement } from "../ast/nodes/WhileStatement.js";
+import { StructDeclaration } from "../ast/nodes/StructDeclaration.js";
+import { FieldAccessKind, StructFieldDeclaration } from "../ast/nodes/StructFieldDeclaration.js";
 
 export class Parser {
   public program: Source = new Source("test.zp");
@@ -60,9 +62,9 @@ export class Parser {
     state.resume();
     if ((node = this.parseVariableDeclaration(scope))) return node;
     state.resume();
-    if ((node = this.parseEnumDeclaration(scope))) return node;
+    if ((node = this.parseStructDeclaration(scope))) return node;
     state.resume();
-    if ((node = this.parseIfStatement(scope))) return node;
+    if ((node = this.parseEnumDeclaration(scope))) return node;
     state.resume();
     return null;
   }
@@ -627,11 +629,71 @@ export class Parser {
     const node = new WhileStatement(condition, body, Range.from(start, body.range));
     return node;
   }
+  parseStructDeclaration(scope: Scope): StructDeclaration | null {
+    if (this.tokenizer.getToken().text !== "struct") return null;
+    const start = this.tokenizer.position.toRange();
+
+    const nameToken = this.tokenizer.getToken();
+    if (!isIdentifier(nameToken)) return null;
+    const name = new Identifier(nameToken.text, nameToken.range);
+
+    if (this.tokenizer.getToken().text !== "{") return null;
+    const fields: StructFieldDeclaration[] = [];
+    while (true) {
+      const field = this.parseStructFieldExpression(scope);
+      if (!field) return null;
+      fields.push(field);
+      this.tokenizer.position.markPosition();
+      if (this.tokenizer.viewToken().text == "}") break;
+    }
+    const lastToken = this.tokenizer.getToken();
+
+    const node = new StructDeclaration(name, fields, Range.from(start, lastToken.range));
+    this.program.topLevelStatements.push(node);
+    return node;
+  }
+  parseStructFieldExpression(scope: Scope): StructFieldDeclaration | null {
+    const accessToken = this.tokenizer.getToken();
+    const start = this.tokenizer.position.toRange();
+
+    let access: FieldAccessKind | null = null;
+    
+    if (accessToken.text === "public") {
+      access = FieldAccessKind.Public;
+    } else if (accessToken.text === "private") {
+      access = FieldAccessKind.Private;
+    } else if (accessToken.text === "final") {
+      access = FieldAccessKind.Final;
+    }
+
+    access = access || FieldAccessKind.Public;
+
+    const typeToken = access ? this.tokenizer.getToken() : accessToken;
+    if (!isIdentifier(typeToken)) return null;
+    const type = new TypeExpression([typeToken.text], false, typeToken.range);
+
+    const nameToken = this.tokenizer.getToken();
+    if (!isIdentifier(nameToken)) return null;
+    const name = new Identifier(nameToken.text, nameToken.range);
+
+    let value: Expression | null = null;
+    const state = this.tokenizer.createState();
+    if (this.tokenizer.getToken().text == "=") {
+      value = this.parseExpression(scope);
+    } else {
+      state.resume();
+    }
+
+    const node = new StructFieldDeclaration(name, type, access, value, Range.from(start, nameToken.range));
+    return node;
+  }
 }
 
 export function tokenToOp(tok: TokenData): Operator | null {
   if (tok.token === Token.Add) return Operator.Add;
   if (tok.token === Token.Sub) return Operator.Sub;
-  if (tok.token === Token.Equals) return Operator.Assign;
+  if (tok.token === Token.Equals) return Operator.Equals;
+  if (tok.token === Token.EqualsEquals) return Operator.EqualsEquals;
+  if (tok.token === Token.EqualsEqualsEquals) return Operator.EqualsEqualsEquals;
   return null;
 }

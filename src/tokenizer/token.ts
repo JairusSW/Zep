@@ -9,6 +9,8 @@ export enum Token {
   // PUNCTUATION
   Semi, // ;
   Equals, // =
+  EqualsEquals, // ==
+  EqualsEqualsEquals, // ===
   Question, // ?
   Colon, // :
   Comma, // ,

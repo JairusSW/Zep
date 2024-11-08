@@ -1,5 +1,5 @@
 import { expect, test, describe } from "bun:test";
-import { Tokenizer } from "../src/tokenizer";
+import { Tokenizer } from "../src/tokenizer/index";
 import { Parser } from "../src/parser";
 import { StringLiteral } from "../src/ast/nodes/StringLiteral";
 import { NumberLiteral } from "../src/ast/nodes/NumberLiteral";
