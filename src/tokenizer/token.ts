@@ -11,6 +11,8 @@ export enum Token {
   Equals, // =
   EqualsEquals, // ==
   EqualsEqualsEquals, // ===
+  ColonEquals, // :=
+  QuestionEquals, // :=
   Question, // ?
   Colon, // :
   Comma, // ,
@@ -22,8 +24,10 @@ export enum Token {
   RightBrace, // ]
   Period, // .
   // Operators
-  Add, // +
-  Sub, // -
+  Plus, // +
+  Minus, // -
+  Asterisk, // *
+  Percent, // %
   // COMPARISIONS
   GreaterThan, // >
   LessThan, // <

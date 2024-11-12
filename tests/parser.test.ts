@@ -53,9 +53,9 @@ describe("Should parse Statements", () => {
     expect(node?.parameters[0].name.data).toBe("data");
     expect(node?.parameters[0].type?.types[0]).toBe("i32");
     expect(node?.returnType.types[0]).toBe("void");
-    expect(parser.program.globalScope.has(node?.name.data!)).toBe(true);
+    expect(parser.source.globalScope.has(node?.name.data!)).toBe(true);
 
-    testScope = parser.program.globalScope;
+    testScope = parser.source.globalScope;
   });
 
   test(`
@@ -128,8 +128,8 @@ describe("Should parse Statements", () => {
       ).referencing as Iden,
     );
 
-    expect(parser.program.globalScope.has(node?.name.data!)).toBe(true);
+    expect(parser.source.globalScope.has(node?.name.data!)).toBe(true);
 
-    testScope = parser.program.globalScope;
+    testScope = parser.source.globalScope;
   });
 });

@@ -1,2 +1,15 @@
-i32 d = asdfsdc
-  rt c
+import "std:io/prinat"
+
+fn factorial(n: i32) -> i32 {
+  if n == 0 {
+    rt 1
+  } else {
+    rt n * factorial(n - 1)
+  }
+}
+
+#[export]
+fn main() -> void {
+  i32 result = factorial(5)
+  print(result)
+}

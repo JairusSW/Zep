@@ -50,10 +50,13 @@ export function isPunctuation(
     return new TokenData(Token.RightBrace, "]", position.toRange());
   } else if (text.startsWith("+", position.current)) {
     position.current++;
-    return new TokenData(Token.Add, "+", position.toRange());
+    return new TokenData(Token.Plus, "+", position.toRange());
   } else if (text.startsWith("-", position.current)) {
     position.current++;
-    return new TokenData(Token.Sub, "-", position.toRange());
+    return new TokenData(Token.Minus, "-", position.toRange());
+  } else if (text.startsWith("*", position.current)) {
+    position.current++;
+    return new TokenData(Token.Asterisk, "*", position.toRange());
   } else if (text.startsWith("#", position.current)) {
     position.current++;
     return new TokenData(Token.Pound, "#", position.toRange());

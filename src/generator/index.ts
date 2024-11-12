@@ -1,9 +1,9 @@
 import { w } from "../../wazum/src/index";
-import { FunctionDeclaration } from "../ast/nodes/Function";
+import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration";
 import { getNameOf, getTypeOf, toDataType, toNumericType } from "./util";
 import { BinaryExpression, Operator } from "../ast/nodes/BinaryExpression";
 import { ReturnStatement } from "../ast/nodes/ReturnStatement";
-import { FunctionImport } from "../ast/nodes/FunctionImport";
+import { FunctionImportDeclaration } from "../ast/nodes/FunctionImportDeclaration";
 import { CallExpression } from "../ast/nodes/CallExpression";
 import { NumericDataType } from "../../../wazum/dist/nodes";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral";
@@ -25,7 +25,7 @@ export class Generator {
   constructor() {}
   parseProgram(program: Source): void {
     for (const topStmt of program.topLevelStatements) {
-      if (topStmt instanceof FunctionImport) {
+      if (topStmt instanceof FunctionImportDeclaration) {
         this.parseFnImport(topStmt);
       } else if (topStmt instanceof FunctionDeclaration) {
         this.parseFn(topStmt);
@@ -38,7 +38,7 @@ export class Generator {
   toWat(): string {
     return this.module.compile();
   }
-  parseFnImport(node: FunctionImport): w.FuncImport {
+  parseFnImport(node: FunctionImportDeclaration): w.FuncImport {
     const params: [type: NumericDataType, name: string][] = [];
     for (const param of node.parameters) {
       params.push([getTypeOf(param), getNameOf(param)]);

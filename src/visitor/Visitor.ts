@@ -1,10 +1,10 @@
 import { BinaryExpression } from "../ast/nodes/BinaryExpression.js";
-import { BlockExpression } from "../ast/nodes/BlockExpression.js";
+import { BlockExpression } from "../ast/nodes/BlockStatement.js";
 import { CallExpression } from "../ast/nodes/CallExpression.js";
-import { FunctionDeclaration } from "../ast/nodes/Function.js";
+import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
 import { Identifier } from "../ast/nodes/Identifier.js";
 import { ImportDeclaration } from "../ast/nodes/ImportDeclaration.js";
-import { FunctionImport } from "../ast/nodes/FunctionImport.js";
+import { FunctionImportDeclaration } from "../ast/nodes/FunctionImportDeclaration.js";
 import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
 import { Node } from "../ast/nodes/Node.js";
 import { NumberLiteral } from "../ast/nodes/NumberLiteral.js";
@@ -29,7 +29,7 @@ export class Visitor {
       this.visitIdentifier(node);
     } else if (node instanceof ImportDeclaration) {
       this.visitImportDeclaration(node);
-    } else if (node instanceof FunctionImport) {
+    } else if (node instanceof FunctionImportDeclaration) {
       this.visitImportFunctionDeclaration(node);
     } else if (node instanceof ModifierExpression) {
       this.visitModifierExpression(node);
@@ -73,7 +73,7 @@ export class Visitor {
   visitImportDeclaration(node: ImportDeclaration) {
     this.visit(node.path);
   }
-  visitImportFunctionDeclaration(node: FunctionImport) {
+  visitImportFunctionDeclaration(node: FunctionImportDeclaration) {
     this.visit(node.path);
     this.visit(node.name);
     this.visitNodes(node.parameters);

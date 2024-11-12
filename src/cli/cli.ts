@@ -67,7 +67,7 @@ import { Generator } from "../generator/index.js";
     parser.parseFunctionDeclaration();
 
     const connector = new Generator();
-    connector.parseProgram(parser.program);
+    connector.parseProgram(parser.source);
 
     const watText = connector.toWat();
     await Bun.write(output, watText);

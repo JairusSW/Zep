@@ -1,37 +1,53 @@
 import { writeFileSync } from "fs";
 import { Parser } from "./parser";
 import { Tokenizer } from "./tokenizer";
-import { Transpile } from "./transpiler/transpiler";
+import { Formatter } from "./formatter/formatter";
 import { Generator } from "./generator";
 import { Scope } from "./checker/scope/Scope";
+import { Source, SourceKind } from "./ast/Source";
+import { Program } from "./ast/Program";
 
 const start = Date.now();
-const tokenizer = new Tokenizer(`
-#[extern]: env.print
-fn print(num: i32) -> void
+const program = new Program([
+  new Source(
+    "std:io/print",
+    `
+    #[extern]: env
+    #[export]
+    fn print(data: i32) -> void
+    `,
+    SourceKind.Library
+  ),
+  new Source(
+    "test.zp",
+    `
+  import "std:io/print"
 
-fn factorial(n: i32) -> i32 {
-  if (n == 0) {
-    rt 1
-  } else {
-    rt n * factorial(n - 1)
+  fn factorial(n: i32) -> i32 {
+    if n == 0 {
+      rt 1
+    } else {
+      rt n * factorial(n - 1)
+    }
   }
-}
 
-#[export]
-fn main() -> void {
-  i32 result = factorial(5)
-  print(result)
-}
-`);
+  #[export]
+  fn main() -> void {
+    i32 result = factorial(5)
+    print(result)
+  }
+  `,
+  SourceKind.UserEntry
+  )
+]);
+
+const tokenizer = program.entry.tokenizer;
 console.dir(tokenizer.getAll(), { depth: 1 });
-const parser = new Parser(tokenizer, "test.zp");
-const source = parser.parseSource();
+const source = program.entry.parse();
 console.dir(source.topLevelStatements, { depth: 1 });
-
-// console.log(new Parser(new Tokenizer(`fn factorial(n: i32) -> i32 {}`), "test.zp").parseFunctionDeclaration(new Scope()))
-const transpiled = Transpile.from(source);
-console.log("Transpiled:\n" + transpiled);
+// console.log(new Program([new Source("test.zp", 'import "std:io/print"', SourceKind.UserEntry)]).entry.parser.parseImportDeclaration(new Scope()))
+const transpiled = Formatter.from(source);
+console.log("\n" + transpiled.trim());
 
 // const generator = new Generator();
 // generator.parseFn(program.topLevelStatements[1])

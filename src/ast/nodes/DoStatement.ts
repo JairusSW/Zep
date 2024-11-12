@@ -1,16 +1,8 @@
-import { Range } from "../Range";
-import { BlockExpression } from "./BlockExpression";
-import { Expression } from "./Expression.js";
-import { Statement } from "./Statement.js";
+import { EnumDeclaration } from "./EnumDeclaration";
+import { FunctionDeclaration } from "./FunctionDeclaration";
+import { FunctionImportDeclaration } from "./FunctionImportDeclaration";
+import { ImportDeclaration } from "./ImportDeclaration";
+import { ImportFromDeclaration } from "./ImportFromDeclaration";
+import { VariableDeclaration } from "./VariableDeclaration";
 
-export class DoStatement extends Statement {
-  public nameOf: string = "DoStatement";
-  public condition: Expression;
-  public block: BlockExpression;
-  constructor(condition: Expression, block: BlockExpression, range: Range) {
-    super();
-    this.condition = condition;
-    this.block = block;
-    this.range = range;
-  }
-}
+export type Declaration = FunctionDeclaration | FunctionImportDeclaration | VariableDeclaration | ImportDeclaration | ImportFromDeclaration | EnumDeclaration;
