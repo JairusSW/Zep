@@ -31,6 +31,7 @@ export enum Token {
   // COMPARISIONS
   GreaterThan, // >
   LessThan, // <
+  LessThanEquals, // <=
   // SYMBOLS
   Pound, // #
   // UTILITY

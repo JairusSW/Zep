@@ -99,9 +99,9 @@ export class Parser {
   parseExpression(scope: Scope, besides: string | null = null): Expression | null {
     let express: Expression | null = null;
     const state = this.source.tokenizer.createState();
-    if (besides !== "CallExpression" && (express = this.parseCallExpression(scope))) return express;
-    state.resume();
     if (besides !== "BinaryExpression" && (express = this.parseBinaryExpression(scope))) return express;
+    state.resume();
+    if (besides !== "CallExpression" && (express = this.parseCallExpression(scope))) return express;
     state.resume();
     if (besides !== "NumberLiteral" && (express = this.parseNumberLiteral(scope))) return express;
     state.resume();
@@ -557,6 +557,7 @@ export class Parser {
   }
   parseCallExpression(scope: Scope): CallExpression | null {
     const calling = this.source.tokenizer.getToken();
+    if (!isIdentifier(calling)) return null;
     const leftParen = this.source.tokenizer.getToken();
     if (leftParen.text !== "(") return null;
     const args: Expression[] = [];
@@ -636,8 +637,25 @@ export class Parser {
     );
     return node;
   }
+  parseBinaryExpressionLeft(scope: Scope) {
+    const state = this.source.tokenizer.createState();
+    let left: Expression | null;
+    if (left = this.parseCallExpression(scope)) return left;
+    state.resume();
+    if (left = this.parseNumberLiteral(scope)) return left;
+    state.resume();
+    if (left = this.parseIdentifierExpression(scope)) return left;
+    state.resume();
+    if (left = this.parseStringLiteral(scope)) return left;
+    state.resume();
+    if (left = this.parseBooleanLiteral(scope)) return left;
+    state.resume();
+    if (left = this.parseParenthesizedExpression(scope)) return left;
+    state.resume()
+    return null;
+  }
   parseBinaryExpression(scope: Scope): BinaryExpression | null {
-    let left: Expression | null = this.parseIdentifierExpression(scope) || this.parseNumberLiteral(scope) || this.parseIdentifierExpression(scope) || this.parseStringLiteral(scope) || this.parseBooleanLiteral(scope) || this.parseParenthesizedExpression(scope);
+    let left: Expression | null = this.parseBinaryExpressionLeft(scope);
     if (!left) return null;
     const op = tokenToOp(this.source.tokenizer.getToken());
     let right: Expression | null = this.parseExpression(scope);
@@ -779,5 +797,6 @@ export function tokenToOp(tok: TokenData): Operator | null {
   if (tok.token === Token.Equals) return Operator.Equals;
   if (tok.token === Token.EqualsEquals) return Operator.EqualsEquals;
   if (tok.token === Token.EqualsEqualsEquals) return Operator.EqualsEqualsEquals;
+  if (tok.token === Token.LessThanEquals) return Operator.LessThanEquals;
   return null;
 }

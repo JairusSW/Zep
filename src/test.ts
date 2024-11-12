@@ -6,11 +6,12 @@ import { Generator } from "./generator";
 import { Scope } from "./checker/scope/Scope";
 import { Source, SourceKind } from "./ast/Source";
 import { Program } from "./ast/Program";
+import { SyntaxColors } from "./formatter/syntaxcolors";
 
 const start = Date.now();
 const program = new Program([
   new Source(
-    "std:io/print",
+    "std:io",
     `
     #[extern]: env
     #[export]
@@ -21,21 +22,21 @@ const program = new Program([
   new Source(
     "test.zp",
     `
-  import "std:io/print"
+import "std:io"
 
-  fn factorial(n: i32) -> i32 {
-    if n == 0 {
-      rt 1
+fn fib(n: i32) -> i32 {
+    if n <= 1 {
+        rt n
     } else {
-      rt n * factorial(n - 1)
+        rt fib(n - 1) + fib(n - 2)
     }
-  }
+}
 
-  #[export]
-  fn main() -> void {
-    i32 result = factorial(5)
+#[export]
+fn main() -> void {
+    i32 result = fib(16)
     print(result)
-  }
+}
   `,
   SourceKind.UserEntry
   )
@@ -48,9 +49,3 @@ console.dir(source.topLevelStatements, { depth: 1 });
 // console.log(new Program([new Source("test.zp", 'import "std:io/print"', SourceKind.UserEntry)]).entry.parser.parseImportDeclaration(new Scope()))
 const transpiled = Formatter.from(source);
 console.log("\n" + transpiled.trim());
-
-// const generator = new Generator();
-// generator.parseFn(program.topLevelStatements[1])
-// console.log("WAT:\n" + generator.toWat());
-
-// writeFileSync("./test.ts", transpiled);

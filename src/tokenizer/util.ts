@@ -21,6 +21,15 @@ export function isPunctuation(
   } else if (text.startsWith("=", position.current)) {
     position.current++;
     return new TokenData(Token.Equals, "=", position.toRange());
+  } else if (text.startsWith(":=", position.current)) {
+    position.current += 2;
+    return new TokenData(Token.ColonEquals, ":=", position.toRange());
+  } else if (text.startsWith("?=", position.current)) {
+    position.current += 2;
+    return new TokenData(Token.QuestionEquals, "?=", position.toRange());
+  } else if (text.startsWith("<=", position.current)) {
+    position.current += 2;
+    return new TokenData(Token.LessThanEquals, "<=", position.toRange());
   } else if (text.startsWith("?", position.current)) {
     position.current++;
     return new TokenData(Token.Question, "?", position.toRange());

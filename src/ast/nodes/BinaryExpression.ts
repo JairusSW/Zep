@@ -29,4 +29,5 @@ export enum Operator {
   Equals = "=",
   EqualsEquals = "==",
   EqualsEqualsEquals = "===",
+  LessThanEquals = "<="
 }
