@@ -12,7 +12,7 @@ export function toDataType(type: string): w.DataType {
     case "f64":
       return type as w.DataType;
     case "void":
-      return "void";
+      return "none";
     default:
       throw new Error(`Could not convert type '${type}' to wasm data type!`);
   }
