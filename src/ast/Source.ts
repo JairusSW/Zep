@@ -1,7 +1,7 @@
 import { Scope } from "../checker/scope/Scope.js";
 import { Parser } from "../parser/index.js";
 import { Tokenizer } from "../tokenizer/index.js";
-import { Declaration } from "./nodes/DoStatement.js";
+import { Declaration } from "./nodes/Declaration.js";
 import { NodeKind } from "./nodes/Node.js";
 import { Statement } from "./nodes/Statement.js";
 

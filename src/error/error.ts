@@ -30,9 +30,9 @@ export class TokenMismatchError extends CompileTimeError {
       " " +
         chalk.cyan("test.zp") +
         chalk.gray(":") +
-        chalk.cyan(this.range.line) +
+        chalk.cyan(this.range.start.line) +
         chalk.gray(":") +
-        chalk.cyan(this.range.start),
+        chalk.cyan(this.range.end.column),
     );
   }
 }

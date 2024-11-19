@@ -127,39 +127,31 @@ export class Parser {
     return node;
   }
   parseVariableDeclaration(scope: Scope): VariableDeclaration | null {
-    const state = this.source.tokenizer.createState();
-
-    let exported = false;
-
-    const exp = this.parseModifierExpression(scope);
-    if (!exp) state.resume();
-    else if (exp.tag.data == "export") exported = true;
-
-    const type = this.source.tokenizer.getToken();
-    if (!isBuiltinType(type)) return null;
-    const mutableTok = this.source.tokenizer.getToken();
-    let mutable = false;
-    if (mutableTok.token === Token.Question) mutable = true;
-    let name = mutable ? this.source.tokenizer.getToken() : mutableTok;
+    let name = this.source.tokenizer.getToken();
     if (!isIdentifier(name)) return null;
-    this.source.tokenizer.getToken(); // =
+
+    let mutable = false;
+
+    switch (this.source.tokenizer.getToken().text) {
+      case ":=": {
+        break;
+      }
+      case "?=": {
+        mutable = true;
+        break;
+      }
+      default: {
+        return null;
+      }
+    }
 
     const value = this.parseExpression(scope, "IdentifierExpression"); // Expression
-    if (!value) {
-      const value = this.source.tokenizer.getToken();
-      new TokenMismatchError(
-        "Expected to find value of variable, but found " +
-        value.text +
-        " instead!",
-        0x80,
-        value.range,
-      );
-      return null;
-    }
+    if (!value) return null;
+
     const node = new VariableDeclaration(
       value,
       new Identifier(name.text, name.range),
-      new TypeExpression([type.text], false, type.range),
+      new TypeExpression([name.text], false, name.range),
       mutable,
       Range.from(value.range, this.source.tokenizer.position.toRange())
     );
@@ -408,11 +400,6 @@ export class Parser {
     const colonToken = this.source.tokenizer.getToken();
 
     if (colonToken.token !== Token.Colon) {
-      new TokenMismatchError(
-        "Expected to find path to host function import, but found nothing!",
-        3,
-        colonToken.range,
-      );
       return null;
     }
 

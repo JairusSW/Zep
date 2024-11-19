@@ -3,37 +3,73 @@
  */
 export enum Token {
   // GENERAL
-  Identifier,
-  Number, // 0-9 _ .
-  String, // " "   ' '   ` `
+  Identifier,    // variable names, function names, etc.
+  Number,        // numeric literals, e.g., 0-9, _, .
+  String,        // string literals, e.g., " ", ' ', ` `
+
   // PUNCTUATION
-  Semi, // ;
-  Equals, // =
-  EqualsEquals, // ==
-  EqualsEqualsEquals, // ===
-  ColonEquals, // :=
-  QuestionEquals, // :=
-  Question, // ?
-  Colon, // :
-  Comma, // ,
-  LeftParen, // (
-  RightParen, // )
-  LeftBracket, // {
-  RightBracket, // }
-  LeftBrace, // [
-  RightBrace, // ]
-  Period, // .
-  // Operators
-  Plus, // +
-  Minus, // -
-  Asterisk, // *
-  Percent, // %
-  // COMPARISIONS
-  GreaterThan, // >
-  LessThan, // <
-  LessThanEquals, // <=
+  Semi,          // ;
+  Comma,         // ,
+  Colon,         // :
+  Question,      // ?
+  Period,        // .
+  LeftParen,     // (
+  RightParen,    // )
+  LeftBrace,     // {
+  RightBrace,    // }
+  LeftBracket,   // [
+  RightBracket,  // ]
+
+  // ASSIGNMENT OPERATORS
+  Equals,            // =
+  ColonEquals,       // :=
+  PlusEquals,        // +=
+  MinusEquals,       // -=
+  AsteriskEquals,    // *=
+  SlashEquals,       // /=
+  PercentEquals,     // %=
+  BitwiseAndEquals,  // &=
+  BitwiseOrEquals,   // |=
+  BitwiseXorEquals,  // ^=
+  ShiftLeftEquals,   // <<=
+  ShiftRightEquals,  // >>=
+
+  // COMPARISON OPERATORS
+  EqualsEquals,         // ==
+  NotEquals,            // !=
+  NotEqualsEquals,      // !==
+  GreaterThan,          // >
+  LessThan,             // <
+  LessThanEquals,       // <=
+  GreaterThanEquals,    // >=
+
+  // ARITHMETIC OPERATORS
+  Plus,           // +
+  Minus,          // -
+  Asterisk,       // *
+  Slash,          // /
+  Percent,        // %
+  Exponent,       // **
+  Increment,      // ++
+  Decrement,      // --
+
+  // LOGICAL OPERATORS
+  And,            // &&
+  Or,             // ||
+  Not,            // !
+  Ternary,        // ?:
+
+  // BITWISE OPERATORS
+  BitwiseAnd,     // &
+  BitwiseOr,      // |
+  BitwiseXor,     // ^
+  BitwiseNot,     // ~
+  ShiftLeft,      // <<
+  ShiftRight,     // >>
+
   // SYMBOLS
-  Pound, // #
+  Pound,          // #
+
   // UTILITY
-  EOF, // EXIT
+  EOF,            // End of File / Exit
 }

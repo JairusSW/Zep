@@ -99,7 +99,7 @@ export class Formatter {
     if (params) params = params.slice(0, params.length - 2);
     const returnType = node.returnType.types[0];
     const pDepth = parenDepth++;
-    return `${depth}${SyntaxColors.magenta((node.exported ? "export " : "") + "declare function")} ${Formatter.from(node.name)}${depthColor(pDepth, "(")}${params}${depthColor(pDepth, ")")}: ${SyntaxColors.yellowLight(returnType)}`;
+    return `${depth}${SyntaxColors.gray("#[extern]: " + node.path.data)}\n${depth}${SyntaxColors.magenta("fn")} ${Formatter.from(node.name)}${depthColor(pDepth, "(")}${params}${depthColor(pDepth, ")")} -> ${SyntaxColors.yellowLight(returnType)}`;
   }
   static CallExpression(node: CallExpression) {
     let params = "";
