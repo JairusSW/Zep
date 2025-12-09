@@ -1,15 +1,15 @@
 import "std:io"
 
 fn fib(n: i32) -> i32 {
-    if n <= 1 {
-        rt n
-    } else {
-        rt fib(n - 1) + fib(n - 2)
-    }
+  if n <= 1 {
+    rt n
+  } else {
+    rt fib(n - 1) + fib(n - 2)
+  }
 }
 
 #[export]
 fn main() -> void {
-    i32 result = fib(7)
-    print(result)
+  i32 result = fib(7)
+  print(result)
 }

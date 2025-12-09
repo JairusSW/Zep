@@ -21,14 +21,19 @@ import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
 import { WhileStatement } from "../ast/nodes/WhileStatement";
 import { enumToString } from "../util/types/tools/enum";
 
-import chalk from "chalk";
 import { SyntaxColors } from "./syntaxcolors";
 import { ImportDeclaration } from "../ast/nodes/ImportDeclaration";
 
 let depth = "";
 let parenDepth = 0;
 
+export class FormatterRules {
+  public semi: boolean = false;
+  public indent: number = 2;
+}
+
 export class Formatter {
+  static rules: FormatterRules = new FormatterRules();
   static from(node: Node | Source): string {
     if (node instanceof Source) {
       let out = "";
@@ -72,7 +77,7 @@ export class Formatter {
     return SyntaxColors.greenBright("\"" + node.data + "\"");
   }
   static VariableDeclaration(node: VariableDeclaration) {
-    return `${SyntaxColors.yellowLight(node.name.data)} ${node.mutable ? "?" : ":"}= ${Formatter.from(node.value)}`;
+    return `${node.mutable ? SyntaxColors.magenta("mut") : SyntaxColors.magenta("let")} ${SyntaxColors.yellowLight(node.name.data)}${node.type ? ": " + SyntaxColors.yellowLight(node.type.types[0]) : ""}${node.value ? " = " + Formatter.from(node.value) : ""}${Formatter.rules.semi ? ";" : ""}`;
   }
   static FunctionDeclaration(node: FunctionDeclaration) {
     let params = "";
@@ -84,10 +89,10 @@ export class Formatter {
 
     const pDepth = parenDepth++;
     body += Formatter.from(node.block);
-    const returnType = node.returnType.types[0];
+    const returnType = node.returnType?.types[0];
     // Slice off the ", " at the end
     // Can be done more efficiently with a loop - 1
-    let out = `${depth}${(node.exported ? SyntaxColors.gray("#[export]") + "\n" : "")}${SyntaxColors.magenta("fn")} ${Formatter.from(node.name)}${depthColor(pDepth, "(")}${params}${depthColor(pDepth, ")")} -> ${SyntaxColors.yellowLight(returnType)} ${body}`;
+    let out = `${depth}${(node.exported ? SyntaxColors.gray("#[export]") + "\n" : "")}${SyntaxColors.magenta("fn")} ${Formatter.from(node.name)}${depthColor(pDepth, "(")}${params}${depthColor(pDepth, ")")}${returnType ? ": " + SyntaxColors.yellowLight(returnType) : ""} ${body}`;
     parenDepth--;
     return out;
   }
@@ -130,7 +135,7 @@ export class Formatter {
   }
   static ReturnStatement(node: ReturnStatement) {
     // @ts-ignore
-    return SyntaxColors.magenta("rt ") + Formatter.from(node.returning);
+    return SyntaxColors.magenta("rt ") + Formatter.from(node.returning) + (Formatter.rules.semi ? ";" : "");
   }
   static ReferenceExpression(node: ReferenceExpression) {
     return SyntaxColors.red(node.name);
@@ -192,7 +197,7 @@ export class Formatter {
     return node.name.data + ": " + node.type.types[0] + (node.value ? " = " + Formatter.from(node.value) : "");
   }
   static ImportDeclaration(node: ImportDeclaration) {
-    return SyntaxColors.magenta("import") + " " + Formatter.from(node.path);
+    return SyntaxColors.magenta("import") + " " + Formatter.from(node.path) + (Formatter.rules.semi ? ";" : "");
   }
 }
 

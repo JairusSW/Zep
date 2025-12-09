@@ -19,6 +19,7 @@ export enum Token {
   RightBrace,    // }
   LeftBracket,   // [
   RightBracket,  // ]
+  Pipe,          // |
 
   // ASSIGNMENT OPERATORS
   Equals,            // =
@@ -61,7 +62,6 @@ export enum Token {
 
   // BITWISE OPERATORS
   BitwiseAnd,     // &
-  BitwiseOr,      // |
   BitwiseXor,     // ^
   BitwiseNot,     // ~
   ShiftLeft,      // <<

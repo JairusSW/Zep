@@ -10,14 +10,14 @@ export class FunctionDeclaration extends Statement {
   public nameOf: string = "FunctionDeclaration";
   public name: Identifier;
   public parameters: ParameterExpression[];
-  public returnType: TypeExpression;
+  public returnType: TypeExpression | null;
   public block: BlockExpression;
   public scope: Scope;
   public exported: boolean;
   constructor(
     name: Identifier,
     parameters: ParameterExpression[],
-    returnType: TypeExpression,
+    returnType: TypeExpression | null,
     block: BlockExpression,
     scope: Scope,
     exported: boolean,

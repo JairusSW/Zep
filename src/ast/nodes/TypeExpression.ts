@@ -5,7 +5,7 @@ export class TypeExpression extends Expression {
   public nameOf: string = "TypeExpression";
   public types: string[];
   public union: boolean;
-  constructor(types: string[], union: boolean = false, range: Range) {
+  constructor(types: string[], union: boolean, range: Range) {
     super();
     this.types = types;
     this.union = union;

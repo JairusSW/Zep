@@ -2,38 +2,52 @@ import { Formatter } from "./formatter/formatter";
 import { Source, SourceKind } from "./ast/Source";
 import { Program } from "./ast/Program";
 import { SyntaxColors } from "./formatter/syntaxcolors";
-import { Generator } from "./generator";
 
 const program = new Program([
-//   new Source(
-//     "std:io",
-//     `
-// #[extern]: env
-// fn print(data: i32) -> void
-//     `,
-//     SourceKind.Library
-//   ),
+  new Source(
+    "std:io",
+    `
+#[extern]: env
+fn print(data: i32) -> void
+    `,
+    SourceKind.Library
+  ),
   new Source(
     "test.zp",
     `
+import "std:io"
+
+fn add(a: i32, b: i32): i32 {
+  rt a + b
+}
+
+fn fib(n: i32): i32 {
+  if n <= 1 {
+    rt n
+  } else {
+    rt fib(n - 1) + fib(n - 2)
+  }
+}
+
 #[export]
-fn add() -> i32 {
-  rt 1 + 2
+fn main() -> void {
+  print("add(1,2) = " + add(1,2))
+  print("fib(10) = " + fib(10))
 }
   `,
   SourceKind.UserEntry
   )
 ]);
 
-const tokenizer = program.entry.tokenizer;
-console.dir(tokenizer.getAll(), { depth: 1 });
-const source = program.entry.parse();
-console.dir(source.topLevelStatements, { depth: 1 });
-console.log("\n" + SyntaxColors.gray(program.sources[0].fileName) + "\n" + Formatter.from(program.sources[0]).trim());
-const transpiled = Formatter.from(source);
-console.log("\n" + SyntaxColors.gray(program.entry.fileName) + "\n" + transpiled.trim());
+for (const source of program.sources) {
+  const tokenizer = source.tokenizer;
+  if (source.sourceKind == SourceKind.UserEntry)  console.dir(tokenizer.getAll(), { depth: 1 });
+  const src = source.parse();
+  // if (source.sourceKind == SourceKind.UserEntry) console.dir(src.topLevelStatements, { depth: 1 });
+}
 
-const generator = new Generator();
-generator.parseProgram(program);
-
-console.log("\n" + generator.toWat());
+Formatter.rules.semi = true
+for (const source of program.sources) {
+  const transpiled = Formatter.from(source);
+  console.log("\n" + SyntaxColors.gray(source.fileName) + "\n" + transpiled.trim());
+}

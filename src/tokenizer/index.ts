@@ -19,6 +19,7 @@ import { TokenData } from "./tokendata";
 import { Position } from "./position";
 import { isPunctuation } from "./util";
 import { isWhitespace } from "../util";
+import { Range } from "../ast/Range";
 
 const isDigit = (ch: string) => /\d/.test(ch);
 
@@ -210,6 +211,9 @@ export class Tokenizer {
         }
         state.resume();
         return tok;
+    }
+    currentRange(): Range {
+        return this.position.toRange();
     }
     reset(): void {
         this.position = new Position(0, 0);
