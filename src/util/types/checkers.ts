@@ -18,25 +18,25 @@ const builtinTypes = [
 ];
 
 export function isBuiltinType(token: TokenData): boolean {
-  return token.token === Token.Identifier && builtinTypes.includes(token.text);
+  return token.token === Token.IDENTIFIER && builtinTypes.includes(token.text);
 }
 
 export function isIdentifier(token: TokenData): boolean {
-  return token.token === Token.Identifier;
+  return token.token === Token.IDENTIFIER;
 }
 
 export function isEquals(token: TokenData): boolean {
-  return token.token === Token.Equals;
+  return token.token === Token.EQUALS;
 }
 
 export function isString(token: TokenData): boolean {
-  return token.token === Token.String;
+  return token.token === Token.STRING;
 }
 
 export function isSemi(token: TokenData): boolean {
-  return token.token === Token.Semi;
+  return token.token === Token.SEMI;
 }
 
 export function isNumeric(token: TokenData): boolean {
-  return token.token === Token.Number;
+  return token.token === Token.NUMBER;
 }

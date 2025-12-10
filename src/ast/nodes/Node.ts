@@ -1,7 +1,19 @@
-import { Expression } from "./Expression.js";
-import { Statement } from "./Statement.js";
+import { Range } from "../Range";
 
-export type Node = Statement | Expression;
+export class Node {
+    public nameOf: string = "Node";
+    public range: Range = new Range(
+        {
+            line: -1,
+            column: -1
+        },
+        {
+            line: -1,
+            column: -1
+        }
+    );
+}
+
 
 export enum NodeKind {
     Source,

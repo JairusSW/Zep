@@ -3,35 +3,36 @@
  */
 export enum Token {
   // GENERAL
-  Identifier,    // variable names, function names, etc.
-  Number,        // numeric literals, e.g., 0-9, _, .
-  String,        // string literals, e.g., " ", ' ', ` `
+  IDENTIFIER,    // variable names, function names, etc.
+  TEXT,          // arbitrary text
+  NUMBER,        // numeric literals, e.g., 0-9, _, .
+  STRING,        // string literals, e.g., " ", ' ', ` `
 
   // PUNCTUATION
-  Semi,          // ;
-  Comma,         // ,
-  Colon,         // :
-  Question,      // ?
-  Period,        // .
-  LeftParen,     // (
-  RightParen,    // )
-  LeftBrace,     // {
-  RightBrace,    // }
-  LeftBracket,   // [
-  RightBracket,  // ]
-  Pipe,          // |
+  SEMI,          // ;
+  COMMA,         // ,
+  COLON,         // :
+  QUESTION,      // ?
+  DOT,           // .
+  LEFT_PAREN,     // (
+  RIGHT_PAREN,    // )
+  LEFT_BRACE,     // {
+  RIGHT_BRACE,    // }
+  LEFT_BRACKET,   // [
+  RIGHT_BRACKET,  // ]
+  PIPE,           // |
 
   // ASSIGNMENT OPERATORS
-  Equals,            // =
-  ColonEquals,       // :=
-  PlusEquals,        // +=
-  MinusEquals,       // -=
-  AsteriskEquals,    // *=
-  SlashEquals,       // /=
-  PercentEquals,     // %=
-  BitwiseAndEquals,  // &=
-  BitwiseOrEquals,   // |=
-  BitwiseXorEquals,  // ^=
+  EQUALS,            // =
+  COLON_EQUALS,       // :=
+  PLUS_EQUALS,        // +=
+  MINUS_EQUALS,       // -=
+  ASTERISK_EQUALS,    // *=
+  SLASH_EQUALS,       // /=
+  PERCENT_EQUALS,     // %=
+  AMPERSAND_EQUALS,  // &=
+  OR_EQUALS,   // |=
+  XOR_EQUALS,  // ^=
   ShiftLeftEquals,   // <<=
   ShiftRightEquals,  // >>=
 
@@ -48,7 +49,7 @@ export enum Token {
   Plus,           // +
   Minus,          // -
   Asterisk,       // *
-  Slash,          // /
+  Fwd_Slash,      // /
   Percent,        // %
   Exponent,       // **
   Increment,      // ++

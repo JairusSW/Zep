@@ -1,15 +1,5 @@
-import { Range } from "../Range";
+import { Node } from "./Node";
 
-export class Statement {
+export class Statement extends Node {
   public nameOf: string = "Statement";
-  public range: Range = new Range(
-    {
-      line: -1,
-      column: -1
-    },
-    {
-      line: -1,
-      column: -1
-    }
-  );
 }

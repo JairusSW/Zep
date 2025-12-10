@@ -24,7 +24,7 @@ export class Generator {
     const name: string = node.name.data;
     const params: binaryen.Type[] = [];
     const locals: binaryen.Type[] = [];
-    const returnType: binaryen.Type = toDataType(node.returnType.types[0]);
+    const returnType: binaryen.Type = toDataType(node.returnType!.types[0]);
     let body: binaryen.ExpressionRef | binaryen.ExpressionRef[] = [];
 
     for (const param of node.parameters) {

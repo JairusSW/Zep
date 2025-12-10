@@ -20,10 +20,10 @@ export function isPunctuation(
     return new TokenData(Token.EqualsEquals, "==", position.toRange());
   } else if (text.startsWith("=", position.current)) {
     position.current++;
-    return new TokenData(Token.Equals, "=", position.toRange());
+    return new TokenData(Token.EQUALS, "=", position.toRange());
   } else if (text.startsWith(":=", position.current)) {
     position.current += 2;
-    return new TokenData(Token.ColonEquals, ":=", position.toRange());
+    return new TokenData(Token.COLON_EQUALS, ":=", position.toRange());
   } else if (text.startsWith("?=", position.current)) {
     position.current += 2;
     return new TokenData(Token.QuestionEquals, "?=", position.toRange());
@@ -32,31 +32,31 @@ export function isPunctuation(
     return new TokenData(Token.LessThanEquals, "<=", position.toRange());
   } else if (text.startsWith("?", position.current)) {
     position.current++;
-    return new TokenData(Token.Question, "?", position.toRange());
+    return new TokenData(Token.QUESTION, "?", position.toRange());
   } else if (text.startsWith(":", position.current)) {
     position.current++;
-    return new TokenData(Token.Colon, ":", position.toRange());
+    return new TokenData(Token.COLON, ":", position.toRange());
   } else if (text.startsWith(",", position.current)) {
     position.current++;
-    return new TokenData(Token.Comma, ",", position.toRange());
+    return new TokenData(Token.COMMA, ",", position.toRange());
   } else if (text.startsWith("(", position.current)) {
     position.current++;
-    return new TokenData(Token.LeftParen, "(", position.toRange());
+    return new TokenData(Token.LEFT_PAREN, "(", position.toRange());
   } else if (text.startsWith(")", position.current)) {
     position.current++;
-    return new TokenData(Token.RightParen, ")", position.toRange());
+    return new TokenData(Token.RIGHT_PAREN, ")", position.toRange());
   } else if (text.startsWith("{", position.current)) {
     position.current++;
-    return new TokenData(Token.LeftBracket, "{", position.toRange());
+    return new TokenData(Token.LEFT_BRACKET, "{", position.toRange());
   } else if (text.startsWith("}", position.current)) {
     position.current++;
-    return new TokenData(Token.RightBracket, "}", position.toRange());
+    return new TokenData(Token.RIGHT_BRACKET, "}", position.toRange());
   } else if (text.startsWith("[", position.current)) {
     position.current++;
-    return new TokenData(Token.LeftBrace, "[", position.toRange());
+    return new TokenData(Token.LEFT_BRACE, "[", position.toRange());
   } else if (text.startsWith("]", position.current)) {
     position.current++;
-    return new TokenData(Token.RightBrace, "]", position.toRange());
+    return new TokenData(Token.RIGHT_BRACE, "]", position.toRange());
   } else if (text.startsWith("+", position.current)) {
     position.current++;
     return new TokenData(Token.Plus, "+", position.toRange());
@@ -77,7 +77,7 @@ export function isPunctuation(
     return new TokenData(Token.LessThan, "<", position.toRange());
   } else if (text.startsWith(".", position.current)) {
     position.current++;
-    return new TokenData(Token.Period, ".", position.toRange());
+    return new TokenData(Token.DOT, ".", position.toRange());
   } else {
     return null;
   }

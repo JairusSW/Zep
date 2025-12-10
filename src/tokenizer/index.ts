@@ -98,7 +98,7 @@ export class Tokenizer {
                         this.position.current++;
                         this.position.markPosition();
                         return new TokenData(
-                            Token.String,
+                            Token.STRING,
                             txt,
                             pos
                         );
@@ -146,7 +146,7 @@ export class Tokenizer {
                 }
                 this.position.markPosition();
                 const pos = this.position.toRange();
-                return new TokenData(Token.Number, txt, pos);
+                return new TokenData(Token.NUMBER, txt, pos);
             }
 
             const space = isWhitespace(char);
@@ -158,7 +158,7 @@ export class Tokenizer {
                     this.position.current++;
                     this.position.markPosition();
                     return new TokenData(
-                        Token.Identifier,
+                        Token.IDENTIFIER,
                         txt,
                         pos
                     );
@@ -168,7 +168,7 @@ export class Tokenizer {
                 this.position.current++;
                 this.position.markPosition();
                 return new TokenData(
-                    Token.Identifier,
+                    Token.IDENTIFIER,
                     txt,
                     pos
                 );
@@ -183,7 +183,7 @@ export class Tokenizer {
                     const pos = this.position.toRange();
                     this.position.markPosition();
                     return new TokenData(
-                        Token.Identifier,
+                        Token.IDENTIFIER,
                         txt,
                         pos
                     );
@@ -212,6 +212,35 @@ export class Tokenizer {
         state.resume();
         return tok;
     }
+    getLine(): TokenData {
+        const start = this.position.current;
+
+        let i = start;
+        while (i < this.text.length && this.text.charAt(i) !== "\n") {
+            i++;
+        }
+
+        const txt = this.text.slice(start, i);
+
+        this.position.current = i;
+        this.position.markPosition();
+
+        if (i < this.text.length && this.text.charAt(i) === "\n") {
+            this.position.incrementLine();
+            this.position.current++;
+            this.position.markPosition();
+        }
+
+        const range = this.position.toRange();
+
+        return new TokenData(
+            Token.TEXT,
+            txt,
+            range
+        );
+    }
+
+
     currentRange(): Range {
         return this.position.toRange();
     }
@@ -220,7 +249,7 @@ export class Tokenizer {
     }
 }
 
-class TokenizerState {
+export class TokenizerState {
     private index: number = 0;
 
     private _line: number = 0;

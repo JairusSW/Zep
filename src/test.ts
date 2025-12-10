@@ -30,9 +30,10 @@ fn fib(n: i32): i32 {
 }
 
 #[export]
-fn main() -> void {
+fn main() {
   print("add(1,2) = " + add(1,2))
   print("fib(10) = " + fib(10))
+  // foo().bar
 }
   `,
   SourceKind.UserEntry
@@ -48,6 +49,6 @@ for (const source of program.sources) {
 
 Formatter.rules.semi = true
 for (const source of program.sources) {
-  const transpiled = Formatter.from(source);
-  console.log("\n" + SyntaxColors.gray(source.fileName) + "\n" + transpiled.trim());
+  const formatted = Formatter.from(source);
+  console.log("\n" + SyntaxColors.gray(source.fileName) + "\n" + formatted.trim());
 }

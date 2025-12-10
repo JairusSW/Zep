@@ -4,9 +4,9 @@ import { Identifier } from "./Identifier.js";
 
 export class CallExpression extends Expression {
   public nameOf: string = "CallExpression";
-  public calling: Identifier;
+  public calling: Expression;
   public parameters: Expression[];
-  constructor(calling: Identifier, parameters: Expression[], range: Range) {
+  constructor(calling: Expression, parameters: Expression[], range: Range) {
     super();
     this.calling = calling;
     this.parameters = parameters;

@@ -23,6 +23,9 @@ import { enumToString } from "../util/types/tools/enum";
 
 import { SyntaxColors } from "./syntaxcolors";
 import { ImportDeclaration } from "../ast/nodes/ImportDeclaration";
+import { ExpressionStatement } from "../ast/nodes/ExpressionStatement";
+import { PropertyAccessExpression } from "../ast/nodes/PropertyAccessExpression";
+import { CommentNode } from "../ast/nodes/CommentNode";
 
 let depth = "";
 let parenDepth = 0;
@@ -43,6 +46,7 @@ export class Formatter {
       return out;
     }
     // Declaration
+    if (node instanceof CommentNode) return Formatter.CommentNode(node);
     if (node instanceof ImportDeclaration) return Formatter.ImportDeclaration(node);
     if (node instanceof VariableDeclaration) return Formatter.VariableDeclaration(node);
     if (node instanceof FunctionDeclaration) return Formatter.FunctionDeclaration(node);
@@ -51,6 +55,7 @@ export class Formatter {
     if (node instanceof StructDeclaration) return Formatter.StructDeclaration(node);
 
     // Statement
+    if (node instanceof ExpressionStatement) return Formatter.ExpressionStatement(node);
     if (node instanceof ReturnStatement) return Formatter.ReturnStatement(node);
     if (node instanceof IfStatement) return Formatter.IfStatement(node);
     if (node instanceof WhileStatement) return Formatter.WhileStatement(node);
@@ -62,6 +67,7 @@ export class Formatter {
     if (node instanceof ReferenceExpression) return Formatter.ReferenceExpression(node);
     if (node instanceof ParameterExpression) return Formatter.ParameterExpression(node);
     if (node instanceof BlockExpression) return Formatter.BlockExpression(node);
+    if (node instanceof PropertyAccessExpression) return Formatter.PropertyAccessExpression(node);
 
     if (node instanceof NumberLiteral) return Formatter.NumberLiteral(node);
     if (node instanceof StringLiteral) return Formatter.StringLiteral(node);
@@ -69,6 +75,15 @@ export class Formatter {
 
     if (node instanceof Identifier) return Formatter.Identifier(node);
     return "nop";
+  }
+  static CommentNode(node: CommentNode) {
+    return SyntaxColors.gray("// " + node.text);
+  }
+  static PropertyAccessExpression(node: PropertyAccessExpression) {
+    return this.from(node.expression) + "." + this.from(node.property);
+  }
+  static ExpressionStatement(node: ExpressionStatement) {
+    return Formatter.from(node.expression);
   }
   static NumberLiteral(node: NumberLiteral) {
     return SyntaxColors.yellowLight(node.data);

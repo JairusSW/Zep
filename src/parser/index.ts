@@ -22,7 +22,7 @@ import { NumberLiteral } from "../ast/nodes/NumberLiteral.js";
 import { FunctionImportDeclaration } from "../ast/nodes/FunctionImportDeclaration.js";
 import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
 import { ReferenceExpression } from "../ast/nodes/ReferenceExpression.js";
-import { CompileTimeError, SyntaxError, TokenMismatchError, UserError } from "../error/error.js";
+import { SyntaxError, TokenMismatchError, UserError } from "../error/error.js";
 import { Range } from "../ast/Range.js";
 import { Token } from "../tokenizer/token.js";
 import { TokenData } from "../tokenizer/tokendata.js";
@@ -42,6 +42,8 @@ import { ImportDeclaration } from "../ast/nodes/ImportDeclaration.js";
 import { Program } from "../ast/Program.js";
 import { assert } from "../util/assert.js";
 import { ExpressionStatement } from "../ast/nodes/ExpressionStatement.js";
+import { PropertyAccessExpression } from "../ast/nodes/PropertyAccessExpression.js";
+import { CommentNode } from "../ast/nodes/CommentNode.js";
 
 export class Parser {
   public source: Source;
@@ -66,17 +68,19 @@ export class Parser {
     const tokenizer = this.source.tokenizer;
     let node: Statement | null = null;
     const state = tokenizer.createState();
-    if ((node = this.parseFunctionDeclaration(scope))) return node;
+    if ((node = this.parseFunctionDeclaration(scope))) return (this.source.topLevelStatements.push(node), node);
     state.resume();
-    if ((node = this.parseImportDeclaration(scope))) return node;
+    if ((node = this.parseImportDeclaration(scope))) return (this.source.topLevelStatements.push(node), node);
     state.resume();
-    if ((node = this.parseFunctionImport(scope))) return node;
+    if ((node = this.parseFunctionImport(scope))) return (this.source.topLevelStatements.push(node), node);
     state.resume();
-    if ((node = this.parseVariableDeclaration(scope))) return node;
+    if ((node = this.parseVariableDeclaration(scope))) return (this.source.topLevelStatements.push(node), node);
     state.resume();
-    if ((node = this.parseStructDeclaration(scope))) return node;
+    if ((node = this.parseStructDeclaration(scope))) return (this.source.topLevelStatements.push(node), node);
     state.resume();
-    if ((node = this.parseEnumDeclaration(scope))) return node;
+    if ((node = this.parseEnumDeclaration(scope))) return (this.source.topLevelStatements.push(node), node);
+    state.resume();
+    if ((node = this.parseCommentNode(scope))) return (this.source.topLevelStatements.push(node), node);
     state.resume();
     return null;
   }
@@ -96,49 +100,68 @@ export class Parser {
     state.resume();
     if ((node = this.parseWhileStatement(scope))) return node;
     state.resume();
-    if ((node = this.parseCallExpression(scope))) return node;
+    if ((node = this.parseExpressionStatement(scope))) return node;
+    state.resume();
+    if ((node = this.parseCommentNode(scope))) return node;
     state.resume();
     return null;
   }
-  parseExpression(scope: Scope, besides: string | null = null): Expression | null {
+  parseExpression(scope: Scope, besides: Set<string> = new Set<string>()): Expression | null {
     const tokenizer = this.source.tokenizer;
     let express: Expression | null = null;
     const state = tokenizer.createState();
-    if (besides !== "BinaryExpression" && (express = this.parseBinaryExpression(scope))) return express;
+    if (!besides.has("BinaryExpression") && (express = this.parseBinaryExpression(scope, besides))) return express;
     state.resume();
-    if (besides !== "CallExpression" && (express = this.parseCallExpression(scope))) return express;
+    if (!besides.has("CallExpression") && (express = this.parseCallExpression(scope, besides))) return express;
     state.resume();
-    if (besides !== "NumberLiteral" && (express = this.parseNumberLiteral(scope))) return express;
+    if (!besides.has("PropertyAccessExpression") && (express = this.parsePropertyAccessExpression(scope, besides))) return express;
     state.resume();
-    if (besides !== "StringLiteral" && (express = this.parseStringLiteral(scope))) return express;
+    if (!besides.has("NumberLiteral") && (express = this.parseNumberLiteral(scope))) return express;
     state.resume();
-    if (besides !== "BooleanLiteral" && (express = this.parseBooleanLiteral(scope))) return express;
+    if (!besides.has("StringLiteral") && (express = this.parseStringLiteral(scope))) return express;
     state.resume();
-    if (besides !== "ReferenceExpression" && (express = this.parseReferenceExpression(scope))) return express;
+    if (!besides.has("BooleanLiteral") && (express = this.parseBooleanLiteral(scope))) return express;
     state.resume();
-    if (besides !== "ModifierExpression" && (express = this.parseModifierExpression(scope))) return express;
+    if (!besides.has("ReferenceExpression") && (express = this.parseReferenceExpression(scope))) return express;
     state.resume();
-    if (besides !== "IdentifierExpression" && (express = this.parseIdentifierExpression(scope))) return express;
+    if (!besides.has("ModifierExpression") && (express = this.parseModifierExpression(scope))) return express;
     state.resume();
-    if (besides !== "ParameterExpression" && (express = this.parseParameterExpression(scope))) return express;
+    if (!besides.has("ParameterExpression") && (express = this.parseParameterExpression(scope))) return express;
     state.resume();
-    if (besides !== "ParenthesizedExpression" && (express = this.parseParenthesizedExpression(scope))) return express;
+    if (!besides.has("ParenthesizedExpression") && (express = this.parseParenthesizedExpression(scope))) return express;
     state.resume();
-
+    if (!besides.has("CommentNode") && (express = this.parseCommentNode(scope))) return express;
+    state.resume();
+    if (!besides.has("IdentifierExpression") && (express = this.parseIdentifierExpression(scope))) return express;
+    state.resume();
     return null;
   }
-  parseExpressionStatement(scope: Scope): ExpressionStatement | null {
+  parseCommentNode(scope: Scope): CommentNode | null {
+    const tokenizer = this.source.tokenizer;
+    if (tokenizer.getToken().text !== "//") return null;
+    const text = tokenizer.getLine().text;
+    return new CommentNode(text);
+  }
+  parsePropertyAccessExpression(scope: Scope, besides: Set<string> = new Set<string>()): PropertyAccessExpression | null {
+    const tokenizer = this.source.tokenizer;
+    besides.add("PropertyAccessExpression");
+    const expression = this.parseExpression(scope, besides);
+    besides.delete("PropertyAccessExpression");
+    if (!expression) return null;
+    if (tokenizer.getToken().token !== Token.DOT) return null;
+    const property = this.parseIdentifierExpression(scope);
+    if (!property) return null;
+    return new PropertyAccessExpression(expression, property, Range.from(expression.range, property.range));
+  }
+  parseExpressionStatement(scope: Scope, besides: Set<string> = new Set<string>()): ExpressionStatement | null {
     const tokenizer = this.source.tokenizer;
     let node: Expression | null = null;
     const state = tokenizer.createState();
-    if ((node = this.parseExpression(scope, "ExpressionStatement"))) return node;
+    besides.add("ExpressionStatement");
+    if ((node = this.parseExpression(scope, besides))) return new ExpressionStatement(node);
+    besides.delete("ExpressionStatement");
     state.resume();
     return null;
-  }
-  parseNode(scope: Scope, besides: string | null = null): Node | null {
-    const tokenizer = this.source.tokenizer;
-    let node: Node | null = this.parseStatement(scope) || this.parseExpression(scope, besides);
-    return node;
   }
   parseVariableDeclaration(scope: Scope): VariableDeclaration | null {
     const tokenizer = this.source.tokenizer;
@@ -168,7 +191,7 @@ export class Parser {
     let next = tokenizer.viewToken();
 
     // If there's a type annotation: consume ':' then parse the type
-    if (next.token === Token.Colon) {
+    if (next.token === Token.COLON) {
       tokenizer.getToken(); // consume ':'
 
       // parseTypeExpression will call getToken() to consume the identifier(s)
@@ -186,7 +209,7 @@ export class Parser {
 
       // After type, peek: if '=' present -> consume and parse value, otherwise value stays null (optional)
       next = tokenizer.viewToken();
-      if (next.token === Token.Equals) {
+      if (next.token === Token.EQUALS) {
         tokenizer.getToken(); // consume '='
         value = this.parseExpression(scope);
         if (!value) return null;
@@ -194,7 +217,7 @@ export class Parser {
 
     } else {
       // No type annotation -> initializer required
-      if (next.token !== Token.Equals) {
+      if (next.token !== Token.EQUALS) {
         new SyntaxError(
           this.source,
           "Error",
@@ -278,7 +301,7 @@ export class Parser {
 
     const name = tokenizer.getToken();
     if (!isIdentifier(name)) return null;
-    if (tokenizer.getToken().token !== Token.LeftParen) return null;
+    if (tokenizer.getToken().token !== Token.LEFT_PAREN) return null;
     const params: ParameterExpression[] = [];
     const blockScope = new Scope(scope);
     while (true) {
@@ -286,12 +309,12 @@ export class Parser {
       if (!param) break;
       params.push(param);
       const tok = tokenizer.getToken().token;
-      if (tok !== Token.Comma) break;
+      if (tok !== Token.COMMA) break;
     }
 
     let returnType: TypeExpression | null = null
     const stateB = tokenizer.createState();
-    if (tokenizer.getToken().token === Token.Colon) {
+    if (tokenizer.getToken().token === Token.COLON) {
       returnType = this.parseTypeExpression(blockScope);
       assert(!!returnType, new SyntaxError(
         this.source,
@@ -336,7 +359,6 @@ export class Parser {
       }
     }
     this.source.globalScope.add(name.text, node);
-    this.source.topLevelStatements.push(node);
     return node;
   }
   parseEnumDeclaration(scope: Scope): EnumDeclaration | null {
@@ -357,7 +379,7 @@ export class Parser {
     const elements: EnumElement[] = [];
 
     let elementName = tokenizer.getToken();
-    if (elementName.token !== Token.Identifier) return null;
+    if (elementName.token !== Token.IDENTIFIER) return null;
     let elementValue: NumberLiteral | null = null;
 
     let index = 0;
@@ -385,7 +407,7 @@ export class Parser {
         if (trailing.text === "}") break;
 
         elementName = tokenizer.getToken();
-        if (elementName.token !== Token.Identifier) return null;
+        if (elementName.token !== Token.IDENTIFIER) return null;
       } else if (trailing.text === "=") {
         elementValue = this.parseNumberLiteral(scope);
         if (!elementValue) {
@@ -404,7 +426,6 @@ export class Parser {
     );
 
     this.source.globalScope.add(name.text, node);
-    this.source.topLevelStatements.push(node);
 
     return node;
   }
@@ -463,7 +484,7 @@ export class Parser {
       return null;
 
     const colonToken = tokenizer.viewToken();
-    if (colonToken.token !== Token.Colon) {
+    if (colonToken.token !== Token.COLON) {
       const node = new ModifierExpression(
         new Identifier(tagToken.text, tagToken.range),
         null,
@@ -473,7 +494,7 @@ export class Parser {
     }
     tokenizer.getToken();
     const contentFirstToken = tokenizer.getToken();
-    if (contentFirstToken.token !== Token.Identifier) {
+    if (contentFirstToken.token !== Token.IDENTIFIER) {
       new TokenMismatchError(
         "Expected to find content to modifier, but found void!",
         2,
@@ -522,12 +543,12 @@ export class Parser {
 
     const colonToken = tokenizer.getToken();
 
-    if (colonToken.token !== Token.Colon) {
+    if (colonToken.token !== Token.COLON) {
       return null;
     }
 
     const contentFirstToken = tokenizer.getToken();
-    if (contentFirstToken.token !== Token.Identifier) {
+    if (contentFirstToken.token !== Token.IDENTIFIER) {
       new TokenMismatchError(
         "Expected to find content to modifier, but found void!",
         2,
@@ -565,7 +586,7 @@ export class Parser {
     const name = tokenizer.getToken();
 
     if (!isIdentifier(name)) return null;
-    if (tokenizer.getToken().token !== Token.LeftParen) return null;
+    if (tokenizer.getToken().token !== Token.LEFT_PAREN) return null;
     const params: ParameterExpression[] = [];
 
     const blockScope = new Scope();
@@ -578,8 +599,8 @@ export class Parser {
 
       const tok = tokenizer.getToken().token;
 
-      if (tok === Token.RightParen) break;
-      if (tok !== Token.Comma) break;
+      if (tok === Token.RIGHT_PAREN) break;
+      if (tok !== Token.COMMA) break;
     }
     if (tokenizer.getToken().token !== Token.Minus) return null;
     if (tokenizer.getToken().token !== Token.GreaterThan) return null;
@@ -599,7 +620,6 @@ export class Parser {
 
     scope.add(name.text, node);
     if (scope.parentScope) throw new Error("Expected to find function import at top level, but found it elsewhere!");
-    this.source.topLevelStatements.push(node);
 
     return node;
   }
@@ -627,7 +647,6 @@ export class Parser {
 
     // scope.add(, node);
     if (scope.parentScope) throw new Error("Expected to find import at top level, but found it elsewhere!");
-    this.source.topLevelStatements.push(node);
 
     return node;
   }
@@ -636,9 +655,9 @@ export class Parser {
     if (tokenizer.getToken().text !== "branch") return null;
     const start = tokenizer.position.toRange();
     const name = tokenizer.getToken();
-    if (name.token !== Token.Identifier) return null;
+    if (name.token !== Token.IDENTIFIER) return null;
 
-    const body = this.parseNode(scope);
+    const body = this.parseStatement(scope);
     if (!body) return null;
 
     const node = new BranchStatement(
@@ -658,7 +677,7 @@ export class Parser {
     if (tokenizer.getToken().text !== "br") return null;
     const start = tokenizer.position.toRange();
     const branchTo = tokenizer.getToken();
-    if (branchTo.token !== Token.Identifier) return null
+    if (branchTo.token !== Token.IDENTIFIER) return null
     const node = new BranchToStatement(
       new Identifier(
         branchTo.text,
@@ -668,10 +687,12 @@ export class Parser {
     );
     return node;
   }
-  parseCallExpression(scope: Scope): CallExpression | null {
+  parseCallExpression(scope: Scope, besides: Set<string> = new Set()): CallExpression | null {
     const tokenizer = this.source.tokenizer;
-    const calling = tokenizer.getToken();
-    if (!isIdentifier(calling)) return null;
+    besides.add("CallExpression");
+    const calling = this.parseExpression(scope, besides);
+    besides.delete("CallExpression");
+    if (!calling) return null;
     const leftParen = tokenizer.getToken();
     if (leftParen.text !== "(") return null;
     const args: Expression[] = [];
@@ -680,23 +701,22 @@ export class Parser {
       const arg = this.parseExpression(scope);
 
       if (!arg) {
-        assert(tokenizer.getToken().token === Token.RightParen, new SyntaxError(this.source, "Error", "Expected ')' after function call, but got none!", 0x4, tokenizer.currentRange(), "FAIL"));
+        assert(tokenizer.getToken().token === Token.RIGHT_PAREN, new SyntaxError(this.source, "Error", "Expected ')' after function call, but got none!", 0x4, tokenizer.currentRange(), "FAIL"));
         break;
       }
       args.push(arg);
 
       const tok = tokenizer.getToken();
 
-      if (tok.token === Token.RightParen) break;
-      if (tok.token !== Token.Comma) return null;
+      if (tok.token === Token.RIGHT_PAREN) break;
+      if (tok.token !== Token.COMMA) return null;
     }
 
-    if (!isIdentifier(calling)) return null;
-
-    if (leftParen.token !== Token.LeftParen) return null;
+    if (leftParen.token === Token.DOT) return
+    if (leftParen.token !== Token.LEFT_PAREN) return null;
 
     const node = new CallExpression(
-      new Identifier(calling.text, calling.range),
+      calling,
       args,
       Range.from(calling.range, tokenizer.currentRange())
     );
@@ -743,14 +763,14 @@ export class Parser {
   parseBlockStatement(scope: Scope): BlockExpression | null {
     const tokenizer = this.source.tokenizer;
     let token = tokenizer.getToken();
-    if (token.token !== Token.LeftBracket) return null;
+    if (token.token !== Token.LEFT_BRACKET) return null;
     const stmts: Statement[] = [];
     while (true) {
-      let stmt: Node | null = this.parseNode(scope);
+      let stmt: Node | null = this.parseStatement(scope);
       if (stmt) stmts.push(stmt);
       else break;
     }
-    if (tokenizer.getToken().token !== Token.RightBracket) return null;
+    if (tokenizer.getToken().token !== Token.RIGHT_BRACKET) return null;
     const node = new BlockExpression(
       stmts,
       scope,
@@ -776,12 +796,14 @@ export class Parser {
     state.resume()
     return null;
   }
-  parseBinaryExpression(scope: Scope): BinaryExpression | null {
+  parseBinaryExpression(scope: Scope, besides: Set<string> = new Set<string>()): BinaryExpression | null {
     const tokenizer = this.source.tokenizer;
-    let left: Expression | null = this.parseBinaryExpressionLeft(scope);
+    besides.add("BinaryExpression");
+    let left: Expression | null = this.parseExpression(scope, besides);
+    besides.delete("BinaryExpression");
     if (!left) return null;
     const op = tokenToOp(tokenizer.getToken());
-    let right: Expression | null = this.parseExpression(scope);
+    let right: Expression | null = this.parseExpression(scope, besides);
 
     if (op === null || !left || !right) {
       return null;
@@ -815,7 +837,7 @@ export class Parser {
     const tokenizer = this.source.tokenizer;
     if (tokenizer.getToken().text !== "(") return null;
     const start = tokenizer.position.toRange();
-    const expr = this.parseExpression(scope, "ParenthesizedExpression");
+    const expr = this.parseExpression(scope, new Set<string>(["ParenthesizedExpression"]));
     if (tokenizer.getToken().text !== ")") return null;
     if (!expr) return null;
 
@@ -880,7 +902,6 @@ export class Parser {
     const lastToken = tokenizer.getToken();
 
     const node = new StructDeclaration(name, fields, Range.from(start, lastToken.range));
-    this.source.topLevelStatements.push(node);
     return node;
   }
   parseStructFieldExpression(scope: Scope): StructFieldDeclaration | null {
@@ -925,7 +946,7 @@ export function tokenToOp(tok: TokenData): Operator | null {
   if (tok.token === Token.Plus) return Operator.Add;
   if (tok.token === Token.Minus) return Operator.Sub;
   if (tok.token === Token.Asterisk) return Operator.Mul;
-  if (tok.token === Token.Equals) return Operator.Equals;
+  if (tok.token === Token.EQUALS) return Operator.Equals;
   if (tok.token === Token.EqualsEquals) return Operator.EqualsEquals;
   if (tok.token === Token.LessThanEquals) return Operator.LessThanEquals;
   return null;
