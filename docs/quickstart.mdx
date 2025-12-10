@@ -1,0 +1,39 @@
+---
+title: "Quickstart"
+description: "Get up and running with Zep in under 60 seconds."
+keywords: ['zep', 'quickstart', 'install', 'first program']
+---
+
+# Quickstart
+
+Get your first Zep program running in **under a minute**.
+
+## 1. Install Zep
+
+```bash
+npm install zep
+```
+
+Verify installation:
+```bash
+zep --help
+```
+
+## 2. Create your first program
+
+Create `hello.zp`:
+
+```ts
+#[export]
+fn main(): void {
+    print("Hello, World!")
+}
+```
+
+## 3. Run it
+
+```bash
+zep run hello.zp
+```
+
+**Output:**
