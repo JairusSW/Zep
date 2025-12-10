@@ -6,9 +6,9 @@ export class ExpressionStatement extends Statement {
   public nameOf: string = "ExpressionStatement";
   public expression: Expression;
 
-  constructor(expression: Expression, range: Range) {
+  constructor(expression: Expression) {
     super();
     this.expression = expression;
-    this.range = range;
+    this.range = this.expression.range;
   }
 }
