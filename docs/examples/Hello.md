@@ -1,10 +1,9 @@
 `hello.zp`
 
-```rust
-#[extern]: env
-fn print(data: *string) -> void
+```ts
+import "std/io"
 
-fn main() -> void {
+fn main(): void {
     print("Hi there... Its me, Zep!")
 }
 ```
