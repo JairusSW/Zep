@@ -7,8 +7,8 @@ const program = new Program([
   new Source(
     "std:io",
     `
-#[extern]: env
-fn print(data: i32) -> void
+#[extern("env.print")]
+fn print(data: i32): void
     `,
     SourceKind.Library
   ),
