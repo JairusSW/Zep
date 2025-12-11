@@ -17,6 +17,7 @@
     "@types/yargs": "^17.0.33",
     "assemblyscript": "^0.27.29",
     "bun-types": "^1.1.25",
+    "mint": "^4.2.234",
     "prettier": "^3.3.3",
     "tinybench": "^2.9.0",
     "treeify": "^1.1.0",
