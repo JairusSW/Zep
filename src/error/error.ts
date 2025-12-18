@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import { Range } from "../ast/Range";
+import { Range } from "../range";
 import { Source } from "../ast/Source";
 
 export enum ErrorTypes {
@@ -31,11 +31,11 @@ export class TokenMismatchError extends CompileTimeError {
     console.log(chalk.bgRed("Error") + chalk.grey(":") + " " + this.message);
     console.log(
       " " +
-      chalk.cyan("test.zp") +
-      chalk.gray(":") +
-      chalk.cyan(this.range.start.line) +
-      chalk.gray(":") +
-      chalk.cyan(this.range.end.column),
+        chalk.cyan("test.zp") +
+        chalk.gray(":") +
+        chalk.cyan(this.range.start.line) +
+        chalk.gray(":") +
+        chalk.cyan(this.range.end.column),
     );
   }
 }
@@ -63,11 +63,11 @@ export class SyntaxError extends CompileTimeError {
     console.log(color(this.prefix) + chalk.grey(":") + " " + this.message);
     console.log(
       " " +
-      chalk.cyan(this.source.fileName) +
-      chalk.gray(":") +
-      chalk.cyan(this.range.start.line) +
-      chalk.gray(":") +
-      chalk.cyan(this.range.start.column),
+        chalk.cyan(this.source.fileName) +
+        chalk.gray(":") +
+        chalk.cyan(this.range.start.line) +
+        chalk.gray(":") +
+        chalk.cyan(this.range.start.column),
     );
     if (this.action === "FAIL") process.exit(0);
   }
@@ -96,11 +96,11 @@ export class UserError extends CompileTimeError {
     console.log(color(this.prefix) + chalk.grey(":") + " " + this.message);
     console.log(
       " " +
-      chalk.cyan(this.source.fileName) +
-      chalk.gray(":") +
-      chalk.cyan(this.range.start.line) +
-      chalk.gray(":") +
-      chalk.cyan(this.range.start.column),
+        chalk.cyan(this.source.fileName) +
+        chalk.gray(":") +
+        chalk.cyan(this.range.start.line) +
+        chalk.gray(":") +
+        chalk.cyan(this.range.start.column),
     );
     if (this.action === "FAIL") process.exit(0);
   }

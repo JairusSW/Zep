@@ -1,13 +1,13 @@
-import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration";
-import { Program } from "../ast/Program";
+import { FunctionDeclaration } from "../ast/FunctionDeclaration";
+import { Program } from "../program";
 import { getNameOf, getTypeOf, toDataType } from "./util";
-import { BinaryExpression, Operator } from "../ast/nodes/BinaryExpression";
-import { ReturnStatement } from "../ast/nodes/ReturnStatement";
+import { BinaryExpression, OperatorKind } from "../ast/BinaryExpression";
+import { ReturnStatement } from "../ast/ReturnStatement";
 import binaryen from "binaryen";
 
 export class Generator {
   public module = new binaryen.Module();
-  constructor() { }
+  constructor() {}
   parseProgram(program: Program): void {
     for (const topStmt of program.entry.topLevelStatements) {
       if (topStmt instanceof FunctionDeclaration) {
@@ -47,7 +47,7 @@ export class Generator {
       binaryen.createType(params),
       returnType,
       locals,
-      body
+      body,
     );
 
     return fn;
@@ -55,25 +55,31 @@ export class Generator {
   parseBinaryExpression(node: BinaryExpression): binaryen.ExpressionRef {
     const left = this.parseExpression(node.left);
     const right = this.parseExpression(node.right);
-    
+
     switch (node.operand) {
-      case Operator.Add: return this.getModuleType(getTypeOf(node)).add(left, right);
+      case OperatorKind.Add:
+        return this.getModuleType(getTypeOf(node)).add(left, right);
     }
-    if (node.operand == Operator.Add) {
+    if (node.operand == OperatorKind.Add) {
       return this.module.i32.add(left, right);
     }
-    throw new Error("dfd")
+    throw new Error("dfd");
   }
   parseReturnStatement(node: ReturnStatement): wasmir.Instr {
-    return this.parseBinaryExpression(node.returning)
+    return this.parseBinaryExpression(node.returning);
   }
   getModuleType(type: binaryen.Type) {
     switch (type) {
-      case binaryen.i32: return this.module.i32;
-      case binaryen.i64: return this.module.i64;
-      case binaryen.f32: return this.module.f32;
-      case binaryen.f64: return this.module.f64;
-      default: throw new Error("Could not get module type!")
+      case binaryen.i32:
+        return this.module.i32;
+      case binaryen.i64:
+        return this.module.i64;
+      case binaryen.f32:
+        return this.module.f32;
+      case binaryen.f64:
+        return this.module.f64;
+      default:
+        throw new Error("Could not get module type!");
     }
   }
 }

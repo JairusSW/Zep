@@ -1,4 +1,4 @@
-import { Node } from "../../ast/nodes/Node.js";
+import { Node } from "../../ast/Node.js";
 
 export class Scope {
   public nodes = new Map<string, Node>();

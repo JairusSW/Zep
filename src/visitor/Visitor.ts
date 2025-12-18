@@ -1,25 +1,25 @@
-import { BinaryExpression } from "../ast/nodes/BinaryExpression.js";
-import { BlockExpression } from "../ast/nodes/BlockStatement.js";
-import { CallExpression } from "../ast/nodes/CallExpression.js";
-import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration.js";
-import { Identifier } from "../ast/nodes/Identifier.js";
-import { ImportDeclaration } from "../ast/nodes/ImportDeclaration.js";
-import { FunctionImportDeclaration } from "../ast/nodes/FunctionImportDeclaration.js";
-import { ModifierExpression } from "../ast/nodes/ModifierExpression.js";
-import { Node } from "../ast/nodes/Node.js";
-import { NumberLiteral } from "../ast/nodes/NumberLiteral.js";
-import { ParameterExpression } from "../ast/nodes/ParameterExpression.js";
-import { ReturnStatement } from "../ast/nodes/ReturnStatement.js";
-import { StringLiteral } from "../ast/nodes/StringLiteral.js";
-import { TypeExpression } from "../ast/nodes/TypeExpression.js";
-import { VariableDeclaration } from "../ast/nodes/VariableDeclaration.js";
+import { BinaryExpression } from "../ast/BinaryExpression.js";
+import { BlockStatement } from "../ast/BlockStatement.js";
+import { CallExpression } from "../ast/CallExpression.js";
+import { FunctionDeclaration } from "../ast/FunctionDeclaration.js";
+import { Identifier } from "../ast/Identifier.js";
+import { ImportDeclaration } from "../ast/ImportDeclaration.js";
+import { FunctionImportDeclaration } from "../ast/FunctionImportDeclaration.js";
+import { AttributeExpression } from "../ast/AttributeExpression.js";
+import { Node } from "../ast/Node.js";
+import { NumberLiteral } from "../ast/NumberLiteral.js";
+import { ParameterExpression } from "../ast/ParameterExpression.js";
+import { ReturnStatement } from "../ast/ReturnStatement.js";
+import { StringLiteral } from "../ast/StringLiteral.js";
+import { TypeExpression } from "../ast/TypeExpression.js";
+import { VariableDeclaration } from "../ast/VariableDeclaration.js";
 
 export class Visitor {
   constructor() {}
   visit(node: Node) {
     if (node instanceof BinaryExpression) {
       this.visitBinaryExpression(node);
-    } else if (node instanceof BlockExpression) {
+    } else if (node instanceof BlockStatement) {
       this.visitBlockExpression(node);
     } else if (node instanceof CallExpression) {
       this.visitCallExpression(node);
@@ -31,8 +31,8 @@ export class Visitor {
       this.visitImportDeclaration(node);
     } else if (node instanceof FunctionImportDeclaration) {
       this.visitImportFunctionDeclaration(node);
-    } else if (node instanceof ModifierExpression) {
-      this.visitModifierExpression(node);
+    } else if (node instanceof AttributeExpression) {
+      this.visitAttributeExpression(node);
     } else if (node instanceof NumberLiteral) {
       this.visitNumberLiteral(node);
     } else if (node instanceof ParameterExpression) {
@@ -56,7 +56,7 @@ export class Visitor {
     this.visit(node.left);
     this.visit(node.right);
   }
-  visitBlockExpression(node: BlockExpression) {
+  visitBlockExpression(node: BlockStatement) {
     this.visitNodes(node.statements);
   }
   visitCallExpression(node: CallExpression) {
@@ -79,7 +79,7 @@ export class Visitor {
     this.visitNodes(node.parameters);
     this.visit(node.returnType);
   }
-  visitModifierExpression(node: ModifierExpression) {
+  visitAttributeExpression(node: AttributeExpression) {
     this.visit(node.tag);
     if (node.content) this.visit(node.content);
   }

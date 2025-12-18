@@ -1,10 +1,10 @@
-import { ReferenceExpression } from "../ast/nodes/ReferenceExpression";
-import { ParameterExpression } from "../ast/nodes/ParameterExpression";
-import { VariableDeclaration } from "../ast/nodes/VariableDeclaration";
-import { Node } from "../ast/nodes/Node";
+import { ReferenceExpression } from "../ast/ReferenceExpression";
+import { ParameterExpression } from "../ast/ParameterExpression";
+import { VariableDeclaration } from "../ast/VariableDeclaration";
+import { Node } from "../ast/Node";
 import binaryen from "binaryen";
-import { BinaryExpression } from "../ast/nodes/BinaryExpression";
-import { NumberLiteral } from "../ast/nodes/NumberLiteral";
+import { BinaryExpression } from "../ast/BinaryExpression";
+import { NumberLiteral } from "../ast/NumberLiteral";
 export function toDataType(type: string): binaryen.Type {
   switch (type) {
     case "i32":

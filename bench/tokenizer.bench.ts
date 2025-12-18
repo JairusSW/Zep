@@ -1,5 +1,5 @@
 import { Bench } from "tinybench";
-import { Tokenizer } from "../src/tokenizer/index.js";
+import { Tokenizer } from "../src/tokenizer.js";
 import { Token } from "../src/tokenizer/token.js";
 
 const bench = new Bench({ time: 5000 });
@@ -9,7 +9,7 @@ const cachelessTokenizer = new Tokenizer(
 );
 cachelessTokenizer.pauseState();
 bench.add("(cache off) tk/s", () => {
-  const tok = cachelessTokenizer.getToken();
+  const tok = cachelessTokenizer.next();
   if (tok.token === Token.EOF) {
     cachelessTokenizer.resumeState();
   }

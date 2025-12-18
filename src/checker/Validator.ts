@@ -1,5 +1,5 @@
 import { Source } from "../ast/Source";
-import { FunctionDeclaration } from "../ast/nodes/FunctionDeclaration";
+import { FunctionDeclaration } from "../ast/FunctionDeclaration";
 import { ErrorTypes } from "../error/error";
 
 export class Validator {

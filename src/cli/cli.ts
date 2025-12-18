@@ -1,6 +1,6 @@
 import chalk from "chalk";
-import { Parser } from "../parser/index.js";
-import { Tokenizer } from "../tokenizer/index.js";
+import { Parser } from "../parser.js";
+import { Tokenizer } from "../tokenizer.js";
 import { Generator } from "../generator/index.js";
 
 (async () => {

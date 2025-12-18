@@ -1,12 +1,12 @@
 import { expect, test, describe } from "bun:test";
-import { Tokenizer } from "../src/tokenizer/index";
+import { Tokenizer } from "../src/tokenizer";
 import { Parser } from "../src/parser";
-import { StringLiteral } from "../src/ast/nodes/StringLiteral";
-import { NumberLiteral } from "../src/ast/nodes/NumberLiteral";
+import { StringLiteral } from "../src/ast/StringLiteral";
+import { NumberLiteral } from "../src/ast/NumberLiteral";
 import { Scope } from "../src/checker/scope/Scope";
-import { ReturnStatement } from "../src/ast/nodes/ReturnStatement";
-import { BinaryExpression } from "../src/ast/nodes/BinaryExpression";
-import { ReferenceExpression } from "../src/ast/nodes/ReferenceExpression";
+import { ReturnStatement } from "../src/ast/ReturnStatement";
+import { BinaryExpression } from "../src/ast/BinaryExpression";
+import { ReferenceExpression } from "../src/ast/ReferenceExpression";
 
 let testScope: Scope | null = null;
 describe("Should parse Expressions", () => {

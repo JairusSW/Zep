@@ -34,6 +34,7 @@ zep build main.zep
 ## 🚀 Quick Start
 
 `main.zep`
+
 ```rust
 #[export]
 fn add(a: i32, b: i32): i32 {
@@ -54,6 +55,7 @@ zep main.zep
 ## 📚 Core Syntax Highlights
 
 ### Functions & Type Inference
+
 ```rust
 fn parse(s: string): i32 | null {
     if (s is empty) { rt null }
@@ -62,6 +64,7 @@ fn parse(s: string): i32 | null {
 ```
 
 ### Unions & Narrowing
+
 ```rust
 fn process(x: i32 | string | null) {
     if (x is null) { return }
@@ -76,6 +79,7 @@ fn process(x: i32 | string | null) {
 ```
 
 ### Structs with Defaults
+
 ```rust
 struct User {
     id: i32
@@ -85,6 +89,7 @@ struct User {
 ```
 
 ### Borrowing & Pointers
+
 ```rust
 fn get_length(s: &string): i32 {
     rt s.length
@@ -120,7 +125,7 @@ This project is distributed under the [MIT License](./LICENSE).
 
 ## 📫 Contact
 
-Please send all issues to [GitHub Issues](https://github.com/JairusSW/zep/issues) 
+Please send all issues to [GitHub Issues](https://github.com/JairusSW/zep/issues)
 
 - **Email:** [me@jairus.dev](mailto:me@jairus.dev)
 - **GitHub:** [JairusSW/zep](https://github.com/JairusSW/zep)
