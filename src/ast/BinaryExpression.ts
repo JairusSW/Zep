@@ -55,6 +55,10 @@ export enum BinaryOp {
 
 export function tokenToOp(token: Token): BinaryOp | null {
   switch (token) {
+    // assignment
+    case Token.Eq:
+      return BinaryOp.Eq;
+
     // arithmetic
     case Token.Plus:
       return BinaryOp.Add;
@@ -131,6 +135,10 @@ export function tokenToOp(token: Token): BinaryOp | null {
 
 export function opToString(op: BinaryOp): string {
   switch (op) {
+    // assignment
+    case BinaryOp.Eq:
+      return "=";
+      
     // arithmetic
     case BinaryOp.Add:
       return "+";

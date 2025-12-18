@@ -219,6 +219,8 @@ export class Formatter {
   }
   static BlockExpression(node: BlockExpression) {
     let body = depthColor(depth.length >> 1, "{");
+    if (!node.statements.length)
+      return body +depthColor(depth.length >> 1, "}");
     depth += "  ";
     for (const stmt of node.statements) {
       body += "\n" + depth + Formatter.from(stmt);

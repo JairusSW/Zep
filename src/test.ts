@@ -66,13 +66,22 @@ import {
 const source = new Source(
   "test.zp",
   `import "std:io"
-  
+fn deserializeString(srcStart: usize, srcEnd: usize, dst: usize): string {
+  srcStart += 2
+  srcEnd -= 2
+  let startPtr = srcStart
+  dst = new(srcEnd - srcStart)
+  // while (srcStart < srcEnd) {}
+
+}
+
 fn add(a: i32, b: i32): i32 {
   rt a + b
 }
 
 fn fib(n: i32): i32 | null | ahh {
   if n <= 1 {
+    // {}
     rt n
   }
 }

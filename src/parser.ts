@@ -213,8 +213,7 @@ export class Parser extends DiagnosticEmitter {
     if ((node = this.parseWhileStatement())) return this.ranges.pop(), node;
     this.applyState(state);
 
-    if ((node = this.parseExpressionStatement()))
-      return this.ranges.pop(), node;
+    if ((node = this.parseExpressionStatement())) return this.ranges.pop(), node;
     this.applyState(state);
 
     this.ranges.pop();
@@ -456,35 +455,34 @@ export class Parser extends DiagnosticEmitter {
     const start = this.getCurrentRange();
 
     // first token not yet consumed
-    this.advance();
+    this.advance(); // let or mut
 
     let mutable: boolean;
     if (this.matches(Token.Let)) {
-      mutable = true;
-      this.advance();
-    } else if (this.matches(Token.Mut)) {
       mutable = false;
-      this.advance();
+    } else if (this.matches(Token.Mut)) {
+      mutable = true;
     } else {
       this.applyState(state);
       return null;
     }
 
-    if (!this.matches(Token.Identifier)) {
-      this.applyState(state);
-      return null;
+    const name = this.parseIdentifierExpression(); // name
+
+    if (!name) {
+      this.error(
+        DiagnosticCode.MISSING_LITERAL,
+        {},
+        this.getCurrentRange()
+      );
     }
 
-    const nameText = this.tokenizer.readIdentifier();
-    const nameRange = this.getCurrentRange();
-    const name = new Identifier(nameText, nameRange);
-    this.advance();
+    this.advance(); // : or =
 
     let type: TypeExpression | null = null;
     let value: Expression | null = null;
 
     if (this.matches(Token.Colon)) {
-      this.advance();
       type = this.parseTypeExpression();
       if (!type) {
         this.error(
@@ -493,8 +491,8 @@ export class Parser extends DiagnosticEmitter {
           this.getCurrentRange(),
         );
       }
+      this.advance(); // =
       if (this.matches(Token.Eq)) {
-        this.advance();
         value = this.parseExpression();
         if (!value) {
           this.applyState(state);
@@ -502,7 +500,6 @@ export class Parser extends DiagnosticEmitter {
         }
       }
     } else if (this.matches(Token.Eq)) {
-      this.advance();
       value = this.parseExpression();
       if (!value) {
         this.applyState(state);
@@ -849,6 +846,16 @@ export class Parser extends DiagnosticEmitter {
     if (!this.matches(Token.OpenBrace)) {
       this.applyState(state);
       return null;
+    }
+
+    const state2 = this.getState();
+    if (this.advance() === Token.CloseBrace) {
+      return new BlockStatement(
+        [],
+        this.getRange()
+      )
+    } else {
+      this.applyState(state2);
     }
 
     const stmts: Statement[] = [];
