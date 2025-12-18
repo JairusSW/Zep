@@ -71,7 +71,7 @@ fn add(a: i32, b: i32): i32 {
   rt a + b
 }
 
-fn fib(n: i32): i32 {
+fn fib(n: i32): i32 | null | ahh {
   if n <= 1 {
     rt n
   }

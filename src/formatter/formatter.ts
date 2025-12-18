@@ -19,6 +19,7 @@ import {
   StringLiteral,
   StructDeclaration,
   StructFieldDeclaration,
+  TypeExpression,
   VariableDeclaration,
   WhileStatement,
 } from "../ast";
@@ -37,7 +38,8 @@ export class FormatterRules {
 
 export class Formatter {
   static rules: FormatterRules = new FormatterRules();
-  static from(node: Node | Source): string {
+  static from(node: Node | Source | null): string {
+    if (!node) return "";
     if (node instanceof Source) {
       let out = "";
       for (const top of node.statements) {
@@ -76,6 +78,8 @@ export class Formatter {
       return Formatter.PropertyAccessExpression(node);
     if (node instanceof AttributeExpression)
       return Formatter.AttributeExpression(node);
+    if (node instanceof TypeExpression) 
+      return Formatter.TypeExpression(node);
 
     if (node instanceof NumberLiteral) return Formatter.NumberLiteral(node);
     if (node instanceof StringLiteral) return Formatter.StringLiteral(node);
@@ -113,17 +117,24 @@ export class Formatter {
 
     return `#\[${tag}(${inner})]`;
   }
+  static TypeExpression(node: TypeExpression) {
+    if (!node.types.length) return "";
+
+    const base = node.types.join(" | ");
+    return SyntaxColors.yellowLight(base);
+  }
+
   static FunctionDeclaration(node: FunctionDeclaration) {
     let params = "";
     let body = "";
     for (const param of node.parameters) {
-      params += `${SyntaxColors.red(param.name.data)}: ${SyntaxColors.yellowLight(param.type?.types[0].toString())}, `;
+      params += `${SyntaxColors.red(param.name.data)}: ${Formatter.from(param.type)}, `;
     }
     if (params) params = params.slice(0, params.length - 2);
 
     const pDepth = parenDepth++;
     body += Formatter.from(node.block);
-    const returnType = node.returnType?.types[0];
+    const returnType = node.returnType ? Formatter.from(node.returnType) : null;
 
     let attrs = "";
     for (const attr of node.attributes) {

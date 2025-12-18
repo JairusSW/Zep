@@ -292,10 +292,6 @@ export class Tokenizer extends DiagnosticEmitter {
                 return Token.As;
               case "type":
                 return Token.Type;
-              case "null":
-                return Token.Null;
-              case "void":
-                return Token.Void;
               case "true":
                 return Token.True;
               case "false":

@@ -93,6 +93,13 @@ export class Parser extends DiagnosticEmitter {
     };
   }
 
+  private updateState(state: ParserState): ParserState {
+    state.tokenizerState.wind();
+    state.current = this.current;
+    state.rangesSize = this.ranges.size;
+    return state;
+  }
+
   private applyState(state: ParserState): void {
     state.tokenizerState.unwind();
     this.current = state.current;
@@ -401,7 +408,7 @@ export class Parser extends DiagnosticEmitter {
     const start = this.getCurrentRange();
 
     // first token not yet consumed
-    this.advance(); // identifier
+    this.advance(); // type
     if (!this.matches(Token.Identifier)) return this.applyState(state), null;
 
     const types: string[] = [];
@@ -412,13 +419,11 @@ export class Parser extends DiagnosticEmitter {
 
     let union = false;
 
-    if (!this.matches(Token.Bar)) {
-      this.applyState(state);
-    } else
-      do {
-        this.advance(); // '|'
-        union = true;
+    if (this.matches(Token.Bar)) {
+      union = true;
 
+      do {
+        this.advance(); // type
         if (!this.matches(Token.Identifier)) {
           this.error(
             DiagnosticCode.EXPECTED_TYPE_AFTER_BAR_IN_UNION,
@@ -428,8 +433,14 @@ export class Parser extends DiagnosticEmitter {
         }
 
         types.push(this.tokenizer.readIdentifier());
-        this.advance();
+
+        this.updateState(state);
+        this.advance(); // |
       } while (this.matches(Token.Bar));
+      this.applyState(state);
+    } else {
+      this.applyState(state);
+    }
 
     return new TypeExpression(
       types,
