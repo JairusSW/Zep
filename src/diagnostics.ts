@@ -453,6 +453,3 @@ Diagnostic.create(
   "MissingTokenAt",
   "Missing '{token}' {message}",
 );
-
-// write generated file
-Diagnostic.write();

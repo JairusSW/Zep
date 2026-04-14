@@ -1,4 +1,4 @@
-import { Source } from "../ast/Source";
+import { Source } from "../source";
 import { FunctionDeclaration } from "../ast/FunctionDeclaration";
 import { ErrorTypes } from "../error/error";
 
@@ -9,5 +9,11 @@ export class Validator {
     valid: boolean;
     message: string;
     type: ErrorTypes;
-  } {}
+  } {
+    return {
+      valid: true,
+      message: "",
+      type: ErrorTypes.UserError,
+    };
+  }
 }

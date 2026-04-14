@@ -118,6 +118,14 @@ export class Parser extends DiagnosticEmitter {
     return node;
   }
 
+  private checkpoint(): ParserState {
+    return this.getState();
+  }
+
+  private restore(state: ParserState): void {
+    this.applyState(state);
+  }
+
   private advance(): Token {
     this.current = this.tokenizer.next();
     return this.current;
@@ -125,6 +133,32 @@ export class Parser extends DiagnosticEmitter {
 
   private matches(token: Token): boolean {
     return this.current === token;
+  }
+
+  private peek(token: Token): boolean {
+    const state = this.checkpoint();
+    const next = this.advance();
+    this.restore(state);
+    return next === token;
+  }
+
+  private consume(token: Token): boolean {
+    const state = this.checkpoint();
+    this.advance();
+    if (this.matches(token)) return true;
+    this.restore(state);
+    return false;
+  }
+
+  private expect(token: Token, diagnosticToken: string = tokenToString(token)): void {
+    this.advance();
+    if (!this.matches(token)) {
+      this.error(
+        DiagnosticCode.MISSING_TOKEN,
+        { token: diagnosticToken },
+        this.getCurrentRange(),
+      );
+    }
   }
 
   private getCurrentRange(): Range {
@@ -235,16 +269,12 @@ export class Parser extends DiagnosticEmitter {
     return null;
   }
 
-  private parsePrimaryExpression(): Expression | null {
+  private parseAtomExpression(): Expression | null {
     const state = this.getState();
     let expr: Expression | null = null;
-    if ((expr = this.parseCallExpression())) return expr;
-    this.applyState(state);
     if ((expr = this.parseIdentifierExpression())) return expr;
     this.applyState(state);
     if ((expr = this.parseParenthesizedExpression())) return expr;
-    this.applyState(state);
-    if ((expr = this.parsePropertyAccessExpression())) return expr;
     this.applyState(state);
     if ((expr = this.parseNumberLiteral())) return expr;
     this.applyState(state);
@@ -255,22 +285,98 @@ export class Parser extends DiagnosticEmitter {
     return null;
   }
 
+  private parsePostfixExpression(): Expression | null {
+    let expr = this.parseAtomExpression();
+    if (!expr) return null;
+
+    while (true) {
+      const state = this.getState();
+      const token = this.advance();
+
+      if (token === Token.Dot) {
+        const property = this.parseIdentifierExpression();
+        if (!property) {
+          this.error(
+            DiagnosticCode.EXPECTED_TOKEN,
+            { expected: "identifier", found: tokenToString(this.current) },
+            this.getCurrentRange(),
+          );
+        }
+
+        expr = new PropertyAccessExpression(
+          expr,
+          property,
+          Range.from(expr.range, property.range),
+        );
+        continue;
+      }
+
+      if (token === Token.OpenParen) {
+        const args: Expression[] = [];
+
+        const emptyArgsState = this.getState();
+        this.advance();
+        if (!this.matches(Token.CloseParen)) {
+          this.applyState(emptyArgsState);
+
+          while (true) {
+            const arg = this.parseExpression();
+            if (!arg) {
+              this.error(
+                DiagnosticCode.EXPECTED_TOKEN,
+                { expected: "expression", found: tokenToString(this.current) },
+                this.getCurrentRange(),
+              );
+            }
+            args.push(arg);
+
+            this.advance();
+            if (this.matches(Token.Comma)) continue;
+            if (this.matches(Token.CloseParen)) break;
+
+            this.error(
+              DiagnosticCode.UNTERMINATED_GROUP,
+              { kind: ")" },
+              this.getCurrentRange(),
+            );
+          }
+        }
+
+        expr = new CallExpression(
+          expr,
+          args,
+          Range.from(expr.range, this.getCurrentRange()),
+        );
+        continue;
+      }
+
+      this.applyState(state);
+      return expr;
+    }
+  }
+
   private parseBinaryExpression(minPrec: number = 1): Expression | null {
     let state = this.getState();
-    const left = this.parsePrimaryExpression();
+    let left = this.parsePostfixExpression();
     if (!left) {
       this.applyState(state);
       return null;
     }
 
-    state = this.getState();
     while (true) {
+      state = this.getState();
       const opToken = this.advance();
       const op = tokenToOp(opToken);
-      if (op === null) break;
+      if (op === null) {
+        this.applyState(state);
+        break;
+      }
 
       const prec = opPrecedence(op);
-      if (prec < minPrec) break;
+      if (prec < minPrec) {
+        this.applyState(state);
+        break;
+      }
 
       const nextMin = isRightAssociative(op) ? prec : prec + 1;
       const right = this.parseBinaryExpression(nextMin);
@@ -281,104 +387,49 @@ export class Parser extends DiagnosticEmitter {
           this.getCurrentRange(),
         );
       }
+      if (!right) return null;
 
-      const result = new BinaryExpression(
+      const result: BinaryExpression = new BinaryExpression(
         left,
         op,
         right,
         this.getRange(left.range, right.range),
       );
-      return result;
+      left = result;
     }
 
-    this.applyState(state);
     return left;
   }
 
   parsePropertyAccessExpression(): PropertyAccessExpression | null {
     const state = this.getState();
-
-    // first token not yet consumed for this primary
-    this.advance();
-    const base = this.parseIdentifierExpression();
-    if (!base || !this.matches(Token.Dot)) {
-      this.applyState(state);
-      return null;
-    }
-
-    this.advance(); // '.'
-
-    const property = this.parseIdentifierExpression();
-    if (!property) {
-      this.applyState(state);
-      return null;
-    }
-
-    return new PropertyAccessExpression(
-      base,
-      property,
-      Range.from(base.range, property.range),
-    );
+    const expr = this.parsePostfixExpression();
+    if (expr instanceof PropertyAccessExpression) return expr;
+    this.applyState(state);
+    return null;
   }
 
   parseCallExpression(): CallExpression | null {
     const state = this.getState();
-    const start = this.getCurrentRange();
-
-    // first token not yet consumed
-    const callee =
-      this.parseIdentifierExpression() || this.parsePropertyAccessExpression();
-    // Should be this.parseExpression() - CallExpression
-
-    this.advance(); // (
-    if (!callee || !this.matches(Token.OpenParen)) {
-      this.applyState(state);
-      return null;
-    }
-
-    const args: Expression[] = [];
-
-    while (true) {
-      const arg = this.parseExpression();
-      if (!arg) break;
-      args.push(arg);
-      this.advance(); // , or )
-      if (this.matches(Token.Comma)) continue;
-      if (this.matches(Token.CloseParen)) break;
-      else
-        this.error(
-          DiagnosticCode.UNTERMINATED_GROUP,
-          { kind: ")" },
-          this.getCurrentRange(),
-        );
-    }
-
-    return new CallExpression(
-      callee,
-      args,
-      this.getRange(start, this.getCurrentRange()),
-    );
+    const expr = this.parsePostfixExpression();
+    if (expr instanceof CallExpression) return expr;
+    this.applyState(state);
+    return null;
   }
 
   parseParenthesizedExpression(): ParenthesizedExpression | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    // first token not yet consumed
-    this.advance(); // (
-    if (!this.matches(Token.OpenParen)) {
-      this.applyState(state);
-      return null;
-    }
+    if (!this.consume(Token.OpenParen)) return null;
 
     const expr = this.parseExpression();
     if (!expr) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
 
-    this.advance(); // )
-    if (!this.matches(Token.CloseParen)) {
+    if (!this.consume(Token.CloseParen)) {
       this.error(
         DiagnosticCode.UNTERMINATED_GROUP,
         { kind: ")" },
@@ -390,11 +441,11 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseExpressionStatement(): ExpressionStatement | null {
-    const state = this.getState();
+    const state = this.checkpoint();
 
     const expr = this.parseExpression();
     if (!expr) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
     return new ExpressionStatement(expr);
@@ -408,10 +459,10 @@ export class Parser extends DiagnosticEmitter {
 
     // first token not yet consumed
     this.advance(); // type
-    if (!this.matches(Token.Identifier)) return this.applyState(state), null;
+    if (!this.isTypeToken(this.current)) return this.applyState(state), null;
 
     const types: string[] = [];
-    types.push(this.tokenizer.readIdentifier());
+    types.push(this.readTypeToken());
 
     state = this.getState();
     this.advance(); // |
@@ -423,7 +474,7 @@ export class Parser extends DiagnosticEmitter {
 
       do {
         this.advance(); // type
-        if (!this.matches(Token.Identifier)) {
+        if (!this.isTypeToken(this.current)) {
           this.error(
             DiagnosticCode.EXPECTED_TYPE_AFTER_BAR_IN_UNION,
             {},
@@ -431,7 +482,7 @@ export class Parser extends DiagnosticEmitter {
           );
         }
 
-        types.push(this.tokenizer.readIdentifier());
+        types.push(this.readTypeToken());
 
         this.updateState(state);
         this.advance(); // |
@@ -446,6 +497,16 @@ export class Parser extends DiagnosticEmitter {
       union,
       this.getRange(start, this.getCurrentRange()),
     );
+  }
+
+  private isTypeToken(token: Token): boolean {
+    return token === Token.Identifier || token === Token.Void || token === Token.Null;
+  }
+
+  private readTypeToken(): string {
+    if (this.matches(Token.Void)) return "void";
+    if (this.matches(Token.Null)) return "null";
+    return this.tokenizer.readIdentifier();
   }
 
   // --- variable declarations ---
@@ -555,7 +616,7 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseFunctionDeclaration(): FunctionDeclaration | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
     const attributes: AttributeExpression[] = [];
@@ -567,9 +628,8 @@ export class Parser extends DiagnosticEmitter {
 
     let exported = attributes.some((v) => v.tag.data === "export");
 
-    this.advance(); // fn
-    if (!this.matches(Token.Fn)) {
-      this.applyState(state);
+    if (!this.consume(Token.Fn)) {
+      this.restore(state);
       return null;
     }
 
@@ -582,9 +642,7 @@ export class Parser extends DiagnosticEmitter {
       );
     }
 
-    this.advance(); // (
-
-    if (!this.matches(Token.OpenParen)) {
+    if (!this.consume(Token.OpenParen)) {
       this.error(
         DiagnosticCode.EXPECTED_PARAMETER_LIST,
         {},
@@ -593,24 +651,30 @@ export class Parser extends DiagnosticEmitter {
     }
 
     const params: ParameterExpression[] = [];
-    while (true) {
-      const param = this.parseParameterExpression();
-      if (!param) break;
-      params.push(param);
-      this.advance(); // , or )
-      if (this.matches(Token.Comma)) continue;
-      if (this.matches(Token.CloseParen)) break;
-      else
+    if (!this.consume(Token.CloseParen)) {
+      while (true) {
+        const param = this.parseParameterExpression();
+        if (!param) {
+          this.error(
+            DiagnosticCode.EXPECTED_TOKEN,
+            { expected: "parameter", found: tokenToString(this.current) },
+            this.getCurrentRange(),
+          );
+        }
+        params.push(param);
+
+        if (this.consume(Token.Comma)) continue;
+        if (this.consume(Token.CloseParen)) break;
         this.error(
           DiagnosticCode.MISSING_TOKEN,
           { token: ")" },
           this.getCurrentRange(),
         );
+      }
     }
-    this.advance();
 
     let returnType: TypeExpression | null = null;
-    if (this.matches(Token.Colon)) {
+    if (this.consume(Token.Colon)) {
       returnType = this.parseTypeExpression();
       if (!returnType) {
         this.error(
@@ -621,9 +685,12 @@ export class Parser extends DiagnosticEmitter {
       }
     }
 
-    const block = this.parseStatement();
+    const isExtern = attributes.some((v) => v.tag.data === "extern");
+    const block = isExtern
+      ? new BlockStatement([], this.getCurrentRange())
+      : this.parseStatement();
     if (!block) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
 
@@ -659,8 +726,6 @@ export class Parser extends DiagnosticEmitter {
       this.applyState(state);
       return null;
     }
-    this.advance(); // 'enum'
-
     const name = this.parseIdentifierExpression();
     if (!name) {
       this.error(
@@ -669,6 +734,7 @@ export class Parser extends DiagnosticEmitter {
         this.getCurrentRange(),
       );
     }
+    this.advance();
 
     if (!this.matches(Token.OpenBrace)) {
       this.error(
@@ -747,28 +813,24 @@ export class Parser extends DiagnosticEmitter {
   // --- if / while / blocks ---
 
   parseIfStatement(parent: IfStatement | null = null): IfStatement | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
-
-    // first token not yet consumed for this statement
-    this.advance(); // if, else
 
     let kind: IfStatementKind;
 
     if (!parent) {
-      if (!this.matches(Token.If)) {
-        this.applyState(state);
+      if (!this.consume(Token.If)) {
+        this.restore(state);
         return null;
       }
       kind = IfStatementKind.If;
     } else {
-      if (!this.matches(Token.Else)) {
-        this.applyState(state);
+      if (!this.consume(Token.Else)) {
+        this.restore(state);
         return null;
       }
 
-      if (this.matches(Token.If)) {
-        this.advance(); // 'if'
+      if (this.consume(Token.If)) {
         kind = IfStatementKind.ElseIf;
       } else {
         kind = IfStatementKind.Else;
@@ -779,14 +841,14 @@ export class Parser extends DiagnosticEmitter {
     if (kind !== IfStatementKind.Else) {
       condition = this.parseExpression();
       if (!condition) {
-        this.applyState(state);
+        this.restore(state);
         return null;
       }
     }
 
     const ifTrue = this.parseBlockStatement();
     if (!ifTrue) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
 
@@ -808,26 +870,23 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseWhileStatement(): WhileStatement | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    // first token not yet consumed
-    this.advance();
-    if (!this.matches(Token.While)) {
-      this.applyState(state);
+    if (!this.consume(Token.While)) {
+      this.restore(state);
       return null;
     }
-    this.advance(); // 'while'
 
     const condition = this.parseExpression();
     if (!condition) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
 
     const body = this.parseStatement();
     if (!body) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
 
@@ -839,38 +898,30 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseBlockStatement(): BlockStatement | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    this.advance(); // {
-    if (!this.matches(Token.OpenBrace)) {
-      this.applyState(state);
+    if (!this.consume(Token.OpenBrace)) {
+      this.restore(state);
       return null;
     }
 
-    const state2 = this.getState();
-    if (this.advance() === Token.CloseBrace) {
-      return new BlockStatement(
-        [],
-        this.getRange()
-      )
-    } else {
-      this.applyState(state2);
+    if (this.consume(Token.CloseBrace)) {
+      return new BlockStatement([], this.getRange(start, this.getCurrentRange()));
     }
 
     const stmts: Statement[] = [];
 
     while (
-      !this.matches(Token.CloseBrace) &&
-      this.current !== Token.EndOfFile
+      !this.peek(Token.CloseBrace) &&
+      !this.peek(Token.EndOfFile)
     ) {
       const stmt = this.parseStatement();
       if (!stmt) break;
       stmts.push(stmt);
     }
 
-    this.advance(); // }
-    if (!this.matches(Token.CloseBrace)) {
+    if (!this.consume(Token.CloseBrace)) {
       this.error(
         DiagnosticCode.MISSING_TOKEN_AT,
         { token: "}", message: "at end of block." },
@@ -904,8 +955,8 @@ export class Parser extends DiagnosticEmitter {
     }
 
     // attribute name: export / extern / inline / ...
-    const tag = this.parseIdentifierExpression();
-    console.log("tag", tag);
+    this.advance();
+    const tag = this.parseAttributeTag();
     if (!tag) {
       this.error(
         DiagnosticCode.EXPECTED_TAG_IN_MODIFIER,
@@ -925,15 +976,8 @@ export class Parser extends DiagnosticEmitter {
       this.advance(); // case 3
       if (this.matches(Token.StringLiteral)) {
         // extern("env.log") => { value: "env.log" }
-        const lit = this.parseStringLiteral();
-        if (!lit) {
-          this.error(
-            DiagnosticCode.EXPECTED_VALUE_AFTER_EQUALS,
-            {},
-            this.getCurrentRange(),
-          );
-        }
-        args["value"] = lit!.data;
+        args["value"] = this.tokenizer.readString();
+        this.advance();
       } else if (this.matches(Token.Identifier)) {
         // key = "value", [ , key = "value", ... ]
         while (true) {
@@ -999,19 +1043,28 @@ export class Parser extends DiagnosticEmitter {
     );
   }
 
+  private parseAttributeTag(): Identifier | null {
+    if (this.matches(Token.Identifier)) {
+      return new Identifier(this.tokenizer.readIdentifier(), this.getCurrentRange());
+    }
+    if (this.matches(Token.Extern)) {
+      return new Identifier("extern", this.getCurrentRange());
+    }
+    return null;
+  }
+
   parseImportDeclaration(): ImportDeclaration | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    this.advance();
-    if (!this.matches(Token.Import)) {
-      this.applyState(state);
+    if (!this.consume(Token.Import)) {
+      this.restore(state);
       return null;
     }
 
     const path = this.parseStringLiteral();
     if (!path) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
 
@@ -1019,12 +1072,11 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseReturnStatement(): ReturnStatement | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    this.advance(); // return
-    if (!this.matches(Token.Return)) {
-      this.applyState(state);
+    if (!this.consume(Token.Return)) {
+      this.restore(state);
       return null;
     }
     const expr = this.parseExpression();
@@ -1083,24 +1135,31 @@ export class Parser extends DiagnosticEmitter {
       this.applyState(state);
       return null;
     }
-    const typeName = this.tokenizer.readIdentifier();
-    const typeRange = this.getCurrentRange();
-    this.advance();
-    const type = new TypeExpression([typeName], false, typeRange);
-
-    if (!this.matches(Token.Identifier)) {
-      this.applyState(state);
-      return null;
-    }
     const nameText = this.tokenizer.readIdentifier();
     const nameRange = this.getCurrentRange();
-    this.advance();
     const name = new Identifier(nameText, nameRange);
 
+    this.advance();
+    if (!this.matches(Token.Colon)) {
+      this.error(
+        DiagnosticCode.MISSING_TOKEN,
+        { token: ":" },
+        this.getCurrentRange(),
+      );
+    }
+
+    const type = this.parseTypeExpression();
+    if (!type) {
+      this.error(
+        DiagnosticCode.EXPECTED_TYPE_AFTER_COLON,
+        {},
+        this.getCurrentRange(),
+      );
+    }
     let value: Expression | null = null;
     const afterNameState = this.getState();
+    this.advance();
     if (this.matches(Token.Eq)) {
-      this.advance();
       value = this.parseExpression();
       if (!value) this.applyState(afterNameState);
     } else {
@@ -1134,8 +1193,6 @@ export class Parser extends DiagnosticEmitter {
       this.applyState(state);
       return null;
     }
-    this.advance(); // 'struct'
-
     const name = this.parseIdentifierExpression();
     if (!name) {
       this.error(
@@ -1144,6 +1201,7 @@ export class Parser extends DiagnosticEmitter {
         this.getCurrentRange(),
       );
     }
+    this.advance();
 
     if (!this.matches(Token.OpenBrace)) {
       this.error(
@@ -1152,8 +1210,6 @@ export class Parser extends DiagnosticEmitter {
         this.getCurrentRange(),
       );
     }
-    this.advance(); // '{'
-
     const fields: StructFieldDeclaration[] = [];
 
     while (
@@ -1161,7 +1217,13 @@ export class Parser extends DiagnosticEmitter {
       this.current !== Token.EndOfFile
     ) {
       const field = this.parseStructFieldExpression();
-      if (!field) break;
+      if (!field) {
+        const beforeEnd = this.getState();
+        this.advance();
+        if (this.matches(Token.CloseBrace)) break;
+        this.applyState(beforeEnd);
+        break;
+      }
       fields.push(field);
     }
 
@@ -1185,10 +1247,10 @@ export class Parser extends DiagnosticEmitter {
   // --- simple primaries ---
 
   parseIdentifierExpression(): Identifier | null {
-    const state = this.getState();
+    const state = this.checkpoint();
 
     this.advance();
-    if (!this.matches(Token.Identifier)) return this.applyState(state), null;
+    if (!this.matches(Token.Identifier)) return this.restore(state), null;
 
     const text = this.tokenizer.readIdentifier();
     const range = this.getCurrentRange();
@@ -1197,9 +1259,9 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseNumberLiteral(): NumberLiteral | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     this.advance();
-    if (!this.matches(Token.NumberLiteral)) return this.applyState(state), null;
+    if (!this.matches(Token.NumberLiteral)) return this.restore(state), null;
 
     const text = this.tokenizer.readNumber();
     const range = this.getCurrentRange();
@@ -1208,10 +1270,10 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseStringLiteral(): StringLiteral | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     // first token not yet consumed
     this.advance();
-    if (!this.matches(Token.StringLiteral)) return this.applyState(state), null;
+    if (!this.matches(Token.StringLiteral)) return this.restore(state), null;
 
     const text = this.tokenizer.readString();
     const range = this.getCurrentRange();
@@ -1220,11 +1282,11 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseBooleanLiteral(): BooleanLiteral | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     // first token not yet consumed
     this.advance();
     if (!this.matches(Token.True) && !this.matches(Token.False))
-      return this.applyState(state), null;
+      return this.restore(state), null;
 
     const value = this.matches(Token.True);
     const range = this.getCurrentRange();

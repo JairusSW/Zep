@@ -2,9 +2,8 @@ import { Range } from "../range.js";
 import { Expression } from "./Expression.js";
 import { Identifier } from "./Identifier.js";
 import { NodeKind } from "./Node.js";
-import { Statement } from "./Statement.js";
 
-export class PropertyAccessExpression extends Statement {
+export class PropertyAccessExpression extends Expression {
   public nameOf: string = "PropertyAccessExpression";
   public expression: Expression;
   public property: Identifier;

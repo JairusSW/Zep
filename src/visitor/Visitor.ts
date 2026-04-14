@@ -4,7 +4,6 @@ import { CallExpression } from "../ast/CallExpression.js";
 import { FunctionDeclaration } from "../ast/FunctionDeclaration.js";
 import { Identifier } from "../ast/Identifier.js";
 import { ImportDeclaration } from "../ast/ImportDeclaration.js";
-import { FunctionImportDeclaration } from "../ast/FunctionImportDeclaration.js";
 import { AttributeExpression } from "../ast/AttributeExpression.js";
 import { Node } from "../ast/Node.js";
 import { NumberLiteral } from "../ast/NumberLiteral.js";
@@ -16,7 +15,8 @@ import { VariableDeclaration } from "../ast/VariableDeclaration.js";
 
 export class Visitor {
   constructor() {}
-  visit(node: Node) {
+  visit(node: Node | null) {
+    if (!node) return;
     if (node instanceof BinaryExpression) {
       this.visitBinaryExpression(node);
     } else if (node instanceof BlockStatement) {
@@ -29,8 +29,6 @@ export class Visitor {
       this.visitIdentifier(node);
     } else if (node instanceof ImportDeclaration) {
       this.visitImportDeclaration(node);
-    } else if (node instanceof FunctionImportDeclaration) {
-      this.visitImportFunctionDeclaration(node);
     } else if (node instanceof AttributeExpression) {
       this.visitAttributeExpression(node);
     } else if (node instanceof NumberLiteral) {
@@ -47,7 +45,7 @@ export class Visitor {
       this.visitVariableDeclaration(node);
     }
   }
-  visitNodes(...statements: Node[]) {
+  visitNodes(statements: Node[]) {
     for (const stmt of statements) {
       this.visit(stmt);
     }
@@ -73,15 +71,8 @@ export class Visitor {
   visitImportDeclaration(node: ImportDeclaration) {
     this.visit(node.path);
   }
-  visitImportFunctionDeclaration(node: FunctionImportDeclaration) {
-    this.visit(node.path);
-    this.visit(node.name);
-    this.visitNodes(node.parameters);
-    this.visit(node.returnType);
-  }
   visitAttributeExpression(node: AttributeExpression) {
     this.visit(node.tag);
-    if (node.content) this.visit(node.content);
   }
   visitNumberLiteral(node: NumberLiteral) {}
   visitParameterExpression(node: ParameterExpression) {

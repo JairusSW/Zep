@@ -1,2 +1,3 @@
-#[extern]: wasi_unstable.fd_write
-export fn fd_write(fd: i32, iovs: i32, iovs_len: i32, nwritten: i32) -> i32
+#[extern("wasi_unstable.fd_write")]
+#[export]
+fn fd_write(fd: i32, iovs: i32, iovs_len: i32, nwritten: i32): i32

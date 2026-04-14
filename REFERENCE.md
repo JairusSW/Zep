@@ -5,27 +5,14 @@ fn add(a: i32, b: i32): i32 {
     rt a + b
 }
 
-fn parse(s: string) {  // inferred: string -> i32 | null
-    if (s is empty) {
-        rt null
-    }
-    rt parse_int(s)
+fn square(x: i32): i32 {
+    rt x * x
 }
 ```
 
-- Return types after `:`, optional (inferred from `rt` expressions).
-- `rt` for explicit returns; last expression may implicitly return if no `rt`.
-- Type predicates: `fn isString<T>(x: T): T is string { ... }`
-
-**Lambdas:**
-
-```ts
-let double = (x: i32): i32 => x * 2
-let complex = (x: i32): i32 => {
-    let y = x + 1
-    rt y * 2
-}
-```
+- Return types are written after `:`.
+- `rt` is the canonical explicit return form.
+- Extern declarations may omit a body when annotated with `#[extern("module.symbol")]`.
 
 ## Variables
 
@@ -43,19 +30,7 @@ mut counter = 0      // inferred i32
 
 ## Types
 
-**Primitives:** `i32`, `i64`, `f32`, `bool`, `string`, `null`
-
-**Tuples:** `(i32, string)`
-
-```ts
-let pair = (42, "hello")
-let (num, msg) = pair
-let first = pair.0
-```
-
-**Unions:** `string | i32 | null`
-
-- Narrowing: `if (x is string) { ... }`
+**Primitives:** `void`, `bool`, `i32`, `i64`, `f32`, `f64`, `usize`, `string`
 
 **Structs:**
 
@@ -64,61 +39,29 @@ struct Point {
     x: i32
     y: i32 = 0
 }
-
-let p = Point { x: 10 }
 ```
 
-**Generics:**
-
-```ts
-fn first<T>(arr: [T]): T | null { ... }
-struct Box<T> { value: T }
-```
+Unions, tuples, arrays, generics, type predicates, and pattern matching are planned features, not stable surface area yet.
 
 ## Control Flow
 
 **If (statement):**
 
 ```ts
-if (x > 0) {
-  print("positive");
+if x > 0 {
+  print(x)
 }
-```
-
-**Ternary (expression):**
-
-```ts
-let msg = x > 0 ? "pos" : "neg";
 ```
 
 **Loops:**
 
 ```ts
-for i in 0..10 {     // exclusive upper
-    print(i)
-}
-
-while (cond) {
+while x > 0 {
     // ...
 }
-
-outer: while (true) {
-    inner: for x in items {
-        jump outer      // break outer
-        jump inner      // continue inner
-    }
-}
 ```
 
-**Match:**
-
-```ts
-match value {
-    case n is i32 && n > 0 { ... }
-    case s is string { ... }
-    default { ... }
-}
-```
+`for`, `match`, labeled jumps, and ternary expressions are planned.
 
 ## Modules & Attributes
 
@@ -126,8 +69,7 @@ match value {
 
 ```ts
 import "std/io"
-import { print } from "std/io"
-import "std/io" as io
+// Named imports and aliases are planned.
 ```
 
 **Exports:**
@@ -143,58 +85,19 @@ fn add(a: i32, b: i32): i32 { ... }
 fn log(msg: string): void
 ```
 
-**Supported attributes:** `#[export]`, `#[export(alias = "...")]`, `#[extern("...")]`, `#[inline]`
+**Supported attributes:** `#[export]`, `#[export(alias = "...")]`, `#[extern("...")]`.
 
-## Narrowing
+## Planned Result Errors
 
 ```ts
-fn process(x: i32 | string | null) {
-    if (x is null) {
-        return
-    }
-    if (x is string) {
-        // x: string
-        print(x)
-    } else {
-        // x: i32
-        print_int(x)
-    }
+struct Error {
+    code: i32
+    message: string
 }
 ```
 
-**Type predicates:**
-
-```ts
-if (isUser(x)) {
-  // x narrowed to User
-}
-```
-
-## Overloading & Named Arguments
-
-```ts
-fn greet(name: string) { ... }
-fn greet(age: i32) { ... }
-
-greet(name: "alice")
-greet(age: 30)
-```
-
-Resolution: exact type/arity match or error.
-
-## Error Handling
-
-```ts
-fn read_file(path: string): (string, Error) {
-    // ...
-}
-
-let (content, err) = read_file("file.txt")
-if (err is Error) {
-    print("Error: ", err.message)
-}
-```
+The intended error model is `Result<T, E>` rather than Go-style `(value, err)` tuples.
 
 ---
 
-This covers the core you've designed so far. Next would be enums, full `impl` syntax, and stdlib sketches.
+This reference documents the conservative syntax baseline. Future features should be added here only when parser, formatter, checker, and examples are updated together.

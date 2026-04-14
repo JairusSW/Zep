@@ -1,6 +1,6 @@
-import "std:io/prinat"
+import "std/io/print"
 
-fn factorial(n: i32) -> i32 {
+fn factorial(n: i32): i32 {
   if n == 0 {
     rt 1
   } else {
@@ -9,7 +9,7 @@ fn factorial(n: i32) -> i32 {
 }
 
 #[export]
-fn main() -> void {
-  i32 result = factorial(5)
+fn main(): void {
+  let result: i32 = factorial(5)
   print(result)
 }

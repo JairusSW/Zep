@@ -1,0 +1,28 @@
+---
+title: "Standard Library Plan"
+description: "The initial Zep standard library roadmap."
+---
+
+# Standard Library Plan
+
+Zep targets WebAssembly and WASI first, with native output planned through compiler backends or WASM-to-native toolchains.
+
+## Stage 1
+
+- `std/core`: prelude types, assertions, panic, primitive conversions.
+- `std/result`: `Result<T, E>`, `Ok`, `Err`, and basic helpers.
+- `std/io`: `print`, `println`, stderr/stdout helpers.
+- `std/mem`: memory copy, fill, sizing, and low-level intrinsics.
+- `std/alloc`: allocator interface and default bump allocator.
+- `std/string`: length, compare, concat, UTF-8 boundary decisions.
+- `std/buffer`: byte buffers and slices.
+- `std/math`: numeric helpers and WASM-friendly intrinsics.
+- `std/testing`: assertions and test declarations.
+
+## Stage 2
+
+- `std/fs`: WASI-backed file and directory APIs.
+- `std/env`: args, environment variables, clocks, random.
+- `std/process`: exit codes and process metadata.
+- `std/collections`: arrays, maps, and sets after generics are implemented.
+

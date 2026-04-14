@@ -1,6 +1,6 @@
-import "std:io"
+import "std/io"
 
-fn fib(n: i32) -> i32 {
+fn fib(n: i32): i32 {
   if n <= 1 {
     rt n
   } else {
@@ -9,7 +9,7 @@ fn fib(n: i32) -> i32 {
 }
 
 #[export]
-fn main() -> void {
-  i32 result = fib(7)
+fn main(): void {
+  let result: i32 = fib(7)
   print(result)
 }

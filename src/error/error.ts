@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import { Range } from "../range";
-import { Source } from "../ast/Source";
+import { Source } from "../source";
 
 export enum ErrorTypes {
   UserError,

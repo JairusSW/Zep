@@ -23,6 +23,7 @@ export class BinaryExpression extends Expression {
 }
 
 export enum BinaryOp {
+  Assign,
   Add,
   AddEq,
   Sub,
@@ -57,7 +58,7 @@ export function tokenToOp(token: Token): BinaryOp | null {
   switch (token) {
     // assignment
     case Token.Eq:
-      return BinaryOp.Eq;
+      return BinaryOp.Assign;
 
     // arithmetic
     case Token.Plus:
@@ -136,7 +137,7 @@ export function tokenToOp(token: Token): BinaryOp | null {
 export function opToString(op: BinaryOp): string {
   switch (op) {
     // assignment
-    case BinaryOp.Eq:
+    case BinaryOp.Assign:
       return "=";
       
     // arithmetic

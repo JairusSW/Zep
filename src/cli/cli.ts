@@ -1,7 +1,7 @@
 import chalk from "chalk";
 import { Parser } from "../parser.js";
-import { Tokenizer } from "../tokenizer.js";
 import { Generator } from "../generator/index.js";
+import { Source, SourceKind } from "../source.js";
 
 (async () => {
   const args = process.argv.slice(2);
@@ -60,14 +60,12 @@ import { Generator } from "../generator/index.js";
     }
 
     const inputText = await inputFile.text();
-    const tokenizer = new Tokenizer(inputText);
-    const parser = new Parser(tokenizer, input);
-
-    parser.parseFunctionImport();
-    parser.parseFunctionDeclaration();
+    const source = new Source(input, inputText, SourceKind.UserEntry);
+    const parser = new Parser([source]);
+    parser.parseSource(source);
 
     const connector = new Generator();
-    connector.parseProgram(parser.source);
+    connector.parseProgram(source);
 
     const watText = connector.toWat();
     await Bun.write(output, watText);

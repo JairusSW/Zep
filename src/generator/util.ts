@@ -1,10 +1,11 @@
-import { ReferenceExpression } from "../ast/ReferenceExpression";
 import { ParameterExpression } from "../ast/ParameterExpression";
 import { VariableDeclaration } from "../ast/VariableDeclaration";
 import { Node } from "../ast/Node";
 import binaryen from "binaryen";
 import { BinaryExpression } from "../ast/BinaryExpression";
 import { NumberLiteral } from "../ast/NumberLiteral";
+import { Identifier } from "../ast/Identifier";
+
 export function toDataType(type: string): binaryen.Type {
   switch (type) {
     case "i32":
@@ -17,34 +18,36 @@ export function toDataType(type: string): binaryen.Type {
       return binaryen.f64;
     case "void":
       return binaryen.none;
+    case "usize":
+      return binaryen.i32;
     default:
       throw new Error(`Could not convert type '${type}' to wasm data type!`);
   }
 }
-export function getTypeOf(node: Node): string {
-  if (node instanceof ReferenceExpression) {
-    return getTypeOf(node.referencing);
-  } else if (node instanceof ParameterExpression) {
-    return node.type?.types[0]!;
+
+export function getTypeNameOf(node: Node): string {
+  if (node instanceof ParameterExpression) {
+    if (!node.type) throw new Error(`Parameter '${node.name.data}' has no type`);
+    return node.type.types[0];
   } else if (node instanceof VariableDeclaration) {
+    if (!node.type) throw new Error(`Variable '${node.name.data}' has no type`);
     return node.type.types[0];
   } else if (node instanceof BinaryExpression) {
-    return getTypeOf(node.left);
+    return getTypeNameOf(node.left);
   } else if (node instanceof NumberLiteral) {
-    return node.nameOf
+    return node.type?.types[0] ?? "i32";
   }
-  else if (node instanceof ) { } else {
-    else if (node instanceof ) { } 
-    else if (node instanceof ) { } 
-    else if (node instanceof ) { } 
-    else if (node instanceof ) { } 
-    throw new Error("Could not discern the type of expression");
-  }
+
+  throw new Error(`Could not discern the type of ${node.constructor.name}`);
+}
+
+export function getTypeOf(node: Node): binaryen.Type {
+  return toDataType(getTypeNameOf(node));
 }
 
 export function getNameOf(node: Node): string {
-  if (node instanceof ReferenceExpression) {
-    return getNameOf(node.referencing);
+  if (node instanceof Identifier) {
+    return node.data;
   } else if (node instanceof ParameterExpression) {
     return node.name.data;
   } else if (node instanceof VariableDeclaration) {

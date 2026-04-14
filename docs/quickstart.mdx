@@ -27,14 +27,12 @@ Create `hello.zp`:
 ```ts
 #[export]
 fn main(): void {
-    print("Hello, World!")
+    print(42)
 }
 ```
 
 ## 3. Run it
 
 ```bash
-zep run hello.zp
+zep build hello.zp -o hello.wat
 ```
-
-**Output:**

@@ -1,2 +1,3 @@
-#[extern]: env
-export fn print(data: i32) -> void
+#[extern("env.print")]
+#[export]
+fn print(data: i32): void

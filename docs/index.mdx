@@ -11,39 +11,39 @@ mode: center
     href="/language"
     cta={<span>Learn the Zep language</span>}
   >
-    A comprehensive guide to everything Zep
+    The canonical syntax baseline.
   </Card>
   <Card
     icon="box"
-    title="Package Manager"
-    href="/pm/cli/install"
+    title="Standard Library"
+    href="/stdlib"
     cta={
       <span>
-        Get started with <code>zep install</code>
+        Review <code>std</code> modules
       </span>
     }
   >
-    Install packages from the Zep Package List
+    The WASM/WASI-first library roadmap.
   </Card>
   <Card
     icon="flask"
-    title="Test Runner"
-    href="/test"
+    title="Quickstart"
+    href="/quickstart"
     cta={
       <span>
-        Get started with <code>zep test</code>
+        Build a tiny program
       </span>
     }
   >
-    Get started developing software with the included test runner
+    Compile a Zep file to WebAssembly text.
   </Card>
   <Card
     icon="tools"
-    title="Extending"
-    href="/plugins"
-    cta={<span>Get started extending the language</span>}
+    title="Development"
+    href="/development"
+    cta={<span>Work on the compiler</span>}
   >
-    Get started with libraries, transforms, and more
+    Local docs and compiler development notes.
   </Card>
 </CardGroup>
 
@@ -51,11 +51,11 @@ mode: center
 
 ## Get Started
 
-Zep ships as a single binary including a compiler, package manager, test runner, and more.
+Zep is currently a compiler workspace for a TypeScript-inspired systems language targeting WASM/WASI.
 
 <CardGroup>
-  <Card icon="download" title="Install Zep" href="/installation">
-    Supported platforms and all install methods.
+  <Card icon="download" title="Install Zep" href="/quickstart">
+    Install and run the compiler.
   </Card>
   <Card icon="zap" title="Quickstart" href="/quickstart">
     Hello World in moments

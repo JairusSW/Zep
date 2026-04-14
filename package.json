@@ -9,8 +9,9 @@
   "contributors": [],
   "license": "MIT",
   "scripts": {
-    "run:test": "bun run ./src/test.ts",
-    "run:test:debug": "tsx ./src/test.ts"
+    "test": "bun test ./src/test.ts",
+    "run:test": "bun test ./src/test.ts",
+    "run:test:debug": "bun test ./src/test.ts"
   },
   "devDependencies": {
     "@types/node": "^22.5.0",

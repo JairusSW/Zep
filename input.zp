@@ -1,7 +1,7 @@
-import "std:io/print";
+import "std/io/print"
 
-string foo = "bar";
+let foo: string = "bar"
 
-fn main() -> void {
-    print(foo);
+fn main(): void {
+    print(foo)
 }

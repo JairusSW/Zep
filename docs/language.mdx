@@ -1,0 +1,29 @@
+---
+title: "Language Baseline"
+description: "The canonical Zep syntax baseline."
+---
+
+# Language Baseline
+
+Zep uses TypeScript-like annotations with systems-oriented primitives.
+
+```ts
+import "std/io"
+
+#[extern("env.print")]
+fn print(value: i32): void
+
+#[export]
+fn add(a: i32, b: i32): i32 {
+  rt a + b
+}
+```
+
+## Conventions
+
+- Functions use `fn name(arg: Type): Return`.
+- Immutable bindings use `let`; mutable bindings use `mut`.
+- Attributes use `#[name]` or `#[name("value")]`.
+- Module paths use slash-separated strings such as `"std/io"`.
+- Canonical code omits semicolons.
+

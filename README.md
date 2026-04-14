@@ -6,20 +6,18 @@
 
 # Zep
 
-**Zep** is a TypeScript-inspired, statically typed programming language with clean syntax, powerful unions, structural typing, and a focus on developer ergonomics. Designed for simplicity and expressiveness.
+**Zep** is a TypeScript-inspired systems language targeting WebAssembly and WASI first. The goal is approachable syntax with a performance-oriented compiler and explicit low-level escape hatches as the language matures.
 
 [![npm](https://img.shields.io/npm/v/zep?color=blue)](https://www.npmjs.com/package/zep)
 [![License](https://img.shields.io/github/license/JairusSW/zep.svg)](./LICENSE)
 
-## ✨ Features
+## Current Direction
 
-- **TypeScript-like types**: Unions (`A | B`), generics (`<T>`), structural records, type predicates
-- **Clean syntax**: `fn name(a: i32): i32 { rt expr }`, `let x = 42`, `mut count: i32 = 0`
-- **Smart narrowing**: `if (x is string) { ... }`, `if (isUser(x)) { ... }`
-- **Borrowing & ownership**: `&T`, `&mut T`, `T*` with Rust-inspired safety
-- **Pattern matching**: Exhaustive `match` with guards and destructuring
-- **Go-style errors**: `(Result, Error | null)` tuples
-- **Attributes**: `#[export]`, `#[extern("symbol")]`, `#[inline]`
+- **WASM/WASI-first**: the compiler currently emits WebAssembly text for a small numeric subset.
+- **Friendly syntax**: `fn name(a: i32): i32 { rt expr }`, `let x = 42`, `mut count: i32 = 0`.
+- **Explicit host bindings**: `#[export]` and `#[extern("module.symbol")]`.
+- **Growing systems model**: `usize`, memory/allocator modules, and future low-level pointer/slice APIs.
+- **Planned type power**: structs, enums, unions, generics, pattern matching, and result-based errors.
 
 ## 💾 Installation
 
@@ -27,8 +25,7 @@
 npm install zep
 
 zep --help
-zep run main.zep
-zep build main.zep
+zep build main.zp -o main.wat
 ```
 
 ## 🚀 Quick Start
@@ -44,56 +41,45 @@ fn add(a: i32, b: i32): i32 {
 #[export]
 fn main(): void {
     let result = add(5, 3)
-    print("Result: ", result)  // Result: 8
+    print(result)
 }
 ```
 
 ```bash
-zep main.zep
+zep build main.zp -o main.wat
 ```
 
 ## 📚 Core Syntax Highlights
 
-### Functions & Type Inference
+### Functions
 
 ```rust
-fn parse(s: string): i32 | null {
-    if (s is empty) { rt null }
-    rt parse_int(s)
+fn square(x: i32): i32 {
+    rt x * x
 }
 ```
 
-### Unions & Narrowing
+### Variables
 
 ```rust
-fn process(x: i32 | string | null) {
-    if (x is null) { return }
-    if (x is string) {
-        // x: string here
-        print(x)
-    } else {
-        // x: i32 here
-        print_int(x)
-    }
-}
+let answer: i32 = 42
+mut count: i32 = 0
 ```
 
-### Structs with Defaults
+### Structs
 
 ```rust
 struct User {
     id: i32
     name: string
-    avatar: string | null = null
 }
 ```
 
-### Borrowing & Pointers
+### Host Bindings
 
 ```rust
-fn get_length(s: &string): i32 {
-    rt s.length
-}
+#[extern("env.print")]
+fn print(value: i32): void
 ```
 
 ## 🛠️ Development

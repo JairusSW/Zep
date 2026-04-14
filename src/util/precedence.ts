@@ -3,44 +3,46 @@ import { BinaryOp } from "../ast";
 export function opPrecedence(op: BinaryOp): number {
   switch (op) {
     // lowest
-    case BinaryOp.Or:
+    case BinaryOp.Assign:
       return 1;
-    case BinaryOp.And:
+    case BinaryOp.Or:
       return 2;
+    case BinaryOp.And:
+      return 3;
 
     case BinaryOp.BitOr:
     case BinaryOp.BitOrEq:
-      return 3;
+      return 4;
 
     case BinaryOp.BitXor:
     case BinaryOp.BitXorEq:
-      return 4;
+      return 5;
 
     case BinaryOp.BitAnd:
     case BinaryOp.BitAndEq:
-      return 5;
+      return 6;
 
     case BinaryOp.Eq:
     case BinaryOp.NotEq:
-      return 6;
+      return 7;
 
     case BinaryOp.Lt:
     case BinaryOp.LtEq:
     case BinaryOp.Gt:
     case BinaryOp.GtEq:
-      return 7;
+      return 8;
 
     case BinaryOp.ShiftLeft:
     case BinaryOp.ShiftLeftEq:
     case BinaryOp.ShiftRight:
     case BinaryOp.ShiftRightEq:
-      return 8;
+      return 9;
 
     case BinaryOp.Add:
     case BinaryOp.AddEq:
     case BinaryOp.Sub:
     case BinaryOp.SubEq:
-      return 9;
+      return 10;
 
     case BinaryOp.Mul:
     case BinaryOp.MulEq:
@@ -48,7 +50,7 @@ export function opPrecedence(op: BinaryOp): number {
     case BinaryOp.DivEq:
     case BinaryOp.Mod:
     case BinaryOp.ModEq:
-      return 10;
+      return 11;
 
     default:
       return 0;
@@ -57,6 +59,7 @@ export function opPrecedence(op: BinaryOp): number {
 
 export function isRightAssociative(op: BinaryOp): boolean {
   switch (op) {
+    case BinaryOp.Assign:
     case BinaryOp.AddEq:
     case BinaryOp.SubEq:
     case BinaryOp.MulEq:
