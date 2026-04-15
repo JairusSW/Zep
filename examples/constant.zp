@@ -1,0 +1,4 @@
+#[export]
+fn constant(): i32 {
+  rt 42
+}

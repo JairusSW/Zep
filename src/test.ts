@@ -10,11 +10,15 @@ import { NumberLiteral } from "./ast/NumberLiteral";
 import { PropertyAccessExpression } from "./ast/PropertyAccessExpression";
 import { ReturnStatement } from "./ast/ReturnStatement";
 import { StructDeclaration } from "./ast/StructDeclaration";
+import { EnumDeclaration } from "./ast/EnumDeclaration";
 import { VariableDeclaration } from "./ast/VariableDeclaration";
 import { WhileStatement } from "./ast/WhileStatement";
 import { Generator } from "./generator";
+import { Formatter } from "./formatter/formatter";
 import { Parser } from "./parser";
+import { compileSource } from "./pipeline";
 import { Source, SourceKind } from "./source";
+import { Token, Tokenizer } from "./tokenizer";
 
 function parse(text: string): Source {
   const source = new Source("test.zp", text, SourceKind.UserEntry);
@@ -22,6 +26,37 @@ function parse(text: string): Source {
   parser.parseSource(source);
   return source;
 }
+
+function scan(text: string): { token: Token; literal: string | null }[] {
+  const source = new Source("scan.zp", text, SourceKind.UserEntry);
+  const tokenizer = new Tokenizer(source);
+  const out: { token: Token; literal: string | null }[] = [];
+  while (true) {
+    const token = tokenizer.next();
+    out.push({ token, literal: tokenizer.nextLiteral });
+    if (token === Token.EndOfFile) break;
+  }
+  return out;
+}
+
+describe("tokenizer stream", () => {
+  test("scans keywords and identifiers distinctly", () => {
+    const tokens = scan("fn foo(mutx: i32) { rt true }");
+    expect(tokens[0].token).toBe(Token.Fn);
+    expect(tokens[1]).toEqual({ token: Token.Identifier, literal: "foo" });
+    expect(tokens.find((v) => v.token === Token.Return)?.literal).toBe("rt");
+    expect(tokens.find((v) => v.token === Token.True)?.literal).toBe("true");
+  });
+
+  test("distinguishes dots from number literals", () => {
+    const tokens = scan("1..10 foo.bar 3.14");
+    const kinds = tokens.map((v) => v.token);
+    expect(kinds).toContain(Token.NumberLiteral);
+    expect(kinds).toContain(Token.DotDot);
+    expect(kinds).toContain(Token.Dot);
+    expect(tokens.find((v) => v.literal === "3.14")?.token).toBe(Token.NumberLiteral);
+  });
+});
 
 describe("canonical syntax", () => {
   test("parses imports and extern/export attributes", () => {
@@ -230,6 +265,102 @@ fn loop_value(a: i32): i32 {
     expect(loop).toBeInstanceOf(WhileStatement);
     expect(loop.body).toBeInstanceOf(BlockStatement);
   });
+
+  test("parses attributed struct and enum declarations", () => {
+    const source = parse(`
+#[export]
+struct Point {
+  x: i32
+}
+
+#[export]
+enum Kind {
+  A,
+  B = 2
+}
+`);
+
+    const structDecl = source.statements[0] as StructDeclaration;
+    const enumDecl = source.statements[1] as EnumDeclaration;
+    expect(structDecl).toBeInstanceOf(StructDeclaration);
+    expect(structDecl.attributes[0].tag.data).toBe("export");
+    expect(enumDecl).toBeInstanceOf(EnumDeclaration);
+    expect(enumDecl.attributes[0].tag.data).toBe("export");
+    expect(enumDecl.elements).toHaveLength(2);
+  });
+
+  test("recovers at top-level after invalid tokens", () => {
+    const source = parse(`
+@
+fn add(a: i32, b: i32): i32 {
+  rt a + b
+}
+`);
+
+    expect(source.statements).toHaveLength(1);
+    expect((source.statements[0] as FunctionDeclaration).name.data).toBe("add");
+  });
+
+  test("recovers inside blocks after invalid statements", () => {
+    const source = parse(`
+fn demo(a: i32): i32 {
+  @
+  rt a
+}
+`);
+
+    const fn = source.statements[0] as FunctionDeclaration;
+    const body = fn.block as BlockStatement;
+    expect(body.statements).toHaveLength(1);
+    expect(body.statements[0]).toBeInstanceOf(ReturnStatement);
+  });
+
+  test("recovers after missing binary rhs in return", () => {
+    const source = parse(`
+fn demo(a: i32): i32 {
+  rt a +
+  let b: i32 = 1
+  rt b
+}
+`);
+
+    const fn = source.statements[0] as FunctionDeclaration;
+    const body = fn.block as BlockStatement;
+    expect(body.statements).toHaveLength(3);
+    expect(body.statements[1]).toBeInstanceOf(VariableDeclaration);
+    expect(body.statements[2]).toBeInstanceOf(ReturnStatement);
+  });
+
+  test("recovers malformed postfix/call and continues block", () => {
+    const source = parse(`
+fn demo(): i32 {
+  foo(1, )
+  rt 1
+}
+`);
+
+    const fn = source.statements[0] as FunctionDeclaration;
+    const body = fn.block as BlockStatement;
+    expect(body.statements).toHaveLength(2);
+    expect(body.statements[0]).toBeDefined();
+    expect(body.statements[1]).toBeInstanceOf(ReturnStatement);
+  });
+
+  test("keeps following statements after bare return error", () => {
+    const source = parse(`
+fn demo(): i32 {
+  rt
+  let x: i32 = 1
+  rt x
+}
+`);
+
+    const fn = source.statements[0] as FunctionDeclaration;
+    const body = fn.block as BlockStatement;
+    expect(body.statements).toHaveLength(2);
+    expect(body.statements[0]).toBeInstanceOf(VariableDeclaration);
+    expect(body.statements[1]).toBeInstanceOf(ReturnStatement);
+  });
 });
 
 describe("minimal wasm generation", () => {
@@ -247,5 +378,132 @@ fn add(a: i32, b: i32): i32 {
 
     expect(wat).toContain("(func $add");
     expect(wat).toContain("i32.add");
+  });
+});
+
+describe("compile pipeline", () => {
+  test("emits wasm bytes when target is wasm", () => {
+    const result = compileSource({
+      fileName: "main.zp",
+      text: `
+#[export]
+fn add(a: i32, b: i32): i32 {
+  rt a + b
+}
+`,
+      format: "wasm",
+    });
+
+    expect(result.wat.length).toBeGreaterThan(0);
+    expect(result.wasm).not.toBeNull();
+    expect(result.wasm!.byteLength).toBeGreaterThan(8);
+  });
+
+  test("fails on unknown identifier", () => {
+    expect(() =>
+      compileSource({
+        fileName: "bad_unknown.zp",
+        text: `
+#[export]
+fn main(): i32 {
+  rt missing_name
+}
+`,
+        format: "wasm",
+      }),
+    ).toThrow();
+  });
+
+  test("fails on return type mismatch", () => {
+    expect(() =>
+      compileSource({
+        fileName: "bad_return_type.zp",
+        text: `
+#[export]
+fn main(): i32 {
+  rt true
+}
+`,
+        format: "wasm",
+      }),
+    ).toThrow();
+  });
+
+  test("fails on function call arity mismatch", () => {
+    expect(() =>
+      compileSource({
+        fileName: "bad_arity.zp",
+        text: `
+fn add(a: i32, b: i32): i32 {
+  rt a + b
+}
+
+#[export]
+fn main(): i32 {
+  rt add(1)
+}
+`,
+        format: "wasm",
+      }),
+    ).toThrow();
+  });
+
+  test("fails on assignment to immutable variable", () => {
+    expect(() =>
+      compileSource({
+        fileName: "bad_mutability.zp",
+        text: `
+#[export]
+fn main(): i32 {
+  let x: i32 = 1
+  x = 2
+  rt x
+}
+`,
+        format: "wasm",
+      }),
+    ).toThrow();
+  });
+});
+
+describe("formatter", () => {
+  test("formats declarations and preserves key syntax", () => {
+    const source = parse(`
+#[extern("env.print")]
+fn print(value:i32):void
+
+#[export]
+fn add(a:i32,b:i32):i32{
+rt a+b
+}
+
+struct Point{
+x:i32
+y:i32=0
+}
+`);
+
+    const formatted = Formatter.from(source);
+    expect(formatted).toContain('#[extern("env.print")]');
+    expect(formatted).toContain("fn print(value: i32): void");
+    expect(formatted).toContain("fn add(a: i32, b: i32): i32 {");
+    expect(formatted).toContain("struct Point {");
+    expect(formatted).toContain("y: i32 = 0");
+  });
+
+  test("formatted output can be parsed again without parser diagnostics", () => {
+    const original = `
+#[export]
+fn add(a:i32,b:i32):i32{
+let c:i32=a+b
+rt c
+}
+`;
+    const source = parse(original);
+    const formatted = Formatter.from(source);
+    const reparsed = new Source("formatted.zp", formatted, SourceKind.UserEntry);
+    const parser = new Parser([reparsed]);
+    parser.parseSource(reparsed);
+    expect(parser.diagnostics).toHaveLength(0);
   });
 });

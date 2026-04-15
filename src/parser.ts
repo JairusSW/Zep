@@ -43,7 +43,7 @@ import {
 } from "./tokenizer.js";
 import { isRightAssociative, opPrecedence } from "./util.js";
 
-type ParserState = {
+type ParserSnapshot = {
   tokenizerState: TokenizerState;
   current: Token;
   rangesSize: number;
@@ -85,7 +85,17 @@ export class Parser extends DiagnosticEmitter {
     return this.currentSource.statements;
   }
 
-  private getState(): ParserState {
+  private tryParse<T extends Node>(fn: () => T | null): T | null {
+    const state = this.checkpoint();
+    const node = fn();
+    if (!node) {
+      this.restore(state);
+      return null;
+    }
+    return node;
+  }
+
+  private checkpoint(): ParserSnapshot {
     return {
       tokenizerState: this.tokenizer.createState(),
       current: this.current,
@@ -93,14 +103,7 @@ export class Parser extends DiagnosticEmitter {
     };
   }
 
-  private updateState(state: ParserState): ParserState {
-    state.tokenizerState.wind();
-    state.current = this.current;
-    state.rangesSize = this.ranges.size;
-    return state;
-  }
-
-  private applyState(state: ParserState): void {
+  private restore(state: ParserSnapshot): void {
     state.tokenizerState.unwind();
     this.current = state.current;
     while (this.ranges.size > state.rangesSize) {
@@ -108,22 +111,77 @@ export class Parser extends DiagnosticEmitter {
     }
   }
 
-  private tryParse<T extends Node>(fn: () => T | null): T | null {
-    const state = this.getState();
-    const node = fn();
-    if (!node) {
-      this.applyState(state);
-      return null;
+  private reportSyntaxError(
+    code: DiagnosticCode,
+    params: Record<string, string> = {},
+    range: Range | null = this.getCurrentRange(),
+  ): void {
+    this.warn(code, params, range);
+  }
+
+  private isTopLevelStart(token: Token): boolean {
+    return (
+      token === Token.Hash ||
+      token === Token.Fn ||
+      token === Token.Import ||
+      token === Token.Let ||
+      token === Token.Mut ||
+      token === Token.Struct ||
+      token === Token.Enum
+    );
+  }
+
+  private isStatementStart(token: Token): boolean {
+    return (
+      token === Token.OpenBrace ||
+      token === Token.Let ||
+      token === Token.Mut ||
+      token === Token.Return ||
+      token === Token.If ||
+      token === Token.Else ||
+      token === Token.While ||
+      token === Token.Identifier ||
+      token === Token.NumberLiteral ||
+      token === Token.StringLiteral ||
+      token === Token.True ||
+      token === Token.False ||
+      token === Token.OpenParen
+    );
+  }
+
+  private synchronizeTopLevel(): void {
+    let consumed = false;
+    while (true) {
+      const next = this.peekNextToken();
+      if (next === Token.EndOfFile) return;
+      if (consumed && this.isTopLevelStart(next)) return;
+      this.advance();
+      consumed = true;
+      if (this.current === Token.Semicolon) return;
     }
-    return node;
   }
 
-  private checkpoint(): ParserState {
-    return this.getState();
+  private synchronizeStatement(allowImmediateBoundary: boolean = false): void {
+    let consumed = false;
+    while (true) {
+      const next = this.peekNextToken();
+      if (next === Token.EndOfFile || next === Token.CloseBrace) return;
+      if ((consumed || allowImmediateBoundary) && this.isStatementStart(next)) {
+        return;
+      }
+      this.advance();
+      consumed = true;
+      if (this.current === Token.Semicolon) return;
+    }
   }
 
-  private restore(state: ParserState): void {
-    this.applyState(state);
+  private synchronizeTo(stops: Token[]): void {
+    while (true) {
+      const next = this.peekNextToken();
+      if (next === Token.EndOfFile) return;
+      if (stops.includes(next)) return;
+      this.advance();
+    }
   }
 
   private advance(): Token {
@@ -142,6 +200,13 @@ export class Parser extends DiagnosticEmitter {
     return next === token;
   }
 
+  private peekNextToken(): Token {
+    const state = this.checkpoint();
+    const token = this.advance();
+    this.restore(state);
+    return token;
+  }
+
   private consume(token: Token): boolean {
     const state = this.checkpoint();
     this.advance();
@@ -153,7 +218,7 @@ export class Parser extends DiagnosticEmitter {
   private expect(token: Token, diagnosticToken: string = tokenToString(token)): void {
     this.advance();
     if (!this.matches(token)) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN,
         { token: diagnosticToken },
         this.getCurrentRange(),
@@ -187,68 +252,73 @@ export class Parser extends DiagnosticEmitter {
 
   parseTopLevelStatements(): void {
     while (true) {
+      const next = this.peekNextToken();
+      if (next === Token.EndOfFile) break;
       const stmt = this.parseTopLevelStatement();
-      if (!stmt) break;
-      this.currentSource.statements.push(stmt);
+      if (stmt) {
+        this.currentSource.statements.push(stmt);
+        continue;
+      }
+      this.reportSyntaxError(
+        DiagnosticCode.EXPECTED_TOKEN,
+        { expected: "top-level declaration", found: tokenToString(next) },
+      );
+      this.synchronizeTopLevel();
     }
   }
 
   parseTopLevelStatement(): Statement | null {
     const startRange = this.getCurrentRange();
-    const state = this.getState();
     this.ranges.push(startRange);
 
+    const token = this.peekNextToken();
     let node: Statement | null = null;
 
-    if ((node = this.parseFunctionDeclaration()))
-      return this.ranges.pop(), node;
-    this.applyState(state);
+    if (token === Token.Hash) {
+      node =
+        this.tryParse(() => this.parseFunctionDeclaration()) ??
+        this.tryParse(() => this.parseStructDeclaration()) ??
+        this.tryParse(() => this.parseEnumDeclaration());
+    } else if (token === Token.Fn) {
+      node = this.parseFunctionDeclaration();
+    } else if (token === Token.Import) {
+      node = this.parseImportDeclaration();
+    } else if (token === Token.Let || token === Token.Mut) {
+      node = this.parseVariableDeclaration();
+    } else if (token === Token.Struct) {
+      node = this.parseStructDeclaration();
+    } else if (token === Token.Enum) {
+      node = this.parseEnumDeclaration();
+    }
 
-    if ((node = this.parseImportDeclaration())) return this.ranges.pop(), node;
-    this.applyState(state);
-
-    if ((node = this.parseVariableDeclaration()))
-      return this.ranges.pop(), node;
-    this.applyState(state);
-
-    if ((node = this.parseStructDeclaration())) return this.ranges.pop(), node;
-    this.applyState(state);
-
-    if ((node = this.parseEnumDeclaration())) return this.ranges.pop(), node;
-    this.applyState(state);
+    if (node) return this.ranges.pop(), node;
 
     this.ranges.pop();
     return null;
   }
 
   parseStatement(): Statement | null {
-    const state = this.getState();
     const startRange = this.getCurrentRange();
     this.ranges.push(startRange);
 
+    const token = this.peekNextToken();
     let node: Statement | null = null;
 
-    if ((node = this.parseBlockStatement())) return this.ranges.pop(), node;
-    this.applyState(state);
+    if (token === Token.OpenBrace) {
+      node = this.parseBlockStatement();
+    } else if (token === Token.Let || token === Token.Mut) {
+      node = this.parseVariableDeclaration();
+    } else if (token === Token.Return) {
+      node = this.parseReturnStatement();
+    } else if (token === Token.If || token === Token.Else) {
+      node = this.parseIfStatement();
+    } else if (token === Token.While) {
+      node = this.parseWhileStatement();
+    } else {
+      node = this.parseExpressionStatement();
+    }
 
-    if ((node = this.parseVariableDeclaration()))
-      return this.ranges.pop(), node;
-    this.applyState(state);
-
-    if ((node = this.parseReturnStatement())) return this.ranges.pop(), node;
-    this.applyState(state);
-
-    if ((node = this.parseIfStatement())) return this.ranges.pop(), node;
-    this.applyState(state);
-
-    if ((node = this.parseBlockStatement())) return this.ranges.pop(), node;
-    this.applyState(state);
-
-    if ((node = this.parseWhileStatement())) return this.ranges.pop(), node;
-    this.applyState(state);
-
-    if ((node = this.parseExpressionStatement())) return this.ranges.pop(), node;
-    this.applyState(state);
+    if (node) return this.ranges.pop(), node;
 
     this.ranges.pop();
     return null;
@@ -257,31 +327,31 @@ export class Parser extends DiagnosticEmitter {
   // --- expressions / precedence ---
 
   parseExpression(): Expression | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const startRange = this.getCurrentRange();
     this.ranges.push(startRange);
     let expr: Expression | null;
     if ((expr = this.parseBinaryExpression(1))) return this.ranges.pop(), expr;
-    this.applyState(state);
+    this.restore(state);
     // if (expr = this.parseBlockStatement()) return this.ranges.pop(), expr;
-    // this.applyState(state);
+    // this.restore(state);
     this.ranges.pop();
     return null;
   }
 
   private parseAtomExpression(): Expression | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     let expr: Expression | null = null;
     if ((expr = this.parseIdentifierExpression())) return expr;
-    this.applyState(state);
+    this.restore(state);
     if ((expr = this.parseParenthesizedExpression())) return expr;
-    this.applyState(state);
+    this.restore(state);
     if ((expr = this.parseNumberLiteral())) return expr;
-    this.applyState(state);
+    this.restore(state);
     if ((expr = this.parseStringLiteral())) return expr;
-    this.applyState(state);
+    this.restore(state);
     if ((expr = this.parseBooleanLiteral())) return expr;
-    this.applyState(state);
+    this.restore(state);
     return null;
   }
 
@@ -290,17 +360,26 @@ export class Parser extends DiagnosticEmitter {
     if (!expr) return null;
 
     while (true) {
-      const state = this.getState();
+      const state = this.checkpoint();
       const token = this.advance();
 
       if (token === Token.Dot) {
         const property = this.parseIdentifierExpression();
         if (!property) {
-          this.error(
+          this.reportSyntaxError(
             DiagnosticCode.EXPECTED_TOKEN,
-            { expected: "identifier", found: tokenToString(this.current) },
+            { expected: "identifier", found: tokenToString(this.peekNextToken()) },
             this.getCurrentRange(),
           );
+          this.synchronizeTo([
+            Token.Dot,
+            Token.OpenParen,
+            Token.CloseParen,
+            Token.Comma,
+            Token.Semicolon,
+            Token.CloseBrace,
+          ]);
+          return expr;
         }
 
         expr = new PropertyAccessExpression(
@@ -314,19 +393,28 @@ export class Parser extends DiagnosticEmitter {
       if (token === Token.OpenParen) {
         const args: Expression[] = [];
 
-        const emptyArgsState = this.getState();
+        const emptyArgsState = this.checkpoint();
         this.advance();
         if (!this.matches(Token.CloseParen)) {
-          this.applyState(emptyArgsState);
+          this.restore(emptyArgsState);
 
           while (true) {
             const arg = this.parseExpression();
             if (!arg) {
-              this.error(
+              this.reportSyntaxError(
                 DiagnosticCode.EXPECTED_TOKEN,
-                { expected: "expression", found: tokenToString(this.current) },
+                { expected: "expression", found: tokenToString(this.peekNextToken()) },
                 this.getCurrentRange(),
               );
+              this.synchronizeTo([
+                Token.Comma,
+                Token.CloseParen,
+                Token.Semicolon,
+                Token.CloseBrace,
+              ]);
+              if (this.consume(Token.Comma)) continue;
+              if (this.consume(Token.CloseParen)) break;
+              return expr;
             }
             args.push(arg);
 
@@ -334,11 +422,18 @@ export class Parser extends DiagnosticEmitter {
             if (this.matches(Token.Comma)) continue;
             if (this.matches(Token.CloseParen)) break;
 
-            this.error(
+            this.reportSyntaxError(
               DiagnosticCode.UNTERMINATED_GROUP,
               { kind: ")" },
               this.getCurrentRange(),
             );
+            this.synchronizeTo([
+              Token.CloseParen,
+              Token.Semicolon,
+              Token.CloseBrace,
+            ]);
+            if (!this.consume(Token.CloseParen)) return expr;
+            break;
           }
         }
 
@@ -350,44 +445,68 @@ export class Parser extends DiagnosticEmitter {
         continue;
       }
 
-      this.applyState(state);
+      this.restore(state);
       return expr;
     }
   }
 
   private parseBinaryExpression(minPrec: number = 1): Expression | null {
-    let state = this.getState();
+    let state = this.checkpoint();
     let left = this.parsePostfixExpression();
     if (!left) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
 
     while (true) {
-      state = this.getState();
+      state = this.checkpoint();
       const opToken = this.advance();
       const op = tokenToOp(opToken);
       if (op === null) {
-        this.applyState(state);
+        this.restore(state);
         break;
       }
 
       const prec = opPrecedence(op);
       if (prec < minPrec) {
-        this.applyState(state);
+        this.restore(state);
         break;
       }
 
       const nextMin = isRightAssociative(op) ? prec : prec + 1;
       const right = this.parseBinaryExpression(nextMin);
       if (!right) {
-        this.error(
+        this.reportSyntaxError(
           DiagnosticCode.EXPECTED_EXPRESSION_AFTER_OPERATOR,
           { operator: tokenToString(opToken) },
           this.getCurrentRange(),
         );
+        this.synchronizeTo([
+          Token.Hash,
+          Token.Fn,
+          Token.Import,
+          Token.Let,
+          Token.Mut,
+          Token.Struct,
+          Token.Enum,
+          Token.Return,
+          Token.If,
+          Token.Else,
+          Token.While,
+          Token.Identifier,
+          Token.NumberLiteral,
+          Token.StringLiteral,
+          Token.True,
+          Token.False,
+          Token.OpenParen,
+          Token.OpenBrace,
+          Token.Semicolon,
+          Token.Comma,
+          Token.CloseParen,
+          Token.CloseBrace,
+        ]);
+        break;
       }
-      if (!right) return null;
 
       const result: BinaryExpression = new BinaryExpression(
         left,
@@ -402,18 +521,18 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parsePropertyAccessExpression(): PropertyAccessExpression | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const expr = this.parsePostfixExpression();
     if (expr instanceof PropertyAccessExpression) return expr;
-    this.applyState(state);
+    this.restore(state);
     return null;
   }
 
   parseCallExpression(): CallExpression | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const expr = this.parsePostfixExpression();
     if (expr instanceof CallExpression) return expr;
-    this.applyState(state);
+    this.restore(state);
     return null;
   }
 
@@ -430,14 +549,19 @@ export class Parser extends DiagnosticEmitter {
     }
 
     if (!this.consume(Token.CloseParen)) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.UNTERMINATED_GROUP,
         { kind: ")" },
         this.getCurrentRange(),
       );
+      this.synchronizeTo([Token.CloseParen, Token.Semicolon, Token.CloseBrace]);
+      this.consume(Token.CloseParen);
     }
 
-    return new ParenthesizedExpression(expr, this.getRange(start, expr.range));
+    return new ParenthesizedExpression(
+      expr,
+      this.getRange(start, this.getCurrentRange()),
+    );
   }
 
   parseExpressionStatement(): ExpressionStatement | null {
@@ -454,42 +578,29 @@ export class Parser extends DiagnosticEmitter {
   // --- type syntax ---
 
   parseTypeExpression(): TypeExpression | null {
-    let state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    // first token not yet consumed
-    this.advance(); // type
-    if (!this.isTypeToken(this.current)) return this.applyState(state), null;
+    this.advance();
+    if (!this.isTypeToken(this.current)) return this.restore(state), null;
 
     const types: string[] = [];
     types.push(this.readTypeToken());
 
-    state = this.getState();
-    this.advance(); // |
-
     let union = false;
-
-    if (this.matches(Token.Bar)) {
+    while (this.consume(Token.Bar)) {
       union = true;
-
-      do {
-        this.advance(); // type
-        if (!this.isTypeToken(this.current)) {
-          this.error(
-            DiagnosticCode.EXPECTED_TYPE_AFTER_BAR_IN_UNION,
-            {},
-            this.getCurrentRange(),
-          );
-        }
-
-        types.push(this.readTypeToken());
-
-        this.updateState(state);
-        this.advance(); // |
-      } while (this.matches(Token.Bar));
-      this.applyState(state);
-    } else {
-      this.applyState(state);
+      this.advance();
+      if (!this.isTypeToken(this.current)) {
+        this.reportSyntaxError(
+          DiagnosticCode.EXPECTED_TYPE_AFTER_BAR_IN_UNION,
+          {},
+          this.getCurrentRange(),
+        );
+        this.synchronizeTo([Token.Comma, Token.CloseParen, Token.Eq, Token.OpenBrace, Token.CloseBrace]);
+        break;
+      }
+      types.push(this.readTypeToken());
     }
 
     return new TypeExpression(
@@ -512,66 +623,76 @@ export class Parser extends DiagnosticEmitter {
   // --- variable declarations ---
 
   parseVariableDeclaration(): VariableDeclaration | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    // first token not yet consumed
-    this.advance(); // let or mut
-
     let mutable: boolean;
-    if (this.matches(Token.Let)) {
+    if (this.consume(Token.Let)) {
       mutable = false;
-    } else if (this.matches(Token.Mut)) {
+    } else if (this.consume(Token.Mut)) {
       mutable = true;
     } else {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
 
     const name = this.parseIdentifierExpression(); // name
 
     if (!name) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_LITERAL,
         {},
         this.getCurrentRange()
       );
+      this.synchronizeStatement(true);
+      return null;
     }
-
-    this.advance(); // : or =
 
     let type: TypeExpression | null = null;
     let value: Expression | null = null;
 
-    if (this.matches(Token.Colon)) {
+    if (this.consume(Token.Colon)) {
       type = this.parseTypeExpression();
       if (!type) {
-        this.error(
+        this.reportSyntaxError(
           DiagnosticCode.EXPECTED_TYPE_AFTER_COLON,
           {},
           this.getCurrentRange(),
         );
+        this.synchronizeStatement(true);
+        return null;
       }
-      this.advance(); // =
-      if (this.matches(Token.Eq)) {
+      if (this.consume(Token.Eq)) {
         value = this.parseExpression();
         if (!value) {
-          this.applyState(state);
+          this.reportSyntaxError(
+            DiagnosticCode.EXPECTED_TOKEN,
+            { expected: "expression", found: tokenToString(this.peekNextToken()) },
+            this.getCurrentRange(),
+          );
+          this.synchronizeStatement(true);
           return null;
         }
       }
-    } else if (this.matches(Token.Eq)) {
+    } else if (this.consume(Token.Eq)) {
       value = this.parseExpression();
       if (!value) {
-        this.applyState(state);
+        this.reportSyntaxError(
+          DiagnosticCode.EXPECTED_TOKEN,
+          { expected: "expression", found: tokenToString(this.peekNextToken()) },
+          this.getCurrentRange(),
+        );
+        this.synchronizeStatement(true);
         return null;
       }
     } else {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.EXPECTED_EQUALS_OR_COLON_AFTER_VARIABLE_NAME,
         {},
         this.getCurrentRange(),
       );
+      this.synchronizeStatement(true);
+      return null;
     }
 
     const endNode = (value ?? type ?? name) as Node;
@@ -587,24 +708,31 @@ export class Parser extends DiagnosticEmitter {
   // --- function declarations ---
 
   parseParameterExpression(): ParameterExpression | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
     const name = this.parseIdentifierExpression();
     if (!name) return null;
 
-    this.advance(); // :
-    if (!this.matches(Token.Colon)) {
-      this.error(
+    if (!this.consume(Token.Colon)) {
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN,
         { token: ":" },
         this.getCurrentRange(),
       );
+      this.synchronizeTo([Token.Comma, Token.CloseParen]);
+      return null;
     }
 
     const type = this.parseTypeExpression();
     if (!type) {
-      this.applyState(state);
+      this.reportSyntaxError(
+        DiagnosticCode.EXPECTED_TYPE_AFTER_COLON,
+        {},
+        this.getCurrentRange(),
+      );
+      this.synchronizeTo([Token.Comma, Token.CloseParen]);
+      this.restore(state);
       return null;
     }
 
@@ -635,19 +763,23 @@ export class Parser extends DiagnosticEmitter {
 
     const name = this.parseIdentifierExpression(); // name
     if (!name) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.EXPECTED_NAME_AFTER_FUNCTION,
         {},
         this.getCurrentRange(),
       );
+      this.synchronizeTopLevel();
+      return null;
     }
 
     if (!this.consume(Token.OpenParen)) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.EXPECTED_PARAMETER_LIST,
         {},
         this.getCurrentRange(),
       );
+      this.synchronizeTopLevel();
+      return null;
     }
 
     const params: ParameterExpression[] = [];
@@ -655,21 +787,28 @@ export class Parser extends DiagnosticEmitter {
       while (true) {
         const param = this.parseParameterExpression();
         if (!param) {
-          this.error(
+          this.reportSyntaxError(
             DiagnosticCode.EXPECTED_TOKEN,
-            { expected: "parameter", found: tokenToString(this.current) },
+            { expected: "parameter", found: tokenToString(this.peekNextToken()) },
             this.getCurrentRange(),
           );
+          this.synchronizeTo([Token.Comma, Token.CloseParen]);
+          if (this.consume(Token.Comma)) continue;
+          if (this.consume(Token.CloseParen)) break;
+          return null;
         }
         params.push(param);
 
         if (this.consume(Token.Comma)) continue;
         if (this.consume(Token.CloseParen)) break;
-        this.error(
+        this.reportSyntaxError(
           DiagnosticCode.MISSING_TOKEN,
           { token: ")" },
           this.getCurrentRange(),
         );
+        this.synchronizeTo([Token.CloseParen, Token.OpenBrace]);
+        if (!this.consume(Token.CloseParen)) return null;
+        break;
       }
     }
 
@@ -677,11 +816,13 @@ export class Parser extends DiagnosticEmitter {
     if (this.consume(Token.Colon)) {
       returnType = this.parseTypeExpression();
       if (!returnType) {
-        this.error(
+        this.reportSyntaxError(
           DiagnosticCode.EXPECTED_TYPE_AFTER_COLON,
           {},
           this.getCurrentRange(),
         );
+        this.synchronizeTo([Token.OpenBrace, Token.Hash, Token.Fn, Token.Struct, Token.Enum, Token.Import]);
+        return null;
       }
     }
 
@@ -690,7 +831,12 @@ export class Parser extends DiagnosticEmitter {
       ? new BlockStatement([], this.getCurrentRange())
       : this.parseStatement();
     if (!block) {
-      this.restore(state);
+      this.reportSyntaxError(
+        DiagnosticCode.EXPECTED_TOKEN,
+        { expected: "function body", found: tokenToString(this.peekNextToken()) },
+        this.getCurrentRange(),
+      );
+      this.synchronizeTopLevel();
       return null;
     }
 
@@ -708,99 +854,96 @@ export class Parser extends DiagnosticEmitter {
   // --- enum declarations ---
 
   parseEnumDeclaration(): EnumDeclaration | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    const attributes: AttributeExpression[] = [];
-    while (true) {
-      const attribute = this.tryParse(() => this.parseAttributeExpression());
-      if (!attribute) break;
-      attributes.push(attribute);
-    }
+    const attributes = this.parseAttributes();
 
-    let exported = attributes.some((v) => v.tag.data === "export");
-
-    // first token not yet consumed
-    this.advance();
-    if (!this.matches(Token.Enum)) {
-      this.applyState(state);
+    if (!this.consume(Token.Enum)) {
+      this.restore(state);
       return null;
     }
+
     const name = this.parseIdentifierExpression();
     if (!name) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.EXPECTED_NAME_AFTER_ENUM,
         {},
         this.getCurrentRange(),
       );
+      this.synchronizeTopLevel();
+      return null;
     }
-    this.advance();
 
-    if (!this.matches(Token.OpenBrace)) {
-      this.error(
+    if (!this.consume(Token.OpenBrace)) {
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN,
         { token: "{" },
         this.getCurrentRange(),
       );
+      this.synchronizeTopLevel();
+      return null;
     }
-    this.advance(); // '{'
 
     const elements: EnumFieldDeclaration[] = [];
     let index = 0;
 
-    while (
-      !this.matches(Token.CloseBrace) &&
-      this.current !== Token.EndOfFile
-    ) {
-      const fieldAttributes: AttributeExpression[] = [];
-      while (true) {
-        const attribute = this.tryParse(() => this.parseAttributeExpression());
-        if (!attribute) break;
-        fieldAttributes.push(attribute);
-      }
+    if (!this.consume(Token.CloseBrace)) {
+      while (!this.peek(Token.CloseBrace) && !this.peek(Token.EndOfFile)) {
+        const fieldAttributes = this.parseAttributes();
 
-      const elementName = this.parseIdentifierExpression();
-      if (!elementName) break;
-
-      let elementValue: NumberLiteral | StringLiteral | null = null;
-
-      if (this.matches(Token.Eq)) {
-        this.advance(); // '='
-        elementValue = this.parseNumberLiteral() || this.parseStringLiteral();
-        if (!elementValue) {
-          this.error(
-            DiagnosticCode.EXPECTED_VALUE_AFTER_EQUALS,
-            {},
+        const elementName = this.parseIdentifierExpression();
+        if (!elementName) {
+          this.reportSyntaxError(
+            DiagnosticCode.EXPECTED_TOKEN,
+            { expected: "enum member", found: tokenToString(this.peekNextToken()) },
             this.getCurrentRange(),
           );
+          this.synchronizeTo([Token.Comma, Token.CloseBrace]);
+          if (this.consume(Token.Comma)) continue;
+          break;
         }
+
+        let elementValue: NumberLiteral | StringLiteral | null = null;
+
+        if (this.consume(Token.Eq)) {
+          elementValue = this.parseNumberLiteral() || this.parseStringLiteral();
+          if (!elementValue) {
+            this.reportSyntaxError(
+              DiagnosticCode.EXPECTED_VALUE_AFTER_EQUALS,
+              {},
+              this.getCurrentRange(),
+            );
+            this.synchronizeTo([Token.Comma, Token.CloseBrace]);
+          }
+        }
+
+        const valueNode =
+          elementValue ||
+          new NumberLiteral(index.toString(), null, elementName.range);
+
+        const element = new EnumFieldDeclaration(
+          fieldAttributes,
+          elementName,
+          valueNode,
+          this.getRange(elementName.range, valueNode.range),
+        );
+        elements.push(element);
+        index++;
+
+        if (this.consume(Token.Comma)) continue;
+        break;
       }
-
-      const valueNode =
-        elementValue ||
-        new NumberLiteral(index.toString(), null, elementName.range);
-
-      const element = new EnumFieldDeclaration(
-        fieldAttributes,
-        elementName,
-        valueNode,
-        this.getRange(elementName.range, valueNode.range),
-      );
-      elements.push(element);
-      index++;
-
-      if (!this.matches(Token.Comma)) break;
-      this.advance(); // ','
     }
 
-    if (!this.matches(Token.CloseBrace)) {
-      this.error(
+    if (!this.consume(Token.CloseBrace)) {
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN,
         { token: "}" },
         this.getCurrentRange(),
       );
+      this.synchronizeTopLevel();
     }
-    this.advance(); // '}'
 
     return new EnumDeclaration(
       attributes,
@@ -916,13 +1059,27 @@ export class Parser extends DiagnosticEmitter {
       !this.peek(Token.CloseBrace) &&
       !this.peek(Token.EndOfFile)
     ) {
+      const beforeCursor = this.tokenizer.cursor;
       const stmt = this.parseStatement();
-      if (!stmt) break;
+      if (!stmt) {
+        this.reportSyntaxError(
+          DiagnosticCode.EXPECTED_TOKEN,
+          { expected: "statement", found: tokenToString(this.peekNextToken()) },
+        );
+        this.synchronizeStatement(true);
+        if (this.tokenizer.cursor === beforeCursor) {
+          const next = this.peekNextToken();
+          if (next !== Token.EndOfFile && next !== Token.CloseBrace) {
+            this.advance();
+          }
+        }
+        continue;
+      }
       stmts.push(stmt);
     }
 
     if (!this.consume(Token.CloseBrace)) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN_AT,
         { token: "}", message: "at end of block." },
         this.getCurrentRange(),
@@ -938,19 +1095,16 @@ export class Parser extends DiagnosticEmitter {
   // --- attributes / import / return ---
 
   parseAttributeExpression(): AttributeExpression | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    // first token not yet consumed
-    this.advance(); // #
-    if (!this.matches(Token.Hash)) {
-      this.applyState(state);
+    if (!this.consume(Token.Hash)) {
+      this.restore(state);
       return null;
     }
-    this.advance(); // [
 
-    if (!this.matches(Token.OpenBracket)) {
-      this.applyState(state);
+    if (!this.consume(Token.OpenBracket)) {
+      this.restore(state);
       return null;
     }
 
@@ -958,82 +1112,85 @@ export class Parser extends DiagnosticEmitter {
     this.advance();
     const tag = this.parseAttributeTag();
     if (!tag) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.EXPECTED_TAG_IN_MODIFIER,
         {},
         this.getCurrentRange(),
       );
+      this.synchronizeTo([Token.CloseBracket]);
+      if (!this.consume(Token.CloseBracket)) return null;
+      return null;
     }
 
     const args: Record<string, string> = {};
 
-    this.advance(); // ( or ]
-    // Optional arguments:
-    // 1 - #[export]
-    // 2 - #[export(alias = "name")]
-    // 3 - #[extern("env.log")]
-    if (this.matches(Token.OpenParen)) {
-      this.advance(); // case 3
-      if (this.matches(Token.StringLiteral)) {
-        // extern("env.log") => { value: "env.log" }
-        args["value"] = this.tokenizer.readString();
-        this.advance();
-      } else if (this.matches(Token.Identifier)) {
-        // key = "value", [ , key = "value", ... ]
-        while (true) {
-          const keyIdent = new Identifier(
-            this.tokenizer.readIdentifier(),
+    if (this.consume(Token.OpenParen)) {
+      this.advance();
+      if (!this.matches(Token.CloseParen)) {
+        if (this.matches(Token.StringLiteral)) {
+          args["value"] = this.tokenizer.readString();
+        } else if (this.matches(Token.Identifier)) {
+          while (true) {
+            if (!this.matches(Token.Identifier)) {
+              this.reportSyntaxError(
+                DiagnosticCode.EXPECTED_TOKEN,
+                { expected: "identifier", found: tokenToString(this.current) },
+                this.getCurrentRange(),
+              );
+              this.synchronizeTo([Token.Comma, Token.CloseParen, Token.CloseBracket]);
+              break;
+            }
+            const key = this.tokenizer.readIdentifier();
+
+            if (!this.consume(Token.Eq)) {
+              this.reportSyntaxError(
+                DiagnosticCode.EXPECTED_TOKEN,
+                { expected: "=", found: tokenToString(this.current) },
+                this.getCurrentRange(),
+              );
+              this.synchronizeTo([Token.Comma, Token.CloseParen, Token.CloseBracket]);
+              break;
+            }
+
+            const valueLit = this.parseStringLiteral() || null;
+            if (!valueLit) {
+              this.reportSyntaxError(
+                DiagnosticCode.EXPECTED_VALUE_AFTER_EQUALS,
+                {},
+                this.getCurrentRange(),
+              );
+              this.synchronizeTo([Token.Comma, Token.CloseParen, Token.CloseBracket]);
+              break;
+            }
+
+            args[key] = valueLit.data;
+
+            if (!this.consume(Token.Comma)) break;
+            this.advance();
+          }
+        }
+
+        if (!this.consume(Token.CloseParen)) {
+          this.reportSyntaxError(
+            DiagnosticCode.UNTERMINATED_GROUP,
+            { kind: ")" },
             this.getCurrentRange(),
           );
-          if (!keyIdent) {
-            this.error(
-              DiagnosticCode.EXPECTED_TOKEN,
-              { expected: "identifier", found: tokenToString(this.current) },
-              this.getCurrentRange(),
-            );
-          }
-
-          this.advance(); // =
-          if (!this.matches(Token.Eq)) {
-            this.error(
-              DiagnosticCode.EXPECTED_TOKEN,
-              { expected: "=", found: tokenToString(this.current) },
-              this.getCurrentRange(),
-            );
-          }
-
-          const valueLit = this.parseStringLiteral();
-          if (!valueLit) {
-            this.error(
-              DiagnosticCode.EXPECTED_VALUE_AFTER_EQUALS,
-              {},
-              this.getCurrentRange(),
-            );
-          }
-
-          args[keyIdent.data] = valueLit!.data;
-
-          this.advance(); // ,
-          if (!this.matches(Token.Comma)) break;
+          this.synchronizeTo([Token.CloseParen, Token.CloseBracket]);
+          this.consume(Token.CloseParen);
         }
       }
-
-      if (!this.matches(Token.CloseParen)) {
-        this.error(
-          DiagnosticCode.UNTERMINATED_GROUP,
-          { kind: ")" },
-          this.getCurrentRange(),
-        );
-      }
-      this.advance(); // ')'
     }
 
-    if (!this.matches(Token.CloseBracket)) {
-      this.error(
+    if (!this.consume(Token.CloseBracket)) {
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN,
         { token: "]" },
         this.getCurrentRange(),
       );
+      this.synchronizeTo([Token.CloseBracket, Token.Hash, Token.Fn, Token.Struct, Token.Enum]);
+      this.consume(Token.CloseBracket);
+      return null;
     }
 
     return new AttributeExpression(
@@ -1081,89 +1238,87 @@ export class Parser extends DiagnosticEmitter {
     }
     const expr = this.parseExpression();
     if (!expr) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.EXPECTED_EXPRESSION_AFTER_RETURN,
         {},
         this.getCurrentRange(),
       );
+      this.synchronizeStatement(true);
+      return null;
     }
 
-    return new ReturnStatement(expr!, this.getRange(start, expr!.range));
+    return new ReturnStatement(expr, this.getRange(start, expr.range));
   }
 
   // --- struct fields ---
 
   parseStructFieldExpression(): StructFieldDeclaration | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    const attributes: AttributeExpression[] = [];
-    while (true) {
-      const attribute = this.tryParse(() => this.parseAttributeExpression());
-      if (!attribute) break;
-      attributes.push(attribute);
-    }
+    const attributes = this.parseAttributes();
 
-    // first token not yet consumed
     this.advance();
-
-    let access: FieldAccessKind = FieldAccessKind.Public;
-
-    if (this.matches(Token.Identifier)) {
-      const identState = this.getState();
-      const text = this.tokenizer.readIdentifier();
-      this.advance();
-
-      if (text === "public" || text === "private" || text === "final") {
-        switch (text) {
-          case "public":
-            access = FieldAccessKind.Public;
-            break;
-          case "private":
-            access = FieldAccessKind.Private;
-            break;
-          case "final":
-            access = FieldAccessKind.Final;
-            break;
-        }
-      } else {
-        this.applyState(identState);
-      }
-    }
-
     if (!this.matches(Token.Identifier)) {
-      this.applyState(state);
+      this.restore(state);
       return null;
     }
-    const nameText = this.tokenizer.readIdentifier();
+
+    let access: FieldAccessKind = FieldAccessKind.Public;
+    let nameText = this.tokenizer.readIdentifier();
+    const isAccessModifier =
+      nameText === "public" || nameText === "private" || nameText === "final";
+    if (isAccessModifier && this.peek(Token.Identifier)) {
+      if (nameText === "private") access = FieldAccessKind.Private;
+      if (nameText === "final") access = FieldAccessKind.Final;
+      this.advance();
+      if (!this.matches(Token.Identifier)) {
+        this.reportSyntaxError(
+          DiagnosticCode.EXPECTED_TOKEN,
+          { expected: "identifier", found: tokenToString(this.current) },
+          this.getCurrentRange(),
+        );
+        this.synchronizeTo([Token.CloseBrace]);
+        return null;
+      }
+      nameText = this.tokenizer.readIdentifier();
+    }
+
     const nameRange = this.getCurrentRange();
     const name = new Identifier(nameText, nameRange);
 
-    this.advance();
-    if (!this.matches(Token.Colon)) {
-      this.error(
+    if (!this.consume(Token.Colon)) {
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN,
         { token: ":" },
         this.getCurrentRange(),
       );
+      this.synchronizeTo([Token.CloseBrace]);
+      return null;
     }
 
     const type = this.parseTypeExpression();
     if (!type) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.EXPECTED_TYPE_AFTER_COLON,
         {},
         this.getCurrentRange(),
       );
+      this.synchronizeTo([Token.Comma, Token.CloseBrace]);
+      return null;
     }
     let value: Expression | null = null;
-    const afterNameState = this.getState();
-    this.advance();
-    if (this.matches(Token.Eq)) {
+    if (this.consume(Token.Eq)) {
       value = this.parseExpression();
-      if (!value) this.applyState(afterNameState);
-    } else {
-      this.applyState(afterNameState);
+      if (!value) {
+        this.reportSyntaxError(
+          DiagnosticCode.EXPECTED_TOKEN,
+          { expected: "expression", found: tokenToString(this.peekNextToken()) },
+          this.getCurrentRange(),
+        );
+        this.synchronizeTo([Token.Comma, Token.CloseBrace]);
+        return null;
+      }
     }
 
     return new StructFieldDeclaration(
@@ -1177,64 +1332,61 @@ export class Parser extends DiagnosticEmitter {
   }
 
   parseStructDeclaration(): StructDeclaration | null {
-    const state = this.getState();
+    const state = this.checkpoint();
     const start = this.getCurrentRange();
 
-    const attributes: AttributeExpression[] = [];
-    while (true) {
-      const attribute = this.tryParse(() => this.parseAttributeExpression());
-      if (!attribute) break;
-      attributes.push(attribute);
-    }
+    const attributes = this.parseAttributes();
 
-    // first token not yet consumed
-    this.advance();
-    if (!this.matches(Token.Struct)) {
-      this.applyState(state);
+    if (!this.consume(Token.Struct)) {
+      this.restore(state);
       return null;
     }
     const name = this.parseIdentifierExpression();
     if (!name) {
-      this.error(
+      this.reportSyntaxError(
         DiagnosticCode.EXPECTED_NAME_AFTER_STRUCT,
         {},
         this.getCurrentRange(),
       );
+      this.synchronizeTopLevel();
+      return null;
     }
-    this.advance();
 
-    if (!this.matches(Token.OpenBrace)) {
-      this.error(
+    if (!this.consume(Token.OpenBrace)) {
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN,
         { token: "{" },
         this.getCurrentRange(),
       );
+      this.synchronizeTopLevel();
+      return null;
     }
     const fields: StructFieldDeclaration[] = [];
 
-    while (
-      !this.matches(Token.CloseBrace) &&
-      this.current !== Token.EndOfFile
-    ) {
-      const field = this.parseStructFieldExpression();
-      if (!field) {
-        const beforeEnd = this.getState();
-        this.advance();
-        if (this.matches(Token.CloseBrace)) break;
-        this.applyState(beforeEnd);
-        break;
+    if (!this.consume(Token.CloseBrace)) {
+      while (!this.peek(Token.CloseBrace) && !this.peek(Token.EndOfFile)) {
+        const field = this.parseStructFieldExpression();
+        if (!field) {
+          this.reportSyntaxError(
+            DiagnosticCode.EXPECTED_TOKEN,
+            { expected: "struct field", found: tokenToString(this.peekNextToken()) },
+            this.getCurrentRange(),
+          );
+          this.synchronizeTo([Token.CloseBrace]);
+          break;
+        }
+        fields.push(field);
       }
-      fields.push(field);
     }
 
-    if (!this.matches(Token.CloseBrace)) {
-      this.error(
+    if (!this.consume(Token.CloseBrace)) {
+      this.reportSyntaxError(
         DiagnosticCode.MISSING_TOKEN,
         { token: "}" },
         this.getCurrentRange(),
       );
+      this.synchronizeTopLevel();
     }
-    this.advance(); // '}'
 
     return new StructDeclaration(
       attributes,
@@ -1242,6 +1394,16 @@ export class Parser extends DiagnosticEmitter {
       fields,
       this.getRange(start, this.getCurrentRange()),
     );
+  }
+
+  private parseAttributes(): AttributeExpression[] {
+    const attributes: AttributeExpression[] = [];
+    while (true) {
+      const attribute = this.tryParse(() => this.parseAttributeExpression());
+      if (!attribute) break;
+      attributes.push(attribute);
+    }
+    return attributes;
   }
 
   // --- simple primaries ---

@@ -111,24 +111,59 @@ export class Tokenizer extends DiagnosticEmitter {
   public end: number;
   public pos: number = 0;
   public tkPos: number = 0;
-
   public line: number = 0;
   public lineStart: number = 0;
-
   public tkLine: number = 0;
   public tkLineStart: number = 0;
-
   public lastToken: Token = Token.Invalid;
   public nextToken: Token | null = null;
   public nextLiteral: string | null = null;
 
   private readonly state: TokenizerState;
+  private entries: TokenEntry[] = [];
+  public cursor: number = -1;
+  private scanPos: number = 0;
+  private scanLine: number = 0;
+  private scanColumn: number = 0;
+
+  private static readonly KEYWORDS: Record<string, Token> = {
+    fn: Token.Fn,
+    struct: Token.Struct,
+    enum: Token.Enum,
+    interface: Token.Interface,
+    impl: Token.Impl,
+    import: Token.Import,
+    let: Token.Let,
+    mut: Token.Mut,
+    if: Token.If,
+    else: Token.Else,
+    for: Token.For,
+    in: Token.In,
+    while: Token.While,
+    match: Token.Match,
+    case: Token.Case,
+    default: Token.Default,
+    rt: Token.Return,
+    extern: Token.Extern,
+    as: Token.As,
+    type: Token.Type,
+    null: Token.Null,
+    void: Token.Void,
+    true: Token.True,
+    false: Token.False,
+    and: Token.And,
+    or: Token.Or,
+    is: Token.Is,
+    instanceof: Token.InstanceOf,
+    jump: Token.Jump,
+  };
 
   constructor(source: Source) {
     super();
     this.source = source;
     this.source.tokenizer = this;
     this.end = this.source.text.length;
+    this.scanAll();
     this.state = new TokenizerState(this);
   }
 
@@ -145,578 +180,48 @@ export class Tokenizer extends DiagnosticEmitter {
   }
 
   getRange(lookahead: number = 0): Range {
-    if (lookahead) {
-      this.state.wind();
-      while (lookahead-- >= 0) {
-        this.next();
-      }
-
-      const start: RangeData = {
-        line: this.line,
-        column: this.pos - this.lineStart,
-      };
-      const end: RangeData = {
-        line: this.tkLine,
-        column: this.tkPos - this.tkLineStart,
-      };
-      this.state.unwind();
-      return new Range(start, end, this.source);
-    } else {
-      const start: RangeData = {
-        line: this.line,
-        column: this.pos - this.lineStart,
-      };
-      const end: RangeData = {
-        line: this.tkLine,
-        column: this.tkPos - this.tkLineStart,
-      };
-      return new Range(start, end, this.source);
+    const idx = this.cursor + lookahead;
+    if (idx < 0 || idx >= this.entries.length) {
+      return new Range(
+        { line: this.scanLine, column: this.scanColumn },
+        { line: this.scanLine, column: this.scanColumn },
+        this.source,
+      );
     }
+    return this.entries[idx].range;
   }
 
   all(): Token[] {
-    const state = this.getState();
-    const out: Token[] = [];
-    while (true) {
-      const t = this.next();
-      out.push(t);
-      if (t === Token.EndOfFile) break;
-    }
-    state.unwind();
-    return out;
+    return this.entries.map((entry) => entry.token);
   }
+
   next(): Token {
-    this.lastToken = this.nextUnsafe();
-    return this.lastToken;
-  }
-  private bumpLine(pos: number = this.tkPos, amount: number = 1): void {
-    this.tkLine += amount;
-    this.tkLineStart = pos;
-  }
-
-  private nextUnsafe(): Token {
-    this.nextLiteral = null;
-    this.line = this.tkLine;
-    this.lineStart = this.tkLineStart;
-
-    this.pos = this.tkPos;
-
-    const text = this.source.text;
-    const end = this.end;
-
-    while (this.tkPos < end) {
-      let c = text.charCodeAt(this.tkPos);
-
-      switch (c) {
-        // whitespace
-        case CharCode.CarriageReturn: {
-          ++this.tkPos;
-          if (
-            this.tkPos < end &&
-            text.charCodeAt(this.tkPos) === CharCode.LineFeed
-          ) {
-            ++this.tkPos;
-          }
-          this.bumpLine();
-          this.line = this.tkLine;
-          this.lineStart = this.tkLineStart;
-          continue;
-        }
-        case CharCode.LineFeed: {
-          ++this.tkPos;
-          this.bumpLine();
-          this.line = this.tkLine;
-          this.lineStart = this.tkLineStart;
-          continue;
-        }
-
-        case CharCode.Tab:
-        case CharCode.VerticalTab:
-        case CharCode.FormFeed:
-        case CharCode.Space: {
-          ++this.tkPos;
-          continue;
-        }
-
-        // identifiers / keywords / numbers
-        default: {
-          // identifier start: letter, _, $
-          if (
-            (c >= CharCode.A && c <= CharCode.Z) ||
-            (c >= CharCode.a && c <= CharCode.z) ||
-            c === CharCode._ ||
-            c === CharCode.Dollar
-          ) {
-            this.nextLiteral = this.digestIdentifier();
-
-            switch (this.nextLiteral) {
-              case "fn":
-                return Token.Fn;
-              case "struct":
-                return Token.Struct;
-              case "enum":
-                return Token.Enum;
-              case "interface":
-                return Token.Interface;
-              case "impl":
-                return Token.Impl;
-              case "import":
-                return Token.Import;
-              case "let":
-                return Token.Let;
-              case "mut":
-                return Token.Mut;
-              case "if":
-                return Token.If;
-              case "else":
-                return Token.Else;
-              case "for":
-                return Token.For;
-              case "in":
-                return Token.In;
-              case "while":
-                return Token.While;
-              case "match":
-                return Token.Match;
-              case "case":
-                return Token.Case;
-              case "default":
-                return Token.Default;
-              case "rt":
-                return Token.Return;
-              // case "export":
-              //   return Token.Export;
-              case "extern":
-                return Token.Extern;
-              case "as":
-                return Token.As;
-              case "type":
-                return Token.Type;
-              case "true":
-                return Token.True;
-              case "false":
-                return Token.False;
-              case "and":
-                return Token.And;
-              case "or":
-                return Token.Or;
-              case "is":
-                return Token.Is;
-              case "instanceof":
-                return Token.InstanceOf;
-              case "jump":
-                return Token.Jump;
-            }
-            return Token.Identifier;
-          }
-
-          if (
-            (c >= CharCode._0 && c <= CharCode._9) ||
-            c === CharCode._ ||
-            c === CharCode.Dot
-          ) {
-            this.nextLiteral = this.digestNumber();
-            return Token.NumberLiteral;
-          }
-        }
-
-        // !
-        case CharCode.Exclamation: {
-          ++this.tkPos;
-          if (
-            this.tkPos < end &&
-            text.charCodeAt(this.tkPos) === CharCode.Equals
-          ) {
-            ++this.tkPos;
-            return Token.BangEq;
-          }
-          return Token.Bang;
-        }
-
-        // "string"
-        case CharCode.DoubleQuote: {
-          ++this.tkPos;
-          this.nextLiteral = this.digestString();
-          return Token.StringLiteral;
-        }
-
-        // 'char'
-        case CharCode.SingleQuote: {
-          ++this.tkPos;
-          this.error(
-            DiagnosticCode.UNSUPPORTED,
-            { message: "Character literals are not yet supported!" },
-            this.getRange(),
-          );
-          return Token.CharLiteral;
-        }
-
-        // `raw`
-        case CharCode.Backtick: {
-          ++this.tkPos;
-          this.error(
-            DiagnosticCode.UNSUPPORTED,
-            { message: "Raw literals are not yet supported!" },
-            this.getRange(),
-          );
-          return Token.RawLiteral;
-        }
-
-        // %
-        case CharCode.Percent: {
-          ++this.tkPos;
-          if (
-            this.tkPos < end &&
-            text.charCodeAt(this.tkPos) === CharCode.Equals
-          ) {
-            ++this.tkPos;
-            return Token.PercentEq;
-          }
-          return Token.Percent;
-        }
-
-        // &
-        case CharCode.Ampersand: {
-          ++this.tkPos;
-          if (this.tkPos < end) {
-            const ch = text.charCodeAt(this.tkPos);
-            if (ch === CharCode.Ampersand) {
-              ++this.tkPos;
-              return Token.AmpAmp;
-            }
-            if (ch === CharCode.Equals) {
-              ++this.tkPos;
-              return Token.AmpEq;
-            }
-          }
-          return Token.Amp;
-        }
-
-        // (
-        case CharCode.OpenParen: {
-          ++this.tkPos;
-          return Token.OpenParen;
-        }
-
-        // )
-        case CharCode.CloseParen: {
-          ++this.tkPos;
-          return Token.CloseParen;
-        }
-
-        // *
-        case CharCode.Asterisk: {
-          ++this.tkPos;
-          if (
-            this.tkPos < end &&
-            text.charCodeAt(this.tkPos) === CharCode.Equals
-          ) {
-            ++this.tkPos;
-            return Token.StarEq;
-          }
-          return Token.Star;
-        }
-
-        // +
-        case CharCode.Plus: {
-          ++this.tkPos;
-          if (this.tkPos < end) {
-            const ch = text.charCodeAt(this.tkPos);
-            if (ch === CharCode.Plus) {
-              ++this.tkPos;
-              return Token.PlusPlus;
-            }
-            if (ch === CharCode.Equals) {
-              ++this.tkPos;
-              return Token.PlusEq;
-            }
-          }
-          return Token.Plus;
-        }
-
-        // -
-        case CharCode.Minus: {
-          ++this.tkPos;
-          if (this.tkPos < end) {
-            const ch = text.charCodeAt(this.tkPos);
-            if (ch === CharCode.Minus) {
-              ++this.tkPos;
-              return Token.MinusMinus;
-            }
-            if (ch === CharCode.GreaterThan) {
-              ++this.tkPos;
-              return Token.Arrow;
-            }
-            if (ch === CharCode.Equals) {
-              ++this.tkPos;
-              return Token.MinusEq;
-            }
-          }
-          return Token.Minus;
-        }
-
-        // .
-        case CharCode.Dot: {
-          ++this.tkPos;
-          if (
-            this.tkPos < end &&
-            text.charCodeAt(this.tkPos) === CharCode.Dot
-          ) {
-            ++this.tkPos;
-            if (
-              this.tkPos < end &&
-              text.charCodeAt(this.tkPos) === CharCode.Equals
-            ) {
-              ++this.tkPos;
-              return Token.DotDotEq;
-            }
-            if (
-              this.tkPos < end &&
-              text.charCodeAt(this.tkPos) === CharCode.Dot
-            ) {
-              ++this.tkPos;
-              return Token.DotDotDot;
-            }
-            return Token.DotDot;
-          }
-          return Token.Dot;
-        }
-
-        // ,
-        case CharCode.Comma: {
-          ++this.tkPos;
-          return Token.Comma;
-        }
-
-        // ;
-        case CharCode.Semicolon: {
-          ++this.tkPos;
-          return Token.Semicolon;
-        }
-
-        // :
-        case CharCode.Colon: {
-          ++this.tkPos;
-          return Token.Colon;
-        }
-
-        // ?
-        case CharCode.Question: {
-          ++this.tkPos;
-          return Token.Question;
-        }
-
-        // [
-        case CharCode.OpenBracket: {
-          ++this.tkPos;
-          return Token.OpenBracket;
-        }
-
-        // ]
-        case CharCode.CloseBracket: {
-          ++this.tkPos;
-          return Token.CloseBracket;
-        }
-
-        // {
-        case CharCode.OpenBrace: {
-          ++this.tkPos;
-          return Token.OpenBrace;
-        }
-
-        // }
-        case CharCode.CloseBrace: {
-          ++this.tkPos;
-          return Token.CloseBrace;
-        }
-
-        // ~
-        case CharCode.Tilde: {
-          ++this.tkPos;
-          return Token.Tilde;
-        }
-
-        // ^
-        case CharCode.Caret: {
-          ++this.tkPos;
-          if (
-            this.tkPos < end &&
-            text.charCodeAt(this.tkPos) === CharCode.Equals
-          ) {
-            ++this.tkPos;
-            return Token.CaretEq;
-          }
-          return Token.Caret;
-        }
-
-        // |
-        case CharCode.Bar: {
-          ++this.tkPos;
-          if (this.tkPos < end) {
-            const ch = text.charCodeAt(this.tkPos);
-            if (ch === CharCode.Bar) {
-              ++this.tkPos;
-              return Token.BarBar;
-            }
-            if (ch === CharCode.Equals) {
-              ++this.tkPos;
-              return Token.BarEq;
-            }
-          }
-          return Token.Bar;
-        }
-
-        // =
-        case CharCode.Equals: {
-          ++this.tkPos;
-          if (this.tkPos < end) {
-            const ch = text.charCodeAt(this.tkPos);
-            if (ch === CharCode.Equals) {
-              ++this.tkPos;
-              return Token.EqEq;
-            }
-            if (ch === CharCode.GreaterThan) {
-              ++this.tkPos;
-              return Token.FatArrow;
-            }
-          }
-          return Token.Eq;
-        }
-
-        // <
-        case CharCode.LessThan: {
-          ++this.tkPos;
-          if (this.tkPos < end) {
-            const ch = text.charCodeAt(this.tkPos);
-            if (ch === CharCode.LessThan) {
-              ++this.tkPos;
-              if (
-                this.tkPos < end &&
-                text.charCodeAt(this.tkPos) === CharCode.Equals
-              ) {
-                ++this.tkPos;
-                return Token.ShiftLeftEq;
-              }
-              return Token.ShiftLeft;
-            }
-            if (ch === CharCode.Equals) {
-              ++this.tkPos;
-              return Token.LessThanEq;
-            }
-          }
-          return Token.LessThan;
-        }
-
-        // >
-        case CharCode.GreaterThan: {
-          ++this.tkPos;
-          if (this.tkPos < end) {
-            let ch = text.charCodeAt(this.tkPos);
-            if (ch === CharCode.GreaterThan) {
-              ++this.tkPos;
-              if (
-                this.tkPos < end &&
-                text.charCodeAt(this.tkPos) === CharCode.Equals
-              ) {
-                ++this.tkPos;
-                return Token.ShiftRightEq;
-              }
-              return Token.ShiftRight;
-            }
-            if (ch === CharCode.Equals) {
-              ++this.tkPos;
-              return Token.GreaterThanEq;
-            }
-          }
-          return Token.GreaterThan;
-        }
-
-        // /
-        case CharCode.Slash: {
-          ++this.tkPos;
-          if (this.tkPos < end) {
-            const ch = text.charCodeAt(this.tkPos);
-
-            // line comment: //
-            if (ch === CharCode.Slash) {
-              ++this.tkPos;
-              // consume until end of line or EOF
-              while (this.tkPos < end) {
-                const d = text.charCodeAt(this.tkPos);
-                if (d === CharCode.LineFeed) break;
-                this.tkPos++;
-              }
-              // do not return a token; let outer while() continue
-              continue;
-            }
-
-            // block comment: /* ... */
-            if (ch === CharCode.Asterisk) {
-              ++this.tkPos;
-              while (this.tkPos < end) {
-                const d = text.charCodeAt(this.tkPos);
-                if (d === CharCode.Asterisk) {
-                  this.tkPos++;
-                  if (
-                    this.tkPos < end &&
-                    text.charCodeAt(this.tkPos) === CharCode.Slash
-                  ) {
-                    this.tkPos++; // consume closing */
-                    break;
-                  }
-                  continue;
-                }
-
-                if (d === CharCode.LineFeed) {
-                  this.bumpLine();
-                  this.line = this.tkLine;
-                  this.lineStart = this.tkLineStart;
-                }
-
-                this.tkPos++;
-              }
-              // Unterminated block comment falls out of loop; you can emit a diagnostic here if you want.
-              continue;
-            }
-
-            // /= operator
-            if (ch === CharCode.Equals) {
-              ++this.tkPos;
-              return Token.SlashEq;
-            }
-          }
-          return Token.Slash;
-        }
-
-        // #
-        case CharCode.Hash: {
-          ++this.tkPos;
-          return Token.Hash;
-        }
-      }
+    if (this.cursor + 1 < this.entries.length) {
+      this.cursor++;
     }
 
-    ++this.tkPos;
-    return Token.EndOfFile;
+    const entry = this.entries[this.cursor] ?? this.entries[this.entries.length - 1];
+    this.lastToken = entry.token;
+    this.nextToken =
+      this.cursor + 1 < this.entries.length
+        ? this.entries[this.cursor + 1].token
+        : Token.EndOfFile;
+    this.nextLiteral = entry.literal;
+
+    this.pos = entry.startOffset;
+    this.tkPos = entry.endOffset;
+    this.line = entry.range.start.line;
+    this.tkLine = entry.range.end.line;
+    this.lineStart = this.pos - entry.range.start.column;
+    this.tkLineStart = this.tkPos - entry.range.end.column;
+
+    return entry.token;
   }
 
   peek(lookahead: number = 0): Token {
-    const state = this.getState();
-    let tok: Token = Token.Invalid;
-
-    if (!lookahead) {
-      tok = this.next();
-      state.unwind();
-      return tok;
-    }
-
-    while (lookahead-- >= 0) {
-      tok = this.next();
-      if (tok === Token.EndOfFile) break;
-    }
-
-    state.unwind();
-    return tok;
+    const idx = this.cursor + lookahead + 1;
+    if (idx < 0 || idx >= this.entries.length) return Token.EndOfFile;
+    return this.entries[idx].token;
   }
 
   public readIdentifier(): string {
@@ -724,7 +229,7 @@ export class Tokenizer extends DiagnosticEmitter {
       this.error(
         DiagnosticCode.MISSING_LITERAL,
         { function: "readIdentifier" },
-        this.getRange(), // This should be the current file hah
+        this.getRange(),
       );
     }
     if (this.lastToken !== Token.Identifier) {
@@ -736,12 +241,13 @@ export class Tokenizer extends DiagnosticEmitter {
     }
     return this.nextLiteral;
   }
+
   public readString(): string {
     if (!this.nextLiteral) {
       this.error(
         DiagnosticCode.MISSING_LITERAL,
         { function: "readString" },
-        this.getRange(), // This should be the current file hah
+        this.getRange(),
       );
     }
     if (this.lastToken !== Token.StringLiteral) {
@@ -753,12 +259,13 @@ export class Tokenizer extends DiagnosticEmitter {
     }
     return this.nextLiteral;
   }
+
   public readNumber(): string {
     if (!this.nextLiteral) {
       this.error(
         DiagnosticCode.MISSING_LITERAL,
         { function: "readNumber" },
-        this.getRange(), // This should be the current file hah
+        this.getRange(),
       );
     }
     if (this.lastToken !== Token.NumberLiteral) {
@@ -770,162 +277,461 @@ export class Tokenizer extends DiagnosticEmitter {
     }
     return this.nextLiteral;
   }
-  private digestIdentifier(): string {
-    const text = this.source.text;
-    const end = this.end;
 
-    this.pos = this.tkPos;
+  private scanAll(): void {
+    this.entries = [];
+    this.cursor = -1;
+    this.scanPos = 0;
+    this.scanLine = 0;
+    this.scanColumn = 0;
+    this.end = this.source.text.length;
 
-    this.tkPos++;
+    while (this.scanPos < this.end) {
+      if (this.skipTrivia()) continue;
+      this.entries.push(this.scanToken());
+    }
 
-    while (this.tkPos < end) {
-      const d = text.charCodeAt(this.tkPos);
-      if (
-        (d >= CharCode.A && d <= CharCode.Z) ||
-        (d >= CharCode.a && d <= CharCode.z) ||
-        (d >= CharCode._0 && d <= CharCode._9) ||
-        d === CharCode._ ||
-        d === CharCode.Dollar
-      ) {
-        ++this.tkPos;
+    const eofRange = new Range(
+      { line: this.scanLine, column: this.scanColumn },
+      { line: this.scanLine, column: this.scanColumn },
+      this.source,
+    );
+    this.entries.push({
+      token: Token.EndOfFile,
+      literal: null,
+      range: eofRange,
+      startOffset: this.scanPos,
+      endOffset: this.scanPos,
+    });
+  }
+
+  private skipTrivia(): boolean {
+    if (this.scanPos >= this.end) return false;
+    const ch = this.charCode(this.scanPos);
+    const next = this.charCode(this.scanPos + 1);
+
+    if (
+      ch === CharCode.Space ||
+      ch === CharCode.Tab ||
+      ch === CharCode.VerticalTab ||
+      ch === CharCode.FormFeed
+    ) {
+      this.advanceChar();
+      return true;
+    }
+    if (ch === CharCode.CarriageReturn || ch === CharCode.LineFeed) {
+      this.advanceNewline();
+      return true;
+    }
+    if (ch === CharCode.Slash && next === CharCode.Slash) {
+      this.advanceChar();
+      this.advanceChar();
+      while (this.scanPos < this.end) {
+        const c = this.charCode(this.scanPos);
+        if (c === CharCode.CarriageReturn || c === CharCode.LineFeed) break;
+        this.advanceChar();
+      }
+      return true;
+    }
+    if (ch === CharCode.Slash && next === CharCode.Asterisk) {
+      this.advanceChar();
+      this.advanceChar();
+      while (this.scanPos < this.end) {
+        const c = this.charCode(this.scanPos);
+        if (c === CharCode.Asterisk && this.charCode(this.scanPos + 1) === CharCode.Slash) {
+          this.advanceChar();
+          this.advanceChar();
+          return true;
+        }
+        if (c === CharCode.CarriageReturn || c === CharCode.LineFeed) {
+          this.advanceNewline();
+          continue;
+        }
+        this.advanceChar();
+      }
+      this.error(DiagnosticCode.UNTERMINATED_STRING_LITERAL, {}, this.getRange());
+    }
+    return false;
+  }
+
+  private scanToken(): TokenEntry {
+    const startOffset = this.scanPos;
+    const start: RangeData = { line: this.scanLine, column: this.scanColumn };
+    const ch = this.charCode(this.scanPos);
+
+    if (this.isIdentifierStart(ch)) {
+      const literal = this.scanIdentifier();
+      const keyword = Tokenizer.KEYWORDS[literal];
+      return this.makeEntry(keyword ?? Token.Identifier, literal, start, startOffset);
+    }
+
+    if (this.isDigit(ch)) {
+      const literal = this.scanNumber();
+      return this.makeEntry(Token.NumberLiteral, literal, start, startOffset);
+    }
+
+    switch (ch) {
+      case CharCode.DoubleQuote:
+        return this.makeEntry(Token.StringLiteral, this.scanString(), start, startOffset);
+      case CharCode.OpenBrace:
+        this.advanceChar();
+        return this.makeEntry(Token.OpenBrace, null, start, startOffset);
+      case CharCode.CloseBrace:
+        this.advanceChar();
+        return this.makeEntry(Token.CloseBrace, null, start, startOffset);
+      case CharCode.OpenParen:
+        this.advanceChar();
+        return this.makeEntry(Token.OpenParen, null, start, startOffset);
+      case CharCode.CloseParen:
+        this.advanceChar();
+        return this.makeEntry(Token.CloseParen, null, start, startOffset);
+      case CharCode.OpenBracket:
+        this.advanceChar();
+        return this.makeEntry(Token.OpenBracket, null, start, startOffset);
+      case CharCode.CloseBracket:
+        this.advanceChar();
+        return this.makeEntry(Token.CloseBracket, null, start, startOffset);
+      case CharCode.Semicolon:
+        this.advanceChar();
+        return this.makeEntry(Token.Semicolon, null, start, startOffset);
+      case CharCode.Comma:
+        this.advanceChar();
+        return this.makeEntry(Token.Comma, null, start, startOffset);
+      case CharCode.Question:
+        this.advanceChar();
+        return this.makeEntry(Token.Question, null, start, startOffset);
+      case CharCode.Tilde:
+        this.advanceChar();
+        return this.makeEntry(Token.Tilde, null, start, startOffset);
+      case CharCode.Hash:
+        this.advanceChar();
+        return this.makeEntry(Token.Hash, null, start, startOffset);
+      case CharCode.Dot:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Dot) {
+          this.advanceChar();
+          if (this.charCode(this.scanPos) === CharCode.Equals) {
+            this.advanceChar();
+            return this.makeEntry(Token.DotDotEq, null, start, startOffset);
+          }
+          if (this.charCode(this.scanPos) === CharCode.Dot) {
+            this.advanceChar();
+            return this.makeEntry(Token.DotDotDot, null, start, startOffset);
+          }
+          return this.makeEntry(Token.DotDot, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Dot, null, start, startOffset);
+      case CharCode.Colon:
+        this.advanceChar();
+        return this.makeEntry(Token.Colon, null, start, startOffset);
+      case CharCode.Exclamation:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.BangEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Bang, null, start, startOffset);
+      case CharCode.Equals:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.EqEq, null, start, startOffset);
+        }
+        if (this.charCode(this.scanPos) === CharCode.GreaterThan) {
+          this.advanceChar();
+          return this.makeEntry(Token.FatArrow, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Eq, null, start, startOffset);
+      case CharCode.Plus:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Plus) {
+          this.advanceChar();
+          return this.makeEntry(Token.PlusPlus, null, start, startOffset);
+        }
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.PlusEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Plus, null, start, startOffset);
+      case CharCode.Minus:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Minus) {
+          this.advanceChar();
+          return this.makeEntry(Token.MinusMinus, null, start, startOffset);
+        }
+        if (this.charCode(this.scanPos) === CharCode.GreaterThan) {
+          this.advanceChar();
+          return this.makeEntry(Token.Arrow, null, start, startOffset);
+        }
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.MinusEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Minus, null, start, startOffset);
+      case CharCode.Asterisk:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.StarEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Star, null, start, startOffset);
+      case CharCode.Slash:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.SlashEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Slash, null, start, startOffset);
+      case CharCode.Percent:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.PercentEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Percent, null, start, startOffset);
+      case CharCode.Ampersand:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Ampersand) {
+          this.advanceChar();
+          return this.makeEntry(Token.AmpAmp, null, start, startOffset);
+        }
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.AmpEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Amp, null, start, startOffset);
+      case CharCode.Bar:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Bar) {
+          this.advanceChar();
+          return this.makeEntry(Token.BarBar, null, start, startOffset);
+        }
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.BarEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Bar, null, start, startOffset);
+      case CharCode.Caret:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.CaretEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.Caret, null, start, startOffset);
+      case CharCode.LessThan:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.LessThan) {
+          this.advanceChar();
+          if (this.charCode(this.scanPos) === CharCode.Equals) {
+            this.advanceChar();
+            return this.makeEntry(Token.ShiftLeftEq, null, start, startOffset);
+          }
+          return this.makeEntry(Token.ShiftLeft, null, start, startOffset);
+        }
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.LessThanEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.LessThan, null, start, startOffset);
+      case CharCode.GreaterThan:
+        this.advanceChar();
+        if (this.charCode(this.scanPos) === CharCode.GreaterThan) {
+          this.advanceChar();
+          if (this.charCode(this.scanPos) === CharCode.Equals) {
+            this.advanceChar();
+            return this.makeEntry(Token.ShiftRightEq, null, start, startOffset);
+          }
+          return this.makeEntry(Token.ShiftRight, null, start, startOffset);
+        }
+        if (this.charCode(this.scanPos) === CharCode.Equals) {
+          this.advanceChar();
+          return this.makeEntry(Token.GreaterThanEq, null, start, startOffset);
+        }
+        return this.makeEntry(Token.GreaterThan, null, start, startOffset);
+      case CharCode.SingleQuote:
+        this.advanceChar();
+        this.error(
+          DiagnosticCode.UNSUPPORTED,
+          { message: "Character literals are not yet supported!" },
+          this.getRange(),
+        );
+      case CharCode.Backtick:
+        this.advanceChar();
+        this.error(
+          DiagnosticCode.UNSUPPORTED,
+          { message: "Raw literals are not yet supported!" },
+          this.getRange(),
+        );
+    }
+
+    this.advanceChar();
+    return this.makeEntry(Token.Invalid, null, start, startOffset);
+  }
+
+  private isIdentifierStart(ch: number): boolean {
+    return (
+      (ch >= CharCode.A && ch <= CharCode.Z) ||
+      (ch >= CharCode.a && ch <= CharCode.z) ||
+      ch === CharCode._ ||
+      ch === CharCode.Dollar
+    );
+  }
+
+  private isIdentifierPart(ch: number): boolean {
+    return this.isIdentifierStart(ch) || this.isDigit(ch);
+  }
+
+  private isDigit(ch: number): boolean {
+    return ch >= CharCode._0 && ch <= CharCode._9;
+  }
+
+  private scanIdentifier(): string {
+    const start = this.scanPos;
+    this.advanceChar();
+    while (this.scanPos < this.end && this.isIdentifierPart(this.charCode(this.scanPos))) {
+      this.advanceChar();
+    }
+    return this.source.text.slice(start, this.scanPos);
+  }
+
+  private scanNumber(): string {
+    const start = this.scanPos;
+    this.advanceDigitsOrUnderscore();
+
+    if (this.charCode(this.scanPos) === CharCode.Dot && this.isDigit(this.charCode(this.scanPos + 1))) {
+      this.advanceChar();
+      this.advanceDigitsOrUnderscore();
+    }
+
+    const exp = this.charCode(this.scanPos);
+    if (exp === CharCode.E || exp === CharCode.e) {
+      const expStart = this.scanPos;
+      this.advanceChar();
+      const sign = this.charCode(this.scanPos);
+      if (sign === CharCode.Plus || sign === CharCode.Minus) this.advanceChar();
+      if (this.isDigit(this.charCode(this.scanPos))) {
+        this.advanceDigitsOrUnderscore();
+      } else {
+        this.scanPos = expStart;
+      }
+    }
+
+    return this.source.text.slice(start, this.scanPos);
+  }
+
+  private advanceDigitsOrUnderscore(): void {
+    while (this.scanPos < this.end) {
+      const ch = this.charCode(this.scanPos);
+      if (this.isDigit(ch) || ch === CharCode._) {
+        this.advanceChar();
       } else {
         break;
       }
     }
-
-    this.nextLiteral = text.slice(this.pos, this.tkPos);
-    return this.nextLiteral;
-  }
-  private digestNumber(): string {
-    const text = this.source.text;
-    const end = this.end;
-
-    this.pos = this.tkPos;
-
-    this.tkPos++;
-    while (this.tkPos < end) {
-      const d = text.charCodeAt(this.tkPos);
-      if (d >= CharCode._0 && d <= CharCode._9) {
-        ++this.tkPos;
-      } else break;
-    }
-
-    if (this.tkPos < end && text.charCodeAt(this.tkPos) === CharCode.Dot) {
-      const next = this.tkPos + 1 < end ? text.charCodeAt(this.tkPos + 1) : -1;
-      if (next >= CharCode._0 && next <= CharCode._9) {
-        this.tkPos += 2;
-        while (this.tkPos < end) {
-          const d = text.charCodeAt(this.tkPos);
-          if (d >= CharCode._0 && d <= CharCode._9) {
-            ++this.tkPos;
-          } else break;
-        }
-      }
-    }
-
-    if (this.tkPos < end) {
-      const e = text.charCodeAt(this.tkPos);
-      if (e === CharCode.E || e === CharCode.e) {
-        let p = this.tkPos + 1;
-        if (p < end) {
-          const s = text.charCodeAt(p);
-          if (s === CharCode.Plus || s === CharCode.Minus) {
-            ++p;
-          }
-        }
-        if (p < end) {
-          const d = text.charCodeAt(p);
-          if (d >= CharCode._0 && d <= CharCode._9) {
-            this.tkPos = p + 1;
-            while (this.tkPos < end) {
-              const d2 = text.charCodeAt(this.tkPos);
-              if (d2 >= CharCode._0 && d2 <= CharCode._9) {
-                ++this.tkPos;
-              } else break;
-            }
-          }
-        }
-      }
-    }
-
-    this.nextLiteral = text.slice(this.pos, this.tkPos);
-    return this.nextLiteral;
   }
 
-  private digestString(): string {
-    const text = this.source.text;
-    const end = this.end;
+  private scanString(): string {
+    this.advanceChar(); // open "
+    let out = "";
+    let chunkStart = this.scanPos;
 
-    this.pos = this.tkPos - 1;
-
-    this.nextLiteral = "";
-    let start = this.tkPos;
-
-    while (this.tkPos < end) {
-      const ch = text.charCodeAt(this.tkPos);
-
+    while (this.scanPos < this.end) {
+      const ch = this.charCode(this.scanPos);
       if (ch === CharCode.DoubleQuote) {
-        if (this.tkPos > start) {
-          this.nextLiteral += text.slice(start, this.tkPos);
-        }
-        this.tkPos++;
-        return this.nextLiteral;
+        if (this.scanPos > chunkStart) out += this.source.text.slice(chunkStart, this.scanPos);
+        this.advanceChar();
+        return out;
       }
-
       if (ch === CharCode.Backslash) {
-        if (this.tkPos > start) {
-          this.nextLiteral += text.slice(start, this.tkPos);
+        if (this.scanPos > chunkStart) out += this.source.text.slice(chunkStart, this.scanPos);
+        this.advanceChar();
+        if (this.scanPos >= this.end) {
+          this.error(DiagnosticCode.UNTERMINATED_STRING_LITERAL, {}, this.getRange());
         }
-        this.tkPos++;
-        if (this.tkPos >= end) {
-          this.error(
-            DiagnosticCode.UNTERMINATED_STRING_LITERAL,
-            {},
-            this.getRange(),
-          );
-        }
-
-        const esc = text.charCodeAt(this.tkPos);
-        this.tkPos++;
-
+        const esc = this.charCode(this.scanPos);
+        this.advanceChar();
         switch (esc) {
           case CharCode.Backslash:
-            this.nextLiteral += "\\";
+            out += "\\";
             break;
           case CharCode.DoubleQuote:
-            this.nextLiteral += '"';
+            out += '"';
             break;
           case CharCode.n:
-            this.nextLiteral += "\n";
+            out += "\n";
             break;
           case CharCode.r:
-            this.nextLiteral += "\r";
+            out += "\r";
             break;
           case CharCode.t:
-            this.nextLiteral += "\t";
+            out += "\t";
             break;
           case CharCode.b:
-            this.nextLiteral += "\b";
+            out += "\b";
             break;
           case CharCode.f:
-            this.nextLiteral += "\f";
+            out += "\f";
             break;
           default:
-            this.nextLiteral += String.fromCharCode(esc);
+            out += String.fromCharCode(esc);
             break;
         }
-
-        start = this.tkPos;
+        chunkStart = this.scanPos;
         continue;
       }
-
-      this.tkPos++;
+      if (ch === CharCode.CarriageReturn || ch === CharCode.LineFeed) {
+        this.error(DiagnosticCode.UNTERMINATED_STRING_LITERAL, {}, this.getRange());
+      }
+      this.advanceChar();
     }
-
-    if (this.tkPos > start) this.nextLiteral += text.slice(start, this.tkPos);
 
     this.error(DiagnosticCode.UNTERMINATED_STRING_LITERAL, {}, this.getRange());
   }
+
+  private makeEntry(
+    token: Token,
+    literal: string | null,
+    start: RangeData,
+    startOffset: number,
+  ): TokenEntry {
+    const end: RangeData = { line: this.scanLine, column: this.scanColumn };
+    return {
+      token,
+      literal,
+      range: new Range(start, end, this.source),
+      startOffset,
+      endOffset: this.scanPos,
+    };
+  }
+
+  private advanceNewline(): void {
+    if (
+      this.charCode(this.scanPos) === CharCode.CarriageReturn &&
+      this.charCode(this.scanPos + 1) === CharCode.LineFeed
+    ) {
+      this.scanPos += 2;
+    } else {
+      this.scanPos += 1;
+    }
+    this.scanLine += 1;
+    this.scanColumn = 0;
+  }
+
+  private advanceChar(): void {
+    const ch = this.charCode(this.scanPos);
+    if (ch === CharCode.CarriageReturn || ch === CharCode.LineFeed) {
+      this.advanceNewline();
+      return;
+    }
+    this.scanPos += 1;
+    this.scanColumn += 1;
+  }
+
+  private charCode(pos: number): number {
+    if (pos < 0 || pos >= this.end) return -1;
+    return this.source.text.charCodeAt(pos);
+  }
+
   getSurroundingLines(
     range: Range,
     padding: number = 1,
@@ -980,14 +786,31 @@ export class Tokenizer extends DiagnosticEmitter {
   reset(source: Source | null = null): void {
     if (!source) return;
     this.source = source;
-    this.end = this.source.text.length;
+    this.source.tokenizer = this;
+    this.scanAll();
     this.pos = 0;
-    this.nextToken = null;
+    this.tkPos = 0;
+    this.line = 0;
+    this.lineStart = 0;
+    this.tkLine = 0;
+    this.tkLineStart = 0;
+    this.lastToken = Token.Invalid;
+    this.nextToken = this.entries[0]?.token ?? Token.EndOfFile;
+    this.nextLiteral = null;
   }
 }
 
+type TokenEntry = {
+  token: Token;
+  literal: string | null;
+  range: Range;
+  startOffset: number;
+  endOffset: number;
+};
+
 export class TokenizerState {
   readonly tokenizer: Tokenizer;
+  public cursor: number;
   public pos: number;
   public tkPos: number;
   public line: number;
@@ -999,6 +822,7 @@ export class TokenizerState {
 
   constructor(tokenizer: Tokenizer) {
     this.tokenizer = tokenizer;
+    this.cursor = tokenizer.cursor;
     this.pos = tokenizer.pos;
     this.tkPos = tokenizer.tkPos;
     this.line = tokenizer.line;
@@ -1011,6 +835,7 @@ export class TokenizerState {
 
   unwind(): void {
     const t = this.tokenizer;
+    t.cursor = this.cursor;
     t.pos = this.pos;
     t.tkPos = this.tkPos;
     t.line = this.line;
@@ -1023,6 +848,7 @@ export class TokenizerState {
 
   wind(): TokenizerState {
     const t = this.tokenizer;
+    this.cursor = t.cursor;
     this.pos = t.pos;
     this.tkPos = t.tkPos;
     this.line = t.line;

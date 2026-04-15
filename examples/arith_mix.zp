@@ -1,0 +1,4 @@
+#[export]
+fn arith_mix(x: i32, y: i32): i32 {
+  rt x / 2 + y * 3
+}

@@ -4,6 +4,7 @@ import {
   BooleanLiteral,
   CallExpression,
   EnumDeclaration,
+  Expression,
   ExpressionStatement,
   FunctionDeclaration,
   Identifier,
@@ -12,280 +13,245 @@ import {
   ImportDeclaration,
   Node,
   NumberLiteral,
-  ParameterExpression,
   ParenthesizedExpression,
   PropertyAccessExpression,
   ReturnStatement,
+  Statement,
   StringLiteral,
   StructDeclaration,
   StructFieldDeclaration,
   TypeExpression,
   VariableDeclaration,
   WhileStatement,
-} from "../ast";
-import { opToString } from "../ast/BinaryExpression";
-import { AttributeExpression } from "../ast/AttributeExpression";
-import { Source } from "../source";
-import { SyntaxColors } from "./syntaxcolors";
-
-let depth = "";
-let parenDepth = 0;
+} from "../ast.js";
+import { opToString } from "../ast/BinaryExpression.js";
+import { AttributeExpression } from "../ast/AttributeExpression.js";
+import { EnumFieldDeclaration } from "../ast/EnumElement.js";
+import { ParameterExpression } from "../ast/ParameterExpression.js";
+import { Source } from "../source.js";
 
 export class FormatterRules {
-  public semi: boolean = false;
-  public indent: number = 2;
+  public semi = false;
+  public indent = 2;
 }
 
 export class Formatter {
   static rules: FormatterRules = new FormatterRules();
+
   static from(node: Node | Source | null): string {
     if (!node) return "";
-    if (node instanceof Source) {
-      let out = "";
-      for (const top of node.statements) {
-        out += Formatter.from(top) + "\n\n";
-      }
-      return out;
+    return this.formatNode(node, 0).trimEnd();
+  }
+
+  private static formatNode(node: Node | Source, level: number): string {
+    if (node instanceof Source) return this.formatSource(node, level);
+
+    if (node instanceof ImportDeclaration) return this.formatImportDeclaration(node);
+    if (node instanceof VariableDeclaration) return this.formatVariableDeclaration(node);
+    if (node instanceof FunctionDeclaration) {
+      return this.formatFunctionDeclaration(node, level);
     }
-    // Declaration
-    if (node instanceof ImportDeclaration)
-      return Formatter.ImportDeclaration(node);
-    if (node instanceof VariableDeclaration)
-      return Formatter.VariableDeclaration(node);
-    if (node instanceof FunctionDeclaration)
-      return Formatter.FunctionDeclaration(node);
-    if (node instanceof EnumDeclaration) return Formatter.EnumDeclaration(node);
-    if (node instanceof StructDeclaration)
-      return Formatter.StructDeclaration(node);
-
-    // Statement
-    if (node instanceof ExpressionStatement)
-      return Formatter.ExpressionStatement(node);
-    if (node instanceof ReturnStatement) return Formatter.ReturnStatement(node);
-    if (node instanceof IfStatement) return Formatter.IfStatement(node);
-    if (node instanceof WhileStatement) return Formatter.WhileStatement(node);
-
-    // Expression
-    if (node instanceof ParenthesizedExpression)
-      return Formatter.ParenthesizedExpression(node);
-    if (node instanceof CallExpression) return Formatter.CallExpression(node);
-    if (node instanceof BinaryExpression)
-      return Formatter.BinaryExpression(node);
-    if (node instanceof ParameterExpression)
-      return Formatter.ParameterExpression(node);
-    if (node instanceof BlockExpression) return Formatter.BlockExpression(node);
-    if (node instanceof PropertyAccessExpression)
-      return Formatter.PropertyAccessExpression(node);
-    if (node instanceof AttributeExpression)
-      return Formatter.AttributeExpression(node);
-    if (node instanceof TypeExpression) 
-      return Formatter.TypeExpression(node);
-
-    if (node instanceof NumberLiteral) return Formatter.NumberLiteral(node);
-    if (node instanceof StringLiteral) return Formatter.StringLiteral(node);
-    if (node instanceof BooleanLiteral) return Formatter.BooleanLiteral(node);
-
-    if (node instanceof Identifier) return Formatter.Identifier(node);
-    return "nop";
-  }
-  static PropertyAccessExpression(node: PropertyAccessExpression) {
-    return this.from(node.expression) + "." + this.from(node.property);
-  }
-  static ExpressionStatement(node: ExpressionStatement) {
-    return Formatter.from(node.expression);
-  }
-  static NumberLiteral(node: NumberLiteral) {
-    return SyntaxColors.yellowLight(node.data);
-  }
-  static StringLiteral(node: StringLiteral) {
-    return SyntaxColors.greenBright('"' + node.data + '"');
-  }
-  static VariableDeclaration(node: VariableDeclaration) {
-    return `${node.mutable ? SyntaxColors.magenta("mut") : SyntaxColors.magenta("let")} ${SyntaxColors.yellowLight(node.name.data)}${node.type ? ": " + SyntaxColors.yellowLight(node.type.types[0]) : ""}${node.value ? " = " + Formatter.from(node.value) : ""}${Formatter.rules.semi ? ";" : ""}`;
-  }
-  static AttributeExpression(node: AttributeExpression): string {
-    const tag = SyntaxColors.gray(node.tag.data);
-
-    const entries = Object.entries(node.args);
-    if (entries.length === 0) {
-      return `#\[${tag}]`;
+    if (node instanceof EnumDeclaration) return this.formatEnumDeclaration(node, level);
+    if (node instanceof StructDeclaration) {
+      return this.formatStructDeclaration(node, level);
     }
 
-    const inner = entries
-      .map(([k, v]) => `${k} = ${SyntaxColors.greenBright('"' + v + '"')}`)
-      .join(", ");
+    if (node instanceof ExpressionStatement) return this.formatExpression(node.expression, level);
+    if (node instanceof ReturnStatement) return this.formatReturnStatement(node, level);
+    if (node instanceof IfStatement) return this.formatIfStatement(node, level);
+    if (node instanceof WhileStatement) return this.formatWhileStatement(node, level);
+    if (node instanceof BlockExpression) return this.formatBlock(node, level);
 
-    return `#\[${tag}(${inner})]`;
-  }
-  static TypeExpression(node: TypeExpression) {
-    if (!node.types.length) return "";
-
-    const base = node.types.join(" | ");
-    return SyntaxColors.yellowLight(base);
+    return this.formatExpression(node as Expression, level);
   }
 
-  static FunctionDeclaration(node: FunctionDeclaration) {
-    let params = "";
-    let body = "";
-    for (const param of node.parameters) {
-      params += `${SyntaxColors.red(param.name.data)}: ${Formatter.from(param.type)}, `;
-    }
-    if (params) params = params.slice(0, params.length - 2);
-
-    const pDepth = parenDepth++;
-    body += Formatter.from(node.block);
-    const returnType = node.returnType ? Formatter.from(node.returnType) : null;
-
-    let attrs = "";
-    for (const attr of node.attributes) {
-      attrs += depth + Formatter.AttributeExpression(attr) + "\n";
-    }
-    if (
-      node.exported &&
-      !node.attributes.some((a) => a.tag.data === "export")
-    ) {
-      attrs += depth + SyntaxColors.gray("#[export]") + "\n";
-    }
-
-    let out =
-      `${attrs}` +
-      `${depth}${SyntaxColors.magenta("fn")} ${Formatter.from(node.name)}` +
-      `${depthColor(pDepth, "(")}${params}${depthColor(pDepth, ")")}` +
-      `${returnType ? ": " + SyntaxColors.yellowLight(returnType) : ""} ` +
-      body;
-
-    parenDepth--;
-    return out;
+  private static formatSource(source: Source, level: number): string {
+    const chunks = source.statements.map((stmt) => this.formatNode(stmt, level));
+    return chunks.filter(Boolean).join("\n\n");
   }
-  static CallExpression(node: CallExpression) {
-    let params = "";
-    for (let param of node.parameters) {
-      params += `${Formatter.from(param)}, `;
-    }
-    if (params) params = params.slice(0, params.length - 2);
-    return `${Formatter.from(node.calling)}${SyntaxColors.magenta("(")}${params}${SyntaxColors.magenta(")")}`;
+
+  private static formatImportDeclaration(node: ImportDeclaration): string {
+    return `import ${this.formatStringLiteral(node.path)}${this.maybeSemi()}`;
   }
-  static EnumDeclaration(node: EnumDeclaration) {
-    let body = "";
-    const end = node.elements.length - 1;
 
-    depth += "  ";
-    for (let i = 0; i < end; i++) {
-      const element = node.elements[i];
-      body += `${depth}${element.name.data} = ${element.value.data},\n`;
-    }
-    const lastElement = node.elements[end];
-    body += `${depth}${lastElement.name.data} = ${lastElement.value.data}\n`;
-
-    depth = depth.slice(0, depth.length - 2);
-
-    return `enum ${node.name.data} {\n${body}}`;
+  private static formatVariableDeclaration(node: VariableDeclaration): string {
+    const keyword = node.mutable ? "mut" : "let";
+    const type = node.type ? `: ${this.formatTypeExpression(node.type)}` : "";
+    const value = node.value ? ` = ${this.formatExpression(node.value, 0)}` : "";
+    return `${keyword} ${node.name.data}${type}${value}${this.maybeSemi()}`;
   }
-  static BinaryExpression(node: BinaryExpression) {
-    return (
-      Formatter.from(node.left) +
-      " " +
-      SyntaxColors.cyan(opToString(node.operand)) +
-      " " +
-      Formatter.from(node.right)
+
+  private static formatFunctionDeclaration(
+    node: FunctionDeclaration,
+    level: number,
+  ): string {
+    const lines: string[] = [];
+    for (const attribute of node.attributes) {
+      lines.push(this.indent(level) + this.formatAttributeExpression(attribute));
+    }
+
+    const params = node.parameters.map((p) => this.formatParameterExpression(p)).join(", ");
+    const returnType = node.returnType ? `: ${this.formatTypeExpression(node.returnType)}` : "";
+    const signature = `${this.indent(level)}fn ${node.name.data}(${params})${returnType}`;
+
+    const isExtern = node.attributes.some((a) => a.tag.data === "extern");
+    const externDecl =
+      isExtern &&
+      node.block instanceof BlockExpression &&
+      node.block.statements.length === 0;
+
+    if (externDecl) {
+      lines.push(signature + this.maybeSemi());
+      return lines.join("\n");
+    }
+
+    lines.push(`${signature} ${this.formatStatementAsBlock(node.block, level)}`);
+    return lines.join("\n");
+  }
+
+  private static formatEnumDeclaration(node: EnumDeclaration, level: number): string {
+    const lines: string[] = [];
+    for (const attribute of node.attributes) {
+      lines.push(this.indent(level) + this.formatAttributeExpression(attribute));
+    }
+
+    if (node.elements.length === 0) {
+      lines.push(`${this.indent(level)}enum ${node.name.data} {}`);
+      return lines.join("\n");
+    }
+
+    const body = node.elements
+      .map((element) => this.indent(level + 1) + this.formatEnumField(element))
+      .join(",\n");
+
+    lines.push(`${this.indent(level)}enum ${node.name.data} {\n${body}\n${this.indent(level)}}`);
+    return lines.join("\n");
+  }
+
+  private static formatStructDeclaration(
+    node: StructDeclaration,
+    level: number,
+  ): string {
+    const lines: string[] = [];
+    for (const attribute of node.attributes) {
+      lines.push(this.indent(level) + this.formatAttributeExpression(attribute));
+    }
+
+    if (node.fields.length === 0) {
+      lines.push(`${this.indent(level)}struct ${node.name.data} {}`);
+      return lines.join("\n");
+    }
+
+    const body = node.fields
+      .map((field) => this.indent(level + 1) + this.formatStructFieldDeclaration(field))
+      .join("\n");
+
+    lines.push(
+      `${this.indent(level)}struct ${node.name.data} {\n${body}\n${this.indent(level)}}`,
     );
+    return lines.join("\n");
   }
-  static ReturnStatement(node: ReturnStatement) {
-    // @ts-ignore
-    return (
-      SyntaxColors.magenta("rt ") +
-      Formatter.from(node.returning) +
-      (Formatter.rules.semi ? ";" : "")
-    );
+
+  private static formatStatementAsBlock(stmt: Statement, level: number): string {
+    if (stmt instanceof BlockExpression) return this.formatBlock(stmt, level);
+    return `{\n${this.indent(level + 1)}${this.formatNode(stmt, level + 1)}\n${this.indent(level)}}`;
   }
-  static Identifier(node: Identifier) {
-    return SyntaxColors.blue(node.data);
+
+  private static formatReturnStatement(node: ReturnStatement, level: number): string {
+    return `${this.indent(level)}rt ${this.formatExpression(node.returning, level)}${this.maybeSemi()}`;
   }
-  static ParameterExpression(node: ParameterExpression) {
-    return node.name.data;
-  }
-  static IfStatement(node: IfStatement) {
-    let out = "";
-    out +=
-      SyntaxColors.magenta(node.kind) +
-      " " +
-      Formatter.from(node.condition!) +
-      " " +
-      Formatter.from(node.ifTrue);
+
+  private static formatIfStatement(node: IfStatement, level: number): string {
+    if (node.kind === IfStatementKind.Else) {
+      return `${this.indent(level)}else ${this.formatStatementAsBlock(node.ifTrue, level)}`;
+    }
+
+    const keyword = node.kind === IfStatementKind.ElseIf ? "else if" : "if";
+    let out = `${this.indent(level)}${keyword} ${this.formatExpression(node.condition!, level)} ${this.formatStatementAsBlock(node.ifTrue, level)}`;
     if (node.ifFalse) {
-      out += " " + Formatter.from(node.ifFalse);
+      out += ` ${this.formatNode(node.ifFalse, level).trimStart()}`;
     }
     return out;
   }
-  static BlockExpression(node: BlockExpression) {
-    let body = depthColor(depth.length >> 1, "{");
-    if (!node.statements.length)
-      return body +depthColor(depth.length >> 1, "}");
-    depth += "  ";
-    for (const stmt of node.statements) {
-      body += "\n" + depth + Formatter.from(stmt);
-    }
-    depth = depth.slice(0, depth.length - 2);
-    if (body.length > 1) body += "\n";
-    body += depth + depthColor(depth.length >> 1, "}");
-    return body;
-  }
-  static WhileStatement(node: WhileStatement) {
-    return (
-      "while " +
-      Formatter.from(node.condition) +
-      " " +
-      Formatter.from(node.body)
-    );
-  }
-  static BooleanLiteral(node: BooleanLiteral) {
-    return node.value.toString();
-  }
-  static ParenthesizedExpression(node: ParenthesizedExpression) {
-    let out = depthColor(parenDepth, "(");
-    parenDepth++;
-    out += Formatter.from(node.expression);
-    parenDepth--;
-    out += depthColor(parenDepth, ")");
-    return out;
-  }
-  static StructDeclaration(node: StructDeclaration) {
-    let fields = "";
-    depth += "  ";
-    for (const field of node.fields) {
-      fields += "\n" + depth + Formatter.StructFieldDeclaration(field);
-    }
-    depth = depth.slice(0, depth.length - 2);
-    if (fields.length > 1) fields += "\n";
-    return "struct {" + fields + "}";
-  }
-  static StructFieldDeclaration(node: StructFieldDeclaration) {
-    return (
-      node.name.data +
-      ": " +
-      node.type.types[0] +
-      (node.value ? " = " + Formatter.from(node.value) : "")
-    );
-  }
-  static ImportDeclaration(node: ImportDeclaration) {
-    return (
-      SyntaxColors.magenta("import") +
-      " " +
-      Formatter.from(node.path) +
-      (Formatter.rules.semi ? ";" : "")
-    );
-  }
-}
 
-const depthColors = [
-  SyntaxColors.yellowBright,
-  SyntaxColors.magenta,
-  SyntaxColors.blue,
-  SyntaxColors.red,
-  SyntaxColors.cyan,
-];
-export function depthColor(depth: number, text: string): string {
-  if (depth > depthColors.length) depth = depth - depthColors.length;
-  const color = depthColors[depth];
-  return color(text);
+  private static formatWhileStatement(node: WhileStatement, level: number): string {
+    return `${this.indent(level)}while ${this.formatExpression(node.condition, level)} ${this.formatStatementAsBlock(node.body, level)}`;
+  }
+
+  private static formatBlock(node: BlockExpression, level: number): string {
+    if (node.statements.length === 0) return "{}";
+    const body = node.statements
+      .map((stmt) => `${this.indent(level + 1)}${this.formatNode(stmt, level + 1).trimStart()}`)
+      .join("\n");
+    return `{\n${body}\n${this.indent(level)}}`;
+  }
+
+  private static formatExpression(node: Expression, level: number): string {
+    if (node instanceof Identifier) return node.data;
+    if (node instanceof NumberLiteral) return node.data;
+    if (node instanceof StringLiteral) return this.formatStringLiteral(node);
+    if (node instanceof BooleanLiteral) return node.value ? "true" : "false";
+    if (node instanceof ParenthesizedExpression) {
+      return `(${this.formatExpression(node.expression, level)})`;
+    }
+    if (node instanceof CallExpression) {
+      const args = node.parameters.map((p) => this.formatExpression(p, level)).join(", ");
+      return `${this.formatExpression(node.calling, level)}(${args})`;
+    }
+    if (node instanceof PropertyAccessExpression) {
+      return `${this.formatExpression(node.expression, level)}.${node.property.data}`;
+    }
+    if (node instanceof BinaryExpression) {
+      return `${this.formatExpression(node.left as Expression, level)} ${opToString(node.operand)} ${this.formatExpression(node.right as Expression, level)}`;
+    }
+
+    return "/* unsupported-expression */";
+  }
+
+  private static formatStructFieldDeclaration(node: StructFieldDeclaration): string {
+    const value = node.value ? ` = ${this.formatExpression(node.value, 0)}` : "";
+    return `${node.name.data}: ${this.formatTypeExpression(node.type)}${value}`;
+  }
+
+  private static formatEnumField(node: EnumFieldDeclaration): string {
+    const base = node.name.data;
+    const value =
+      node.value instanceof NumberLiteral
+        ? node.value.data
+        : this.formatStringLiteral(node.value);
+    return `${base} = ${value}`;
+  }
+
+  private static formatParameterExpression(node: ParameterExpression): string {
+    const type = node.type ? this.formatTypeExpression(node.type) : "void";
+    return `${node.name.data}: ${type}`;
+  }
+
+  private static formatTypeExpression(node: TypeExpression): string {
+    return node.types.join(" | ");
+  }
+
+  private static formatAttributeExpression(node: AttributeExpression): string {
+    const entries = Object.entries(node.args);
+    if (entries.length === 0) return `#[${node.tag.data}]`;
+    if (entries.length === 1 && entries[0][0] === "value") {
+      return `#[${node.tag.data}(${JSON.stringify(entries[0][1])})]`;
+    }
+    const args = entries
+      .map(([k, v]) => `${k} = ${JSON.stringify(v)}`)
+      .join(", ");
+    return `#[${node.tag.data}(${args})]`;
+  }
+
+  private static formatStringLiteral(node: StringLiteral): string {
+    return JSON.stringify(node.data);
+  }
+
+  private static indent(level: number): string {
+    return " ".repeat(level * this.rules.indent);
+  }
+
+  private static maybeSemi(): string {
+    return this.rules.semi ? ";" : "";
+  }
 }
